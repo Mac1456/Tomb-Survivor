@@ -6,7 +6,7 @@ This checklist ensures each core feature is implemented and tested in an isolate
 
 ## ✅ Step 1: Core Movement & Arena Setup (**FULLY WORKING - READY TO TEST**)
 - [✅] **Complete Godot project created** (`project.godot`, `Main.tscn`, `Main.gd`, `icon.svg`)
-- [✅] **Input mapping pre-configured** (W/A/S/D, Left/Right Click, Space, Escape)
+- [✅] **Input mapping pre-configured** (W/A/S/D, Left/Right Click, Space for dodge, R for ultimate, Escape)
 - [✅] **Collision layers organized** (Player, Walls, Enemies, SafeZones, Projectiles)
 - [✅] **Performance-optimized architecture** (60+ FPS, monitoring system)
 - [✅] **Top-down player movement** using WASD (✅ FIXED - now working!)
@@ -19,7 +19,7 @@ This checklist ensures each core feature is implemented and tested in an isolate
 - **Movement**: WASD moves blue player smoothly ✅
 - **Camera**: Follows player automatically ✅  
 - **Collision**: Player bounces off brown walls/barriers ✅
-- **Input**: All actions log to console (clicks, space, escape) ✅
+- **Input**: All actions log to console (clicks, space for dodge, R for ultimate, escape) ✅
 - **Performance**: 60+ FPS with good performance messages ✅
 
 **🔧 Recent Fixes Applied:**
@@ -54,6 +54,21 @@ This checklist ensures each core feature is implemented and tested in an isolate
 - Visual feedback for all combat actions
 - Basic enemy AI with chase behavior
 - Cooldown management for special abilities
+
+**🔧 Step 2.1 & 2.2 Additional Features:**
+- [✅] **Dodge roll system** - Spacebar rolls toward mouse (1s cooldown, 600 speed)
+- [✅] **Enemy health bars** - Visual bars above enemies with color coding (green→yellow→red)
+- [✅] **Ultimate ability remapped** - Moved from spacebar to R key
+- [✅] **Enhanced enemy AI** - Fixed sticking issue with 3-tier distance system
+- [✅] **Anti-overlap system** - Strong push-back prevents enemies from sticking to player
+- [✅] **Code quality improvements** - Fixed all compiler warnings
+
+**🎮 Step 2.2 Test Results:**
+- **Dodge Roll**: Spacebar dodge toward mouse works smoothly ✅
+- **Health Bars**: Enemies show health with proper color changes ✅
+- **Enemy AI**: No more sticking, enemies maintain proper distance ✅
+- **Push-back System**: Enemies get pushed away when too close ✅
+- **Controls**: All inputs working (WASD, clicks, spacebar, R key) ✅
 
 ---
 

@@ -573,10 +573,29 @@ func update_enemy_ai(_delta):
 		if not is_instance_valid(enemy):
 			continue
 		
-		# Simple chase AI - move toward player
-		var direction = (player.position - enemy.position).normalized()
-		var speed = enemy.get_meta("speed")
-		enemy.velocity = direction * speed
+		# Calculate distance to player
+		var distance_to_player = enemy.position.distance_to(player.position)
+		var min_distance = 35.0  # Minimum distance to maintain from player
+		var overlap_distance = 25.0  # Distance considered as overlapping
+		
+		# Check if enemy is overlapping with player
+		if distance_to_player < overlap_distance:
+			# Strong push-back when overlapping
+			var push_back_direction = (enemy.position - player.position).normalized()
+			# Handle case where enemy is exactly on player position
+			if push_back_direction.length() == 0:
+				push_back_direction = Vector2(randf() - 0.5, randf() - 0.5).normalized()
+			enemy.velocity = push_back_direction * 150.0  # Strong push-back force
+		elif distance_to_player < min_distance:
+			# Medium push-back when too close
+			var push_back_direction = (enemy.position - player.position).normalized()
+			enemy.velocity = push_back_direction * 80.0  # Medium push-back force
+		else:
+			# Normal chase behavior when at proper distance
+			var direction = (player.position - enemy.position).normalized()
+			var speed = enemy.get_meta("speed")
+			enemy.velocity = direction * speed
+		
 		enemy.move_and_slide()
 
 func destroy_projectile(projectile, index: int):
