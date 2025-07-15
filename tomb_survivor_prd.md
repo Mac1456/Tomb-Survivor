@@ -27,7 +27,7 @@ To build a real-time, arcade-style dungeon survival game for 1–4 players. The 
   * **Stats:** Strength, Speed, Armor, Health
   * **Primary Attack:** Melee or Ranged, mapped to **Left Click**, mouse-aimed
   * **Special Ability:** Offensive, Defensive, or Supportive, mapped to **Right Click**, may be aimed
-  * **Ultimate Ability:** Unlocked at a certain level, mapped to **Spacebar**, longer cooldown
+  * **Ultimate Ability:** Unlocked at a certain level, mapped to **R Key**, longer cooldown
 
 **Character Selection:**
 
@@ -44,7 +44,8 @@ To build a real-time, arcade-style dungeon survival game for 1–4 players. The 
   * Aim: Mouse direction
   * Attack: Left Click
   * Special: Right Click
-  * Ultimate: Spacebar
+    * Ultimate: R Key
+  * Dodge Roll: Spacebar
 * Ranged attacks use **mild target-locking** to assist aim
 * Combat is hitbox/collision-based with responsive animations
 

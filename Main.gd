@@ -13,6 +13,11 @@ const PROJECTILE_DAMAGE = 30.0
 const SPECIAL_ABILITY_COOLDOWN = 2.0
 const ENEMY_SPAWN_COUNT = 3
 
+# Player movement constants
+const DODGE_ROLL_SPEED = 600.0
+const DODGE_ROLL_DURATION = 0.3
+const DODGE_ROLL_COOLDOWN = 1.0
+
 # Core game objects
 var player: CharacterBody2D
 var camera: Camera2D
@@ -24,6 +29,12 @@ var projectiles: Array = []
 var special_ability_timer: float = 0.0
 var enemies_container: Node2D
 var projectiles_container: Node2D
+
+# Player dodge roll system
+var dodge_roll_timer: float = 0.0
+var dodge_roll_cooldown_timer: float = 0.0
+var dodge_roll_direction: Vector2 = Vector2.ZERO
+var is_dodge_rolling: bool = false
 
 # Performance tracking
 var entity_count: int = 0
@@ -41,8 +52,9 @@ func setup_performance_optimized_game():
 	create_combat_containers()
 	spawn_placeholder_enemies()
 	
-	print("Step 2 systems initialized successfully!")
+	print("Step 2+ systems initialized successfully!")
 	print("Controls: WASD to move, Left Click to melee attack, Right Click for projectile (2s cooldown)")
+	print("New: Spacebar for dodge roll (1s cooldown), R for ultimate ability (Step 6)")
 	print("Performance: Entity limit =", MAX_ENTITIES)
 
 func create_arena():
@@ -281,6 +293,9 @@ func create_placeholder_enemy(pos: Vector2):
 	visual.color = Color(1.0, 0.3, 0.3, 1.0)  # Red enemy
 	enemy.add_child(visual)
 	
+	# Create health bar
+	create_enemy_health_bar(enemy)
+	
 	# Enemy stats
 	enemy.set_meta("health", 50.0)
 	enemy.set_meta("max_health", 50.0)
@@ -306,6 +321,15 @@ func _physics_process(delta):
 	if special_ability_timer > 0:
 		special_ability_timer -= delta
 	
+	# Update dodge roll timers
+	if dodge_roll_timer > 0:
+		dodge_roll_timer -= delta
+		if dodge_roll_timer <= 0:
+			is_dodge_rolling = false
+	
+	if dodge_roll_cooldown_timer > 0:
+		dodge_roll_cooldown_timer -= delta
+	
 	# Update projectiles
 	update_projectiles(delta)
 	
@@ -317,6 +341,17 @@ func handle_player_movement(delta):
 	var base_speed = player.get_meta("base_speed")
 	var acceleration = player.get_meta("acceleration")
 	var friction = player.get_meta("friction")
+	
+	# Update facing direction
+	var mouse_pos = get_global_mouse_position()
+	var facing_direction = (mouse_pos - player.global_position).normalized()
+	player.set_meta("facing_direction", facing_direction)
+	
+	# Handle dodge roll movement
+	if is_dodge_rolling:
+		player.velocity = dodge_roll_direction * DODGE_ROLL_SPEED
+		player.move_and_slide()
+		return
 	
 	# Get input direction
 	var input_dir = Vector2.ZERO
@@ -337,11 +372,6 @@ func handle_player_movement(delta):
 	else:
 		player.velocity = player.velocity.move_toward(Vector2.ZERO, friction * delta)
 	
-	# Update facing direction
-	var mouse_pos = get_global_mouse_position()
-	var facing_direction = (mouse_pos - player.global_position).normalized()
-	player.set_meta("facing_direction", facing_direction)
-	
 	# Move the player
 	player.move_and_slide()
 
@@ -352,7 +382,9 @@ func _input(event):
 	elif event.is_action_pressed("special_ability"):
 		perform_special_ability()
 	elif event.is_action_pressed("ultimate_ability"):
-		print("Ultimate ability - will implement in Step 6")
+		print("Ultimate ability (R key) - will implement in Step 6")
+	elif event.is_action_pressed("dodge_roll"):
+		perform_dodge_roll()
 	elif event.is_action_pressed("ui_cancel"):
 		print("Escape pressed - will implement pause menu in future steps")
 
@@ -385,6 +417,22 @@ func perform_special_ability():
 	# Create projectile
 	var facing_direction = player.get_meta("facing_direction")
 	create_projectile(player.position, facing_direction)
+
+func perform_dodge_roll():
+	if dodge_roll_cooldown_timer > 0:
+		print("Dodge roll on cooldown! Wait ", "%.1f" % dodge_roll_cooldown_timer, " seconds")
+		return
+	
+	print("Performing dodge roll!")
+	
+	# Get mouse direction for dodge roll
+	var mouse_pos = get_global_mouse_position()
+	dodge_roll_direction = (mouse_pos - player.global_position).normalized()
+	
+	# Start dodge roll
+	is_dodge_rolling = true
+	dodge_roll_timer = DODGE_ROLL_DURATION
+	dodge_roll_cooldown_timer = DODGE_ROLL_COOLDOWN
 
 func create_projectile(start_pos: Vector2, direction: Vector2):
 	var projectile = RigidBody2D.new()
@@ -445,6 +493,9 @@ func hit_enemy(enemy: CharacterBody2D, damage: float):
 	enemy.set_meta("health", current_health)
 	
 	print("Enemy hit! Health: ", current_health)
+	
+	# Update health bar
+	update_enemy_health_bar(enemy)
 	
 	# Create hit visual effect
 	create_hit_visual(enemy.position)
@@ -517,7 +568,7 @@ func update_projectiles(delta):
 				destroy_projectile(projectile, i)
 				break
 
-func update_enemy_ai(delta):
+func update_enemy_ai(_delta):
 	for enemy in enemies:
 		if not is_instance_valid(enemy):
 			continue
@@ -533,6 +584,53 @@ func destroy_projectile(projectile, index: int):
 		projectile.queue_free()
 		entity_count -= 1
 	projectiles.remove_at(index)
+
+func create_enemy_health_bar(enemy: CharacterBody2D):
+	# Create health bar container
+	var health_bar_container = Node2D.new()
+	health_bar_container.name = "HealthBarContainer"
+	health_bar_container.position = Vector2(0, -25)  # Position above enemy
+	
+	# Background bar (red)
+	var bg_bar = ColorRect.new()
+	bg_bar.size = Vector2(30, 4)
+	bg_bar.position = Vector2(-15, -2)
+	bg_bar.color = Color(0.3, 0.0, 0.0, 1.0)  # Dark red background
+	health_bar_container.add_child(bg_bar)
+	
+	# Health bar (green)
+	var health_bar = ColorRect.new()
+	health_bar.name = "HealthBar"
+	health_bar.size = Vector2(30, 4)
+	health_bar.position = Vector2(-15, -2)
+	health_bar.color = Color(0.0, 0.8, 0.0, 1.0)  # Green health
+	health_bar_container.add_child(health_bar)
+	
+	enemy.add_child(health_bar_container)
+
+func update_enemy_health_bar(enemy: CharacterBody2D):
+	var health_bar_container = enemy.get_node("HealthBarContainer")
+	if not health_bar_container:
+		return
+	
+	var health_bar = health_bar_container.get_node("HealthBar")
+	if not health_bar:
+		return
+	
+	var current_health = enemy.get_meta("health")
+	var max_health = enemy.get_meta("max_health")
+	var health_percentage = current_health / max_health
+	
+	# Update health bar width
+	health_bar.size.x = 30 * health_percentage
+	
+	# Change color based on health
+	if health_percentage > 0.6:
+		health_bar.color = Color(0.0, 0.8, 0.0, 1.0)  # Green
+	elif health_percentage > 0.3:
+		health_bar.color = Color(0.8, 0.8, 0.0, 1.0)  # Yellow
+	else:
+		health_bar.color = Color(0.8, 0.0, 0.0, 1.0)  # Red
 
 # Optimized performance monitoring (less frequent updates)
 func _process(delta):
