@@ -1,0 +1,47 @@
+---
+description: for nearly all of the development process
+alwaysApply: false
+---
+## 🧪 Testing and Debugging
+- Ensure each module works in isolation.
+- Include test scenes, debug logs, or dummy data where needed.
+- Write all logic so it can be reused and extended in future steps.
+
+---
+
+## 💻 Code Style and Structure
+- Organize scripts and scenes by role: `Player/`, `Enemies/`, `UI/`, `Managers/`
+- Use PascalCase for scene files (e.g., `MainMenu.tscn`), snake_case for script files (e.g., `enemy_ai.gd`)
+- Keep each script modular and focused on one responsibility
+
+---
+
+## 🎯 Multiplayer (Step 10)
+- Do not begin multiplayer logic until all local gameplay is functional.
+- Multiplayer must use Godot’s built-in networking API
+- Host and join features must be accessible via a menu
+- Sync player actions and game state only after all local systems are validated
+
+---
+
+## 🔊 Audio (Step 11)
+- Background music and SFX should not be added until all gameplay is functional.
+- Use a centralized AudioManager to manage music, SFX, and volume.
+- All sounds must be optional/toggleable in the settings menu.
+
+---
+
+## 🧠 AI Usage
+- Use AI to explain unfamiliar concepts, debug errors, and recommend optimizations.
+- Document key prompts used for each feature in a Brainlift log (optional but recommended).
+
+---
+
+## ✅ Completion Criteria
+- The game must match the modular checklist exactly.
+- No features should be considered “done” until tested and confirmed in the game loop.
+- After completing all modules, request a full system audit for polish and final testing.
+
+
+## Asset Creation
+- Any assets that are created must be visually consistent with the rest of the game's assets
