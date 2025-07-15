@@ -5,17 +5,32 @@ const ARENA_SIZE = Vector2(1200, 800)
 const WALL_THICKNESS = 32
 const MAX_ENTITIES = 50  # Performance cap
 
+# Combat constants
+const MELEE_ATTACK_RANGE = 50.0
+const MELEE_ATTACK_DAMAGE = 25.0
+const PROJECTILE_SPEED = 400.0
+const PROJECTILE_DAMAGE = 30.0
+const SPECIAL_ABILITY_COOLDOWN = 2.0
+const ENEMY_SPAWN_COUNT = 3
+
 # Core game objects
 var player: CharacterBody2D
 var camera: Camera2D
 var arena_bounds: Array = []
+
+# Combat system
+var enemies: Array = []
+var projectiles: Array = []
+var special_ability_timer: float = 0.0
+var enemies_container: Node2D
+var projectiles_container: Node2D
 
 # Performance tracking
 var entity_count: int = 0
 var frame_time_accumulator: float = 0.0
 
 func _ready():
-	print("=== Tomb Survivor - Step 1: Core Movement & Arena Setup ===")
+	print("=== Tomb Survivor - Step 2: Core Combat Mechanics ===")
 	setup_performance_optimized_game()
 
 func setup_performance_optimized_game():
@@ -23,9 +38,11 @@ func setup_performance_optimized_game():
 	create_arena()
 	create_player()
 	create_camera()
+	create_combat_containers()
+	spawn_placeholder_enemies()
 	
-	print("Step 1 systems initialized successfully!")
-	print("Controls: WASD to move, mouse to aim")
+	print("Step 2 systems initialized successfully!")
+	print("Controls: WASD to move, Left Click to melee attack, Right Click for projectile (2s cooldown)")
 	print("Performance: Entity limit =", MAX_ENTITIES)
 
 func create_arena():
@@ -218,10 +235,82 @@ func create_camera():
 		camera.make_current()
 		print("Camera created as independent node and made current")
 
+func create_combat_containers():
+	print("Creating combat containers...")
+	
+	# Container for enemies
+	enemies_container = Node2D.new()
+	enemies_container.name = "Enemies"
+	add_child(enemies_container)
+	
+	# Container for projectiles
+	projectiles_container = Node2D.new()
+	projectiles_container.name = "Projectiles"
+	add_child(projectiles_container)
+	
+	print("Combat containers created")
+
+func spawn_placeholder_enemies():
+	print("Spawning placeholder enemies...")
+	
+	for i in range(ENEMY_SPAWN_COUNT):
+		var enemy_pos = get_random_spawn_position()
+		# Make sure enemies don't spawn too close to player
+		while enemy_pos.distance_to(player.position) < 150:
+			enemy_pos = get_random_spawn_position()
+		
+		create_placeholder_enemy(enemy_pos)
+	
+	print("Spawned ", ENEMY_SPAWN_COUNT, " placeholder enemies")
+
+func create_placeholder_enemy(pos: Vector2):
+	var enemy = CharacterBody2D.new()
+	enemy.name = "Enemy"
+	
+	# Enemy collision
+	var collision = CollisionShape2D.new()
+	var shape = RectangleShape2D.new()
+	shape.size = Vector2(20, 20)
+	collision.shape = shape
+	enemy.add_child(collision)
+	
+	# Enemy visual (red square)
+	var visual = ColorRect.new()
+	visual.size = Vector2(20, 20)
+	visual.position = Vector2(-10, -10)
+	visual.color = Color(1.0, 0.3, 0.3, 1.0)  # Red enemy
+	enemy.add_child(visual)
+	
+	# Enemy stats
+	enemy.set_meta("health", 50.0)
+	enemy.set_meta("max_health", 50.0)
+	enemy.set_meta("speed", 100.0)
+	
+	# Enemy configuration
+	enemy.collision_layer = 4  # Enemy layer
+	enemy.collision_mask = 1 | 2  # Collides with player and walls
+	enemy.position = pos
+	
+	enemies_container.add_child(enemy)
+	enemies.append(enemy)
+	entity_count += 1
+	
+	return enemy
+
 # Handle player movement in the main script
 func _physics_process(delta):
 	if player:
 		handle_player_movement(delta)
+	
+	# Update combat timers
+	if special_ability_timer > 0:
+		special_ability_timer -= delta
+	
+	# Update projectiles
+	update_projectiles(delta)
+	
+	# Simple enemy AI (basic chase behavior)
+	update_enemy_ai(delta)
 
 func handle_player_movement(delta):
 	# Get movement variables
@@ -259,13 +348,191 @@ func handle_player_movement(delta):
 func _input(event):
 	# Handle combat inputs
 	if event.is_action_pressed("primary_attack"):
-		print("Primary attack - will implement in Step 2")
+		perform_melee_attack()
 	elif event.is_action_pressed("special_ability"):
-		print("Special ability - will implement in Step 2")
+		perform_special_ability()
 	elif event.is_action_pressed("ultimate_ability"):
 		print("Ultimate ability - will implement in Step 6")
 	elif event.is_action_pressed("ui_cancel"):
 		print("Escape pressed - will implement pause menu in future steps")
+
+func perform_melee_attack():
+	print("Performing melee attack!")
+	
+	# Get player facing direction
+	var facing_direction = player.get_meta("facing_direction")
+	var attack_center = player.position + facing_direction * (MELEE_ATTACK_RANGE / 2)
+	
+	# Create visual feedback for attack
+	create_attack_visual(attack_center)
+	
+	# Check for enemies in attack range
+	for enemy in enemies:
+		if is_instance_valid(enemy):
+			var distance = enemy.position.distance_to(attack_center)
+			if distance <= MELEE_ATTACK_RANGE:
+				hit_enemy(enemy, MELEE_ATTACK_DAMAGE)
+				print("Enemy hit with melee attack!")
+
+func perform_special_ability():
+	if special_ability_timer > 0:
+		print("Special ability on cooldown! Wait ", "%.1f" % special_ability_timer, " seconds")
+		return
+	
+	print("Performing special ability - projectile attack!")
+	special_ability_timer = SPECIAL_ABILITY_COOLDOWN
+	
+	# Create projectile
+	var facing_direction = player.get_meta("facing_direction")
+	create_projectile(player.position, facing_direction)
+
+func create_projectile(start_pos: Vector2, direction: Vector2):
+	var projectile = RigidBody2D.new()
+	projectile.name = "Projectile"
+	projectile.gravity_scale = 0  # No gravity for top-down
+	
+	# Projectile collision
+	var collision = CollisionShape2D.new()
+	var shape = CircleShape2D.new()
+	shape.radius = 5
+	collision.shape = shape
+	projectile.add_child(collision)
+	
+	# Projectile visual (yellow circle)
+	var visual = ColorRect.new()
+	visual.size = Vector2(10, 10)
+	visual.position = Vector2(-5, -5)
+	visual.color = Color(1.0, 1.0, 0.3, 1.0)  # Yellow projectile
+	projectile.add_child(visual)
+	
+	# Projectile properties
+	projectile.set_meta("velocity", direction * PROJECTILE_SPEED)
+	projectile.collision_layer = 16  # Projectile layer
+	projectile.collision_mask = 2 | 4  # Collides with walls and enemies
+	projectile.position = start_pos
+	
+	projectiles_container.add_child(projectile)
+	projectiles.append(projectile)
+	entity_count += 1
+
+func create_attack_visual(center_pos: Vector2):
+	# Create temporary visual feedback for melee attack
+	var attack_visual = ColorRect.new()
+	attack_visual.size = Vector2(MELEE_ATTACK_RANGE * 2, MELEE_ATTACK_RANGE * 2)
+	attack_visual.position = center_pos - Vector2(MELEE_ATTACK_RANGE, MELEE_ATTACK_RANGE)
+	attack_visual.color = Color(1.0, 1.0, 1.0, 0.3)  # Semi-transparent white
+	
+	add_child(attack_visual)
+	
+	# Remove visual after short duration
+	var timer = Timer.new()
+	timer.wait_time = 0.1
+	timer.one_shot = true
+	timer.timeout.connect(_on_attack_visual_timeout.bind(attack_visual))
+	add_child(timer)
+	timer.start()
+
+func _on_attack_visual_timeout(visual: ColorRect):
+	if is_instance_valid(visual):
+		visual.queue_free()
+
+func hit_enemy(enemy: CharacterBody2D, damage: float):
+	if not is_instance_valid(enemy):
+		return
+	
+	var current_health = enemy.get_meta("health")
+	current_health -= damage
+	enemy.set_meta("health", current_health)
+	
+	print("Enemy hit! Health: ", current_health)
+	
+	# Create hit visual effect
+	create_hit_visual(enemy.position)
+	
+	# Check if enemy is dead
+	if current_health <= 0:
+		destroy_enemy(enemy)
+
+func create_hit_visual(pos: Vector2):
+	# Create temporary red flash for hit feedback
+	var hit_visual = ColorRect.new()
+	hit_visual.size = Vector2(30, 30)
+	hit_visual.position = pos - Vector2(15, 15)
+	hit_visual.color = Color(1.0, 0.0, 0.0, 0.6)  # Red flash
+	
+	add_child(hit_visual)
+	
+	# Remove visual after short duration
+	var timer = Timer.new()
+	timer.wait_time = 0.2
+	timer.one_shot = true
+	timer.timeout.connect(_on_hit_visual_timeout.bind(hit_visual))
+	add_child(timer)
+	timer.start()
+
+func _on_hit_visual_timeout(visual: ColorRect):
+	if is_instance_valid(visual):
+		visual.queue_free()
+
+func destroy_enemy(enemy: CharacterBody2D):
+	print("Enemy destroyed!")
+	
+	# Remove from enemies array
+	var index = enemies.find(enemy)
+	if index >= 0:
+		enemies.remove_at(index)
+	
+	# Clean up
+	if is_instance_valid(enemy):
+		enemy.queue_free()
+		entity_count -= 1
+	
+	# Spawn new enemy to maintain count (for testing)
+	if enemies.size() < ENEMY_SPAWN_COUNT:
+		var new_pos = get_random_spawn_position()
+		while new_pos.distance_to(player.position) < 150:
+			new_pos = get_random_spawn_position()
+		create_placeholder_enemy(new_pos)
+
+func update_projectiles(delta):
+	for i in range(projectiles.size() - 1, -1, -1):
+		var projectile = projectiles[i]
+		if not is_instance_valid(projectile):
+			projectiles.remove_at(i)
+			continue
+		
+		# Move projectile
+		var velocity = projectile.get_meta("velocity")
+		projectile.position += velocity * delta
+		
+		# Check if projectile is out of bounds
+		if not get_arena_bounds().has_point(projectile.position):
+			destroy_projectile(projectile, i)
+			continue
+		
+		# Check collision with enemies
+		for enemy in enemies:
+			if is_instance_valid(enemy) and projectile.position.distance_to(enemy.position) < 15:
+				hit_enemy(enemy, PROJECTILE_DAMAGE)
+				destroy_projectile(projectile, i)
+				break
+
+func update_enemy_ai(delta):
+	for enemy in enemies:
+		if not is_instance_valid(enemy):
+			continue
+		
+		# Simple chase AI - move toward player
+		var direction = (player.position - enemy.position).normalized()
+		var speed = enemy.get_meta("speed")
+		enemy.velocity = direction * speed
+		enemy.move_and_slide()
+
+func destroy_projectile(projectile, index: int):
+	if is_instance_valid(projectile):
+		projectile.queue_free()
+		entity_count -= 1
+	projectiles.remove_at(index)
 
 # Optimized performance monitoring (less frequent updates)
 func _process(delta):
