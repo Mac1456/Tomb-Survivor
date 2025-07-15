@@ -1,0 +1,132 @@
+[gd_scene load_steps=3 format=3 uid="uid://cp6nj6h5xkf0u"]
+
+[ext_resource type="Script" path="res://CharacterSelect.gd" id="1_wqtg6"]
+[ext_resource type="Texture2D" uid="uid://buvtbhqhpn863" path="res://assets/backgrounds/cave_background.png" id="2_cave_bg"]
+
+[node name="CharacterSelect" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_wqtg6")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("2_cave_bg")
+stretch_mode = 1
+modulate = Color(0.5, 0.5, 0.6, 1)
+
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.5)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 50.0
+offset_top = 50.0
+offset_right = -50.0
+offset_bottom = -50.0
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "CHOOSE YOUR CHAMPION"
+horizontal_alignment = 1
+vertical_alignment = 1
+modulate = Color(1, 1, 0.8, 1)
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="MainContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LeftSide" type="VBoxContainer" parent="VBoxContainer/MainContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CharacterGridLabel" type="Label" parent="VBoxContainer/MainContainer/LeftSide"]
+layout_mode = 2
+text = "Choose Character:"
+horizontal_alignment = 1
+
+[node name="CharacterGrid" type="GridContainer" parent="VBoxContainer/MainContainer/LeftSide"]
+layout_mode = 2
+size_flags_vertical = 3
+columns = 2
+alignment = 1
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/MainContainer"]
+layout_mode = 2
+
+[node name="RightSide" type="VBoxContainer" parent="VBoxContainer/MainContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CharacterInfo" type="VBoxContainer" parent="VBoxContainer/MainContainer/RightSide"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NameLabel" type="Label" parent="VBoxContainer/MainContainer/RightSide/CharacterInfo"]
+layout_mode = 2
+text = "Shadow Assassin"
+horizontal_alignment = 1
+modulate = Color(1, 1, 0.8, 1)
+
+[node name="DescriptionLabel" type="Label" parent="VBoxContainer/MainContainer/RightSide/CharacterInfo"]
+layout_mode = 2
+text = "A swift rogue specializing in stealth and quick strikes"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer/MainContainer/RightSide/CharacterInfo"]
+layout_mode = 2
+
+[node name="StatsLabel" type="Label" parent="VBoxContainer/MainContainer/RightSide/CharacterInfo"]
+layout_mode = 2
+text = "STR: 6  SPD: 9  ARM: 4  HP: 7"
+horizontal_alignment = 1
+
+[node name="HSeparator3" type="HSeparator" parent="VBoxContainer/MainContainer/RightSide/CharacterInfo"]
+layout_mode = 2
+
+[node name="PrimaryAttackLabel" type="Label" parent="VBoxContainer/MainContainer/RightSide/CharacterInfo"]
+layout_mode = 2
+text = "Primary Attack: Melee"
+horizontal_alignment = 1
+
+[node name="SpecialAbilityLabel" type="Label" parent="VBoxContainer/MainContainer/RightSide/CharacterInfo"]
+layout_mode = 2
+text = "Special: Stealth Strike - Becomes invisible for 2 seconds"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="UltimateAbilityLabel" type="Label" parent="VBoxContainer/MainContainer/RightSide/CharacterInfo"]
+layout_mode = 2
+text = "Ultimate: Shadow Clone - Creates 3 shadow copies"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="HSeparator4" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="ButtonContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="BackButton" type="Button" parent="VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Back"
+
+[node name="ReadyButton" type="Button" parent="VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Ready" 

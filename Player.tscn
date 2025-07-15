@@ -1,0 +1,31 @@
+[gd_scene load_steps=3 format=3 uid="uid://bweqb4t1qrqy8"]
+
+[ext_resource type="Script" path="res://Player.gd" id="1_0qj6p"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(32, 40)
+
+[node name="Player" type="CharacterBody2D" groups=["main"]]
+script = ExtResource("1_0qj6p")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_1")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+
+[node name="HealthBarContainer" type="Node2D" parent="."]
+position = Vector2(0, -30)
+
+[node name="HealthBarBackground" type="ColorRect" parent="HealthBarContainer"]
+offset_left = -20.0
+offset_top = -2.0
+offset_right = 20.0
+offset_bottom = 2.0
+color = Color(0.3, 0, 0, 1)
+
+[node name="HealthBar" type="ColorRect" parent="HealthBarContainer"]
+offset_left = -20.0
+offset_top = -2.0
+offset_right = 20.0
+offset_bottom = 2.0
+color = Color(0, 0.8, 0, 1) 

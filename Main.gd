@@ -10,7 +10,6 @@ const MELEE_ATTACK_RANGE = 50.0
 const MELEE_ATTACK_DAMAGE = 25.0
 const PROJECTILE_SPEED = 400.0
 const PROJECTILE_DAMAGE = 30.0
-const SPECIAL_ABILITY_COOLDOWN = 2.0
 const ENEMY_SPAWN_COUNT = 3
 
 # Player movement constants
@@ -19,30 +18,103 @@ const DODGE_ROLL_DURATION = 0.3
 const DODGE_ROLL_COOLDOWN = 1.0
 
 # Core game objects
-var player: CharacterBody2D
+var player: Player
 var camera: Camera2D
 var arena_bounds: Array = []
+
+# Selected character data (Step 3)
+var selected_character: CharacterData.Character = null
 
 # Combat system
 var enemies: Array = []
 var projectiles: Array = []
-var special_ability_timer: float = 0.0
 var enemies_container: Node2D
 var projectiles_container: Node2D
-
-# Player dodge roll system
-var dodge_roll_timer: float = 0.0
-var dodge_roll_cooldown_timer: float = 0.0
-var dodge_roll_direction: Vector2 = Vector2.ZERO
-var is_dodge_rolling: bool = false
 
 # Performance tracking
 var entity_count: int = 0
 var frame_time_accumulator: float = 0.0
 
+# Player scene reference
+var player_scene: PackedScene = preload("res://Player.tscn")
+
 func _ready():
-	print("=== Tomb Survivor - Step 2: Core Combat Mechanics ===")
-	setup_performance_optimized_game()
+	# Add to main group so Player.gd can find this node
+	add_to_group("main")
+	
+	print("=== Tomb Survivor - Step 3: Character System & Selection ===")
+	
+	# Set up input actions for the new system
+	setup_input_actions()
+	
+	# Default character if none selected
+	if not selected_character:
+		selected_character = CharacterData.get_character(0)
+	
+	# Wait for character to be set before initializing game
+	if selected_character:
+		setup_performance_optimized_game()
+
+func setup_input_actions():
+	# Define input actions for character controls
+	if not InputMap.has_action("move_up"):
+		InputMap.add_action("move_up")
+		var event = InputEventKey.new()
+		event.keycode = KEY_W
+		InputMap.action_add_event("move_up", event)
+	
+	if not InputMap.has_action("move_down"):
+		InputMap.add_action("move_down")
+		var event = InputEventKey.new()
+		event.keycode = KEY_S
+		InputMap.action_add_event("move_down", event)
+	
+	if not InputMap.has_action("move_left"):
+		InputMap.add_action("move_left")
+		var event = InputEventKey.new()
+		event.keycode = KEY_A
+		InputMap.action_add_event("move_left", event)
+	
+	if not InputMap.has_action("move_right"):
+		InputMap.add_action("move_right")
+		var event = InputEventKey.new()
+		event.keycode = KEY_D
+		InputMap.action_add_event("move_right", event)
+	
+	if not InputMap.has_action("primary_attack"):
+		InputMap.add_action("primary_attack")
+		var event = InputEventMouseButton.new()
+		event.button_index = MOUSE_BUTTON_LEFT
+		InputMap.action_add_event("primary_attack", event)
+	
+	if not InputMap.has_action("special_ability"):
+		InputMap.add_action("special_ability")
+		var event = InputEventMouseButton.new()
+		event.button_index = MOUSE_BUTTON_RIGHT
+		InputMap.action_add_event("special_ability", event)
+	
+	if not InputMap.has_action("ultimate_ability"):
+		InputMap.add_action("ultimate_ability")
+		var event = InputEventKey.new()
+		event.keycode = KEY_R
+		InputMap.action_add_event("ultimate_ability", event)
+	
+	if not InputMap.has_action("dodge_roll"):
+		InputMap.add_action("dodge_roll")
+		var event = InputEventKey.new()
+		event.keycode = KEY_SPACE
+		InputMap.action_add_event("dodge_roll", event)
+
+func set_selected_character(character: CharacterData.Character):
+	selected_character = character
+	print("Game received selected character: ", character.name)
+	
+	# If game hasn't been set up yet, set it up now
+	if not player:
+		setup_performance_optimized_game()
+	else:
+		# Update existing player with new character
+		player.set_character_data(selected_character)
 
 func setup_performance_optimized_game():
 	# Create all nodes programmatically for guaranteed compatibility
@@ -52,9 +124,10 @@ func setup_performance_optimized_game():
 	create_combat_containers()
 	spawn_placeholder_enemies()
 	
-	print("Step 2+ systems initialized successfully!")
-	print("Controls: WASD to move, Left Click to melee attack, Right Click for projectile (2s cooldown)")
-	print("New: Spacebar for dodge roll (1s cooldown), R for ultimate ability (Step 6)")
+	print("Step 3 systems initialized successfully!")
+	print("Selected character: ", selected_character.name)
+	print("Controls: WASD to move, Left Click to attack, Right Click for special ability")
+	print("Additional: Spacebar for dodge roll, R for ultimate ability")
 	print("Performance: Entity limit =", MAX_ENTITIES)
 
 func create_arena():
@@ -188,64 +261,46 @@ func create_safe_zone(parent: Node2D, pos: Vector2):
 	parent.add_child(zone)
 
 func create_player():
-	print("Creating performance-optimized player...")
+	print("Creating player with selected character: ", selected_character.name)
 	
-	# Create player as CharacterBody2D
-	player = CharacterBody2D.new()
+	# Create player from scene
+	player = player_scene.instantiate()
 	player.name = "Player"
 	
-	# Player collision setup
-	var collision = CollisionShape2D.new()
-	var shape = RectangleShape2D.new()
-	shape.size = Vector2(24, 24)
-	collision.shape = shape
-	player.add_child(collision)
+	# Set character data
+	player.set_character_data(selected_character)
 	
-	# Simple visual representation
-	var visual = ColorRect.new()
-	visual.size = Vector2(24, 24)
-	visual.position = Vector2(-12, -12)
-	visual.color = Color(0.4, 0.7, 1.0, 1.0)  # Blue player
-	player.add_child(visual)
+	# Position player at center
+	player.position = ARENA_SIZE / 2
 	
-	# Player configuration
-	player.collision_layer = 1  # Player layer
-	player.collision_mask = 2   # Collides with walls
-	player.position = ARENA_SIZE / 2  # Center position
-	
-	# Add player movement variables
-	player.set_meta("base_speed", 300.0)
-	player.set_meta("acceleration", 2000.0)
-	player.set_meta("friction", 1500.0)
-	player.set_meta("facing_direction", Vector2.RIGHT)
+	# Connect player signals
+	player.health_changed.connect(_on_player_health_changed)
+	player.character_died.connect(_on_player_died)
+	player.ability_used.connect(_on_player_ability_used)
 	
 	add_child(player)
 	entity_count += 1
 	
-	print("Player created at center position")
+	print("Player created: ", selected_character.name)
 
 func create_camera():
 	print("Creating optimized camera system...")
 	
-	camera = Camera2D.new()
-	camera.name = "GameCamera"
-	
-	# Camera configuration
-	camera.zoom = Vector2(1.2, 1.2)  # Slight zoom for better view
-	camera.position_smoothing_enabled = true
-	camera.position_smoothing_speed = 8.0
-	camera.enabled = true  # Ensure camera is enabled
-	
-	# Add camera to player for automatic following
+	# Camera is now part of the Player scene
 	if player:
+		camera = Camera2D.new()
+		camera.name = "GameCamera"
+		
+		# Camera configuration
+		camera.zoom = Vector2(1.2, 1.2)  # Slight zoom for better view
+		camera.position_smoothing_enabled = true
+		camera.position_smoothing_speed = 8.0
+		camera.enabled = true
+		
+		# Add camera to player for automatic following
 		player.add_child(camera)
-		# Make this camera current
 		camera.make_current()
 		print("Camera attached to player and made current")
-	else:
-		add_child(camera)
-		camera.make_current()
-		print("Camera created as independent node and made current")
 
 func create_combat_containers():
 	print("Creating combat containers...")
@@ -312,89 +367,68 @@ func create_placeholder_enemy(pos: Vector2):
 	
 	return enemy
 
-# Handle player movement in the main script
 func _physics_process(delta):
-	if player:
-		handle_player_movement(delta)
-	
-	# Update combat timers
-	if special_ability_timer > 0:
-		special_ability_timer -= delta
-	
-	# Update dodge roll timers
-	if dodge_roll_timer > 0:
-		dodge_roll_timer -= delta
-		if dodge_roll_timer <= 0:
-			is_dodge_rolling = false
-	
-	if dodge_roll_cooldown_timer > 0:
-		dodge_roll_cooldown_timer -= delta
-	
 	# Update projectiles
 	update_projectiles(delta)
 	
 	# Simple enemy AI (basic chase behavior)
 	update_enemy_ai(delta)
 
-func handle_player_movement(delta):
-	# Get movement variables
-	var base_speed = player.get_meta("base_speed")
-	var acceleration = player.get_meta("acceleration")
-	var friction = player.get_meta("friction")
-	
-	# Update facing direction
-	var mouse_pos = get_global_mouse_position()
-	var facing_direction = (mouse_pos - player.global_position).normalized()
-	player.set_meta("facing_direction", facing_direction)
-	
-	# Handle dodge roll movement
-	if is_dodge_rolling:
-		player.velocity = dodge_roll_direction * DODGE_ROLL_SPEED
-		player.move_and_slide()
+func _input(event):
+	if not player:
 		return
 	
-	# Get input direction
-	var input_dir = Vector2.ZERO
-	if Input.is_action_pressed("move_up"):
-		input_dir.y -= 1
-	if Input.is_action_pressed("move_down"):
-		input_dir.y += 1
-	if Input.is_action_pressed("move_left"):
-		input_dir.x -= 1
-	if Input.is_action_pressed("move_right"):
-		input_dir.x += 1
-	
-	input_dir = input_dir.normalized()
-	
-	# Apply movement with smooth acceleration
-	if input_dir != Vector2.ZERO:
-		player.velocity = player.velocity.move_toward(input_dir * base_speed, acceleration * delta)
-	else:
-		player.velocity = player.velocity.move_toward(Vector2.ZERO, friction * delta)
-	
-	# Move the player
-	player.move_and_slide()
-
-func _input(event):
-	# Handle combat inputs
+	# Handle combat inputs through player
 	if event.is_action_pressed("primary_attack"):
-		perform_melee_attack()
+		player.perform_primary_attack()
 	elif event.is_action_pressed("special_ability"):
-		perform_special_ability()
+		player.perform_special_ability()
 	elif event.is_action_pressed("ultimate_ability"):
-		print("Ultimate ability (R key) - will implement in Step 6")
+		player.perform_ultimate_ability()
 	elif event.is_action_pressed("dodge_roll"):
-		perform_dodge_roll()
+		player.perform_dodge_roll()
 	elif event.is_action_pressed("ui_cancel"):
-		print("Escape pressed - will implement pause menu in future steps")
+		print("Escape pressed - returning to main menu")
+		# Return to main menu (handled by GameManager)
+		get_tree().change_scene_to_file("res://GameManager.tscn")
 
-func perform_melee_attack():
-	print("Performing melee attack!")
+# Player attack handler - called by Player.gd
+func handle_player_attack(attack_type: String, position: Vector2, range: float, damage: float, direction: Vector2 = Vector2.ZERO):
+	if attack_type == "melee":
+		handle_melee_attack(position, range, damage)
+	elif attack_type == "ranged":
+		handle_ranged_attack(position, damage, direction)
+
+# New directional attack handler for better combat feel
+func handle_player_directional_attack(attack_type: String, position: Vector2, range: float, damage: float, direction: Vector2):
+	if attack_type == "melee":
+		handle_directional_melee_attack(position, range, damage, direction)
+	elif attack_type == "ranged":
+		handle_ranged_attack(position, damage, direction)
+
+func handle_directional_melee_attack(attack_center: Vector2, attack_range: float, damage: float, attack_direction: Vector2):
+	# Create visual feedback for directional attack
+	create_directional_attack_visual(attack_center, attack_direction, attack_range)
 	
-	# Get player facing direction
-	var facing_direction = player.get_meta("facing_direction")
-	var attack_center = player.position + facing_direction * (MELEE_ATTACK_RANGE / 2)
+	# Attack cone parameters
+	var attack_angle = 60.0  # 60 degree cone for sword swing
+	var attack_cone_rad = deg_to_rad(attack_angle)
 	
+	# Check for enemies in attack cone
+	for enemy in enemies:
+		if is_instance_valid(enemy):
+			var to_enemy = enemy.position - attack_center
+			var distance = to_enemy.length()
+			
+			# Check if enemy is within range
+			if distance <= attack_range:
+				# Check if enemy is within attack cone
+				var angle_to_enemy = to_enemy.normalized().angle_to(attack_direction)
+				if abs(angle_to_enemy) <= attack_cone_rad / 2:
+					hit_enemy(enemy, damage)
+					print("Enemy hit with directional melee attack!")
+
+func handle_melee_attack(attack_center: Vector2, attack_range: float, damage: float):
 	# Create visual feedback for attack
 	create_attack_visual(attack_center)
 	
@@ -402,39 +436,14 @@ func perform_melee_attack():
 	for enemy in enemies:
 		if is_instance_valid(enemy):
 			var distance = enemy.position.distance_to(attack_center)
-			if distance <= MELEE_ATTACK_RANGE:
-				hit_enemy(enemy, MELEE_ATTACK_DAMAGE)
+			if distance <= attack_range:
+				hit_enemy(enemy, damage)
 				print("Enemy hit with melee attack!")
 
-func perform_special_ability():
-	if special_ability_timer > 0:
-		print("Special ability on cooldown! Wait ", "%.1f" % special_ability_timer, " seconds")
-		return
-	
-	print("Performing special ability - projectile attack!")
-	special_ability_timer = SPECIAL_ABILITY_COOLDOWN
-	
-	# Create projectile
-	var facing_direction = player.get_meta("facing_direction")
-	create_projectile(player.position, facing_direction)
+func handle_ranged_attack(start_pos: Vector2, damage: float, direction: Vector2):
+	create_projectile(start_pos, direction, damage)
 
-func perform_dodge_roll():
-	if dodge_roll_cooldown_timer > 0:
-		print("Dodge roll on cooldown! Wait ", "%.1f" % dodge_roll_cooldown_timer, " seconds")
-		return
-	
-	print("Performing dodge roll!")
-	
-	# Get mouse direction for dodge roll
-	var mouse_pos = get_global_mouse_position()
-	dodge_roll_direction = (mouse_pos - player.global_position).normalized()
-	
-	# Start dodge roll
-	is_dodge_rolling = true
-	dodge_roll_timer = DODGE_ROLL_DURATION
-	dodge_roll_cooldown_timer = DODGE_ROLL_COOLDOWN
-
-func create_projectile(start_pos: Vector2, direction: Vector2):
+func create_projectile(start_pos: Vector2, direction: Vector2, damage: float):
 	var projectile = RigidBody2D.new()
 	projectile.name = "Projectile"
 	projectile.gravity_scale = 0  # No gravity for top-down
@@ -455,6 +464,7 @@ func create_projectile(start_pos: Vector2, direction: Vector2):
 	
 	# Projectile properties
 	projectile.set_meta("velocity", direction * PROJECTILE_SPEED)
+	projectile.set_meta("damage", damage)
 	projectile.collision_layer = 16  # Projectile layer
 	projectile.collision_mask = 2 | 4  # Collides with walls and enemies
 	projectile.position = start_pos
@@ -481,6 +491,41 @@ func create_attack_visual(center_pos: Vector2):
 	timer.start()
 
 func _on_attack_visual_timeout(visual: ColorRect):
+	if is_instance_valid(visual):
+		visual.queue_free()
+
+func create_directional_attack_visual(center_pos: Vector2, direction: Vector2, range: float):
+	# Create a visual representation of the attack cone
+	var attack_visual = Node2D.new()
+	attack_visual.position = center_pos
+	
+	# Create multiple small rectangles to represent the attack cone
+	var cone_segments = 5
+	var cone_angle = 60.0  # degrees
+	var start_angle = direction.angle() - deg_to_rad(cone_angle / 2)
+	
+	for i in range(cone_segments):
+		var angle = start_angle + (deg_to_rad(cone_angle) * i / cone_segments)
+		var segment_pos = Vector2(cos(angle), sin(angle)) * range * 0.7
+		
+		var segment = ColorRect.new()
+		segment.size = Vector2(20, 8)
+		segment.position = segment_pos - segment.size / 2
+		segment.rotation = angle
+		segment.color = Color(1.0, 1.0, 0.8, 0.6)  # Golden attack effect
+		attack_visual.add_child(segment)
+	
+	add_child(attack_visual)
+	
+	# Remove visual after short duration
+	var timer = Timer.new()
+	timer.wait_time = 0.15
+	timer.one_shot = true
+	timer.timeout.connect(_on_directional_attack_visual_timeout.bind(attack_visual))
+	add_child(timer)
+	timer.start()
+
+func _on_directional_attack_visual_timeout(visual: Node2D):
 	if is_instance_valid(visual):
 		visual.queue_free()
 
@@ -564,7 +609,8 @@ func update_projectiles(delta):
 		# Check collision with enemies
 		for enemy in enemies:
 			if is_instance_valid(enemy) and projectile.position.distance_to(enemy.position) < 15:
-				hit_enemy(enemy, PROJECTILE_DAMAGE)
+				var damage = projectile.get_meta("damage")
+				hit_enemy(enemy, damage)
 				destroy_projectile(projectile, i)
 				break
 
@@ -651,7 +697,7 @@ func update_enemy_health_bar(enemy: CharacterBody2D):
 	else:
 		health_bar.color = Color(0.8, 0.0, 0.0, 1.0)  # Red
 
-# Optimized performance monitoring (less frequent updates)
+# Performance monitoring (less frequent updates)
 func _process(delta):
 	frame_time_accumulator += delta
 	if frame_time_accumulator >= 5.0:  # Update every 5 seconds instead of 1
@@ -661,6 +707,18 @@ func _process(delta):
 		else:
 			print("Performance Good: FPS =", fps, " Entities =", entity_count)
 		frame_time_accumulator = 0.0
+
+# Player signal handlers
+func _on_player_health_changed(new_health: float, max_health: float):
+	var health_percentage = new_health / max_health
+	print("Player health: ", new_health, "/", max_health, " (", health_percentage * 100, "%)")
+
+func _on_player_died():
+	print("Player died! Game over.")
+	# For Step 3, just print message. Game over screen will be implemented later.
+
+func _on_player_ability_used(ability_name: String):
+	print("Player used ability: ", ability_name)
 
 # Performance-optimized helper functions
 func get_arena_bounds() -> Rect2:
@@ -676,7 +734,7 @@ func get_random_spawn_position() -> Vector2:
 	var y = randf_range(margin, ARENA_SIZE.y - margin)
 	return Vector2(x, y)
 
-# Future step preparations (optimized) - Fixed parameter names
+# Future step preparations (optimized)
 func spawn_entity(_entity_type: String, _spawn_position: Vector2):
 	if entity_count >= MAX_ENTITIES:
 		print("Entity limit reached, cannot spawn more")
