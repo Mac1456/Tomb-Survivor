@@ -472,10 +472,18 @@ func perform_dodge_roll():
 	dodge_roll()
 
 func primary_attack():
-	# Check if wizard has primary attack cooldown
-	if character_data.name == "Wizard" and primary_attack_timer > 0:
-		print("🔥 Wizard primary attack on cooldown: ", primary_attack_timer)
-		return
+	# Check for character-specific primary attack cooldowns
+	if primary_attack_timer > 0:
+		match character_data.name:
+			"Wizard":
+				print("🔥 Wizard primary attack on cooldown: ", primary_attack_timer)
+				return
+			"Berserker":
+				print("⚔️ Berserker primary attack on cooldown: ", primary_attack_timer)
+				return
+			_:
+				# Knight and Huntress have no primary attack cooldown
+				pass
 	
 	print("Primary attack: ", character_data.primary_attack_type)
 	
@@ -490,10 +498,24 @@ func primary_attack():
 	# Update facing direction to cursor direction
 	facing_direction = attack_direction
 	
-	# Set primary attack cooldown for wizard
-	if character_data.name == "Wizard":
-		primary_attack_timer = 1.0  # 1 second cooldown for wizard primary attack
-		print("🔥 Wizard primary attack cooldown set: 1.0 seconds")
+	# Set character-specific primary attack cooldowns and damage
+	var attack_damage = 25.0 * damage_multiplier  # Base damage
+	
+	match character_data.name:
+		"Wizard":
+			primary_attack_timer = 1.0  # 1 second cooldown for wizard
+			print("🔥 Wizard primary attack cooldown set: 1.0 seconds")
+		"Berserker":
+			primary_attack_timer = 1.2  # 1.2 second cooldown for berserker (slower but powerful)
+			attack_damage = 40.0 * damage_multiplier  # Higher damage for berserker
+			print("⚔️ Berserker powerful strike cooldown set: 1.2 seconds")
+		"Knight":
+			# Knight has no cooldown but lower damage (quick slashes)
+			attack_damage = 18.0 * damage_multiplier  # Lower damage for knight
+			print("🗡️ Knight quick slash - no cooldown")
+		"Huntress":
+			# Huntress has no cooldown for primary attack (already differentiated in special)
+			print("🏹 Huntress quick shot - no cooldown")
 	
 	# Play attack sound
 	ability_used.emit("primary_attack")
@@ -501,7 +523,6 @@ func primary_attack():
 	# Call Main.gd attack handler with directional attack
 	var main_node = get_tree().get_first_node_in_group("main")
 	if main_node:
-		var attack_damage = 25.0 * damage_multiplier
 		main_node.handle_player_directional_attack(character_data.primary_attack_type, global_position, 80.0, attack_damage, attack_direction)
 
 func special_ability():

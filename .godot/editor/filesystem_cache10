@@ -1,21 +1,21 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1752690267
-CharacterData.gd::GDScript::8413615799191029048::1752690521::0::1::::CharacterData<>Resource<><>0<>0<><>::
-CharacterSelect.gd::GDScript::3194704387276368365::1752620789::0::1::::<>Control<><>0<>0<><>::
-CharacterSelect.tscn::PackedScene::5890476765815332538::1752612601::0::1::::<><><>0<>0<><>::res://CharacterSelect.gd<>uid://buvtbhqhpn863::::res://assets/backgrounds/cave_background.png
-GameManager.gd::GDScript::5835283763766782598::1752609421::0::1::::<>Node<><>0<>0<><>::
+::res://::1752693271
+CharacterData.gd::GDScript::8413615799191029048::1752691612::0::1::::CharacterData<>Resource<><>0<>0<><>::
+CharacterSelect.gd::GDScript/GDScript::3194704387276368365::1752620789::0::1::::<>Control<><>0<>0<><>::
+CharacterSelect.tscn::PackedScene::5890476765815332538::1752692265::0::1::::<><><>0<>0<><>::res://CharacterSelect.gd<>uid://cb1jqlycdvlpc::::res://assets/backgrounds/cave_background.png
+GameManager.gd::GDScript/GDScript::5835283763766782598::1752609421::0::1::::<>Node<><>0<>0<><>::
 GameManager.tscn::PackedScene/PackedScene::-1::1752609421::0::1::::<><><>0<>0<><>::
 icon.svg::CompressedTexture2D/CompressedTexture2D::8147195070487690825::1752599119::1752599311::1::::<><><>0<>0<>eb2270cb6abc191feb82cb4a5341f47f<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
-Main.gd::GDScript::9153910678461787690::1752691445::0::1::::<>Node2D<><>0<>0<><>::
-Main.tscn::PackedScene::6117390032067590720::1752690267::0::1::::<><><>0<>0<><>::uid://d3ohtovdrji15::::res://Main.gd
-MainMenu.gd::GDScript::6638678925605926134::1752609421::0::1::::<>Control<><>0<>0<><>::
-MainMenu.tscn::PackedScene::2932686198337325253::1752609421::0::1::::<><><>0<>0<><>::res://MainMenu.gd<>uid://buvtbhqhpn863::::res://assets/backgrounds/cave_background.png
-Player.gd::GDScript::2241717817019650423::1752691488::0::1::::Player<>CharacterBody2D<><>0<>0<><>::
-Player.tscn::PackedScene::3939807566156048921::1752616497::0::1::::<><><>0<>0<><>::res://Player.gd
+Main.gd::GDScript::9153910678461787690::1752693206::0::1::::<>Node2D<><>0<>0<><>::
+Main.tscn::PackedScene::6117390032067590720::1752692658::0::1::::<><><>0<>0<><>::uid://d3ohtovdrji15::::res://Main.gd
+MainMenu.gd::GDScript/GDScript::6638678925605926134::1752609421::0::1::::<>Control<><>0<>0<><>::
+MainMenu.tscn::PackedScene::2932686198337325253::1752692257::0::1::::<><><>0<>0<><>::res://MainMenu.gd<>uid://cb1jqlycdvlpc::::res://assets/backgrounds/cave_background.png
+Player.gd::GDScript::2241717817019650423::1752693156::0::1::::Player<>CharacterBody2D<><>0<>0<><>::
+Player.tscn::PackedScene/PackedScene::3939807566156048921::1752616497::0::1::::<><><>0<>0<><>::res://Player.gd
 README.md::TextFile/TextFile::-1::1752599182::0::1::::<><><>0<>0<><>::
 tomb_survivor_checklist.md::TextFile/TextFile::-1::1752616984::0::1::::<><><>0<>0<><>::
 tomb_survivor_prd.md::TextFile/TextFile::-1::1752612083::0::1::::<><><>0<>0<><>::
-::res://assets/::1752690259
+::res://assets/::1752691593
 _license.txt::TextFile/TextFile::-1::1752534719::0::1::::<><><>0<>0<><>::
 adventurer-1.3-Sheet.png::CompressedTexture2D/CompressedTexture2D::99119666757470632::1752608093::1752614145::1::::<><><>0<>0<>653e26d5925db39f5e77388cdf543f1b<>res://.godot/imported/adventurer-1.3-Sheet.png-d30c3d8c5e1c8075915f1c560f05fd2d.ctex::
 adventurer-bow-Sheet.png::CompressedTexture2D/CompressedTexture2D::1164854854744422011::1752608526::1752614145::1::::<><><>0<>0<>6b2ad46cc535cde4fcea9fa92d1a7c76<>res://.godot/imported/adventurer-bow-Sheet.png-d323e5aa929f37a80025db1c8fee816e.ctex::
@@ -29,7 +29,7 @@ adventurer-run3-05.png::CompressedTexture2D/CompressedTexture2D::605560050425098
 adventurer-run3-sword-Sheet.png::CompressedTexture2D/CompressedTexture2D::7419157022581682219::1752608186::1752614145::1::::<><><>0<>0<>139003062c829e830affa0ab87ae01e4<>res://.godot/imported/adventurer-run3-sword-Sheet.png-c70e69fa41224edc196e272cdbcfeb1b.ctex::
 adventurer-Sheet.png::CompressedTexture2D/CompressedTexture2D::7977994627217193906::1752608551::1752614145::1::::<><><>0<>0<>81afe3ae6da5672c65290905b9045b06<>res://.godot/imported/adventurer-Sheet.png-3d518353aca5313efe91cb35c569caf1.ctex::
 adventurer-v1.5-Sheet.png::CompressedTexture2D/CompressedTexture2D::2038185952440036277::1752608539::1752614145::1::::<><><>0<>0<>67c147c4a804f73a6b14bc32e2a28ce2<>res://.godot/imported/adventurer-v1.5-Sheet.png-728f65bb66e120681373c910575da3f0.ctex::
-arrow.svg::CompressedTexture2D::4565677092476991838::1752691384::1752691593::1::::<><><>0<>0<>2412069051b21999860a7f04bd87a2d1<>res://.godot/imported/arrow.svg-a996b9f5a5e99d25f45d2c6cd1a7999b.ctex::
+arrow.svg::CompressedTexture2D/CompressedTexture2D::4565677092476991838::1752691384::1752691593::1::::<><><>0<>0<>2412069051b21999860a7f04bd87a2d1<>res://.godot/imported/arrow.svg-a996b9f5a5e99d25f45d2c6cd1a7999b.ctex::
 Effect1 Gameboy Spritesheet.png::CompressedTexture2D/CompressedTexture2D::437854694832150447::1582455276::1752614146::1::::<><><>0<>0<>f44e8f17c6060d74e32cf987a31ec6df<>res://.godot/imported/Effect1 Gameboy Spritesheet.png-8c20b86ec824fe950d380f9405724aca.ctex::
 Effect3 Gameboy Spritesheet.png::CompressedTexture2D/CompressedTexture2D::1518636924771903259::1582455948::1752614146::1::::<><><>0<>0<>270f2f7a03230ee1d814cd20b5bf048b<>res://.godot/imported/Effect3 Gameboy Spritesheet.png-a4ec42b3a94cd4b6a4b92753146811ea.ctex::
 Effect4 Gameboy Spritesheet.png::CompressedTexture2D/CompressedTexture2D::8560946722176892620::1582455977::1752614146::1::::<><><>0<>0<>eda0ec478662b855ef6244992b8acfff<>res://.godot/imported/Effect4 Gameboy Spritesheet.png-4e16671713ce243c7fb1018d8f6eaac4.ctex::
@@ -38,7 +38,7 @@ Effect 2 - Sprite Sheet.png::CompressedTexture2D/CompressedTexture2D::7390351712
 Effect 3 - Sprite Sheet.png::CompressedTexture2D/CompressedTexture2D::5378500042571752819::1582419195::1752614146::1::::<><><>0<>0<>6a6dc87a1d52fd1491f72b8ae75de8cd<>res://.godot/imported/Effect 3 - Sprite Sheet.png-5d18906480ed9012efbc5e5a90bfe19c.ctex::
 Effect 4 - Sprite Sheet.png::CompressedTexture2D/CompressedTexture2D::5672117611468276670::1582419216::1752614146::1::::<><><>0<>0<>768b1ceaf361cba5e993325515462b24<>res://.godot/imported/Effect 4 - Sprite Sheet.png-48548288c02784ffde8955024160ad5a.ctex::
 Effectst2 Gameboy Spritesheet.png::CompressedTexture2D/CompressedTexture2D::1231032317565820028::1582455351::1752614145::1::::<><><>0<>0<>53781f71e9b4ecc2161ba40e31998db5<>res://.godot/imported/Effectst2 Gameboy Spritesheet.png-5f8302d14d2f7e64afb114a1aa815827.ctex::
-fireball.svg::CompressedTexture2D::5818399958063284168::1752690076::1752690259::1::::<><><>0<>0<>690d87ba490c1ec3b3f0e86e16168ad3<>res://.godot/imported/fireball.svg-8d1c1e1a75ee65351f8244dec2994ce0.ctex::
+fireball.svg::CompressedTexture2D/CompressedTexture2D::5818399958063284168::1752690076::1752690259::1::::<><><>0<>0<>690d87ba490c1ec3b3f0e86e16168ad3<>res://.godot/imported/fireball.svg-8d1c1e1a75ee65351f8244dec2994ce0.ctex::
 Heal Effect Sprite Sheet.png::CompressedTexture2D/CompressedTexture2D::2232065802960405226::1752604956::1752605661::1::::<><><>0<>0<>33c965a4ccf3893815d8001ab7958ed2<>res://.godot/imported/Heal Effect Sprite Sheet.png-6eb19fcdbfe5e36ecf2ab487bf2534bf.ctex::
 Heal Gameboy Sprite Sheet.png::CompressedTexture2D/CompressedTexture2D::6007460249596242146::1752604952::1752605661::1::::<><><>0<>0<>d17c9a3c0c5919799f58b573866806a1<>res://.godot/imported/Heal Gameboy Sprite Sheet.png-b7f0ebc014b416b049613163d3117be4.ctex::
 mage_guardian-blue.png::CompressedTexture2D/CompressedTexture2D::4257117872820573545::1752609228::1752614143::1::::<><><>0<>0<>423f5c02f97a450233421d6795ce578f<>res://.godot/imported/mage_guardian-blue.png-81d07094c1ff64c3005cf30adea3f7af.ctex::
@@ -897,7 +897,7 @@ Run.png::CompressedTexture2D/CompressedTexture2D::3485153627286771474::175260918
 Take Hit - white silhouette.png::CompressedTexture2D/CompressedTexture2D::1894223338124513152::1752609187::1752614144::1::::<><><>0<>0<>d2f96391e24e23a7f4f34f92e56c6f3f<>res://.godot/imported/Take Hit - white silhouette.png-a0d8a48b43f04f436743d86cd1f0f300.ctex::
 Take Hit.png::CompressedTexture2D/CompressedTexture2D::8818732033801769598::1752609187::1752614144::1::::<><><>0<>0<>64be49c6aec4764735ba3f4f68c4263c<>res://.godot/imported/Take Hit.png-4571a0bb09971cb890aac9f205e1bc2c.ctex::
 ::res://assets/projectiles/::1752690259
-arrow.svg::CompressedTexture2D::5224050623318839828::1752690005::1752690259::1::::<><><>0<>0<>bf9c0bea77416e90c7f36204dbdc9a91<>res://.godot/imported/arrow.svg-4b25dce1b310f9b2a2d3026dcaefad2e.ctex::
+arrow.svg::CompressedTexture2D/CompressedTexture2D::5224050623318839828::1752690005::1752690259::1::::<><><>0<>0<>bf9c0bea77416e90c7f36204dbdc9a91<>res://.godot/imported/arrow.svg-4b25dce1b310f9b2a2d3026dcaefad2e.ctex::
 ::res://assets/props/::1752597332
 decorative.png::CompressedTexture2D/CompressedTexture2D::1671709340135488739::1752515696::1752597332::1::::<><><>0<>0<>965b3f3316e1acd2ed456fd67bb8b5e9<>res://.godot/imported/decorative.png-d7b2deb0739d8d60d175a6cd2fad6657.ctex::
 props1.png::CompressedTexture2D/CompressedTexture2D::8141294909866050348::1752534755::1752597332::1::::<><><>0<>0<>47c7ecb27df609e996514f19191bc1cc<>res://.godot/imported/props1.png-df8ebc4a07dd6af71f7cb8781978a01e.ctex::

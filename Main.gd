@@ -431,13 +431,17 @@ func handle_player_attack(attack_type: String, attack_position: Vector2, attack_
 # New directional attack handler for better combat feel
 func handle_player_directional_attack(attack_type: String, attack_position: Vector2, attack_range: float, damage: float, direction: Vector2):
 	if attack_type == "melee":
-		handle_directional_melee_attack(attack_position, attack_range, damage, direction)
+		# Pass character info for differentiated melee visuals
+		var character_name = ""
+		if player and player.character_data:
+			character_name = player.character_data.name
+		handle_directional_melee_attack(attack_position, attack_range, damage, direction, character_name)
 	elif attack_type == "ranged":
 		handle_ranged_attack(attack_position, damage, direction)
 
-func handle_directional_melee_attack(attack_center: Vector2, attack_range: float, damage: float, attack_direction: Vector2):
-	# Create visual feedback for directional attack
-	create_directional_attack_visual(attack_center, attack_direction, attack_range)
+func handle_directional_melee_attack(attack_center: Vector2, attack_range: float, damage: float, attack_direction: Vector2, character_name: String = ""):
+	# Create visual feedback for directional attack with character-specific effects
+	create_directional_attack_visual(attack_center, attack_direction, attack_range, character_name)
 	
 	# Attack cone parameters
 	var attack_angle = 60.0  # 60 degree cone for sword swing
@@ -455,7 +459,13 @@ func handle_directional_melee_attack(attack_center: Vector2, attack_range: float
 				var angle_to_enemy = to_enemy.normalized().angle_to(attack_direction)
 				if abs(angle_to_enemy) <= attack_cone_rad / 2:
 					hit_enemy(enemy, damage)
-					print("Enemy hit with directional melee attack!")
+					match character_name:
+						"Berserker":
+							print("💥 Enemy hit with BERSERKER powerful strike!")
+						"Knight":
+							print("⚔️ Enemy hit with KNIGHT quick slash!")
+						_:
+							print("Enemy hit with directional melee attack!")
 
 func handle_melee_attack(attack_center: Vector2, attack_range: float, damage: float):
 	# Create visual feedback for attack
@@ -550,7 +560,7 @@ func _on_attack_visual_timeout(visual: ColorRect):
 	if is_instance_valid(visual):
 		visual.queue_free()
 
-func create_directional_attack_visual(center_pos: Vector2, direction: Vector2, attack_range: float):
+func create_directional_attack_visual(center_pos: Vector2, direction: Vector2, attack_range: float, character_name: String = ""):
 	# Create a visual representation of the attack cone
 	var attack_visual = Node2D.new()
 	attack_visual.position = center_pos
@@ -560,22 +570,39 @@ func create_directional_attack_visual(center_pos: Vector2, direction: Vector2, a
 	var cone_angle = 60.0  # degrees
 	var start_angle = direction.angle() - deg_to_rad(cone_angle / 2)
 	
+	# Character-specific visual effects
+	var effect_color = Color(1.0, 1.0, 0.8, 0.6)  # Default golden
+	var effect_size = Vector2(20, 8)
+	var effect_duration = 0.15
+	
+	match character_name:
+		"Berserker":
+			effect_color = Color(1.0, 0.3, 0.3, 0.8)  # Red for berserker power
+			effect_size = Vector2(25, 12)  # Larger for powerful strike
+			effect_duration = 0.2  # Longer duration for powerful attack
+		"Knight":
+			effect_color = Color(0.8, 0.8, 1.0, 0.7)  # Blue for knight precision
+			effect_size = Vector2(18, 6)  # Smaller for quick slash
+			effect_duration = 0.1  # Shorter duration for quick attack
+		_:
+			effect_color = Color(1.0, 1.0, 0.8, 0.6)  # Default golden
+	
 	for i in range(cone_segments):
 		var angle = start_angle + (deg_to_rad(cone_angle) * i / cone_segments)
 		var segment_pos = Vector2(cos(angle), sin(angle)) * attack_range * 0.7
 		
 		var segment = ColorRect.new()
-		segment.size = Vector2(20, 8)
+		segment.size = effect_size
 		segment.position = segment_pos - segment.size / 2
 		segment.rotation = angle
-		segment.color = Color(1.0, 1.0, 0.8, 0.6)  # Golden attack effect
+		segment.color = effect_color
 		attack_visual.add_child(segment)
 	
 	add_child(attack_visual)
 	
-	# Remove visual after short duration
+	# Remove visual after character-specific duration
 	var timer = Timer.new()
-	timer.wait_time = 0.15
+	timer.wait_time = effect_duration
 	timer.one_shot = true
 	timer.timeout.connect(_on_directional_attack_visual_timeout.bind(attack_visual))
 	add_child(timer)
