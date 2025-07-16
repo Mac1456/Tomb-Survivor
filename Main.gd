@@ -8,7 +8,6 @@ const MAX_ENTITIES = 50  # Performance cap
 # Combat constants
 const MELEE_ATTACK_RANGE = 50.0
 const MELEE_ATTACK_DAMAGE = 25.0
-const ENEMY_SPAWN_COUNT = 3
 
 # Projectile type definitions
 enum ProjectileType {
@@ -53,6 +52,22 @@ var projectiles: Array = []
 var enemies_container: Node2D
 var projectiles_container: Node2D
 
+# Enemy scaling system
+var game_time: float = 0.0
+var enemy_scale_factor: float = 1.0
+
+# Enemy scene reference
+var enemy_scene: PackedScene = preload("res://Enemy.tscn")
+
+# Background system
+var background_sprite: Sprite2D
+
+# Fixed background asset - cave background only
+var background_asset: String = "res://assets/backgrounds/cave_background.png"
+
+# Final background color choice
+var background_color: Color = Color(0.15, 0.15, 0.15, 1.0)  # Brighter Black
+
 # Performance tracking
 var entity_count: int = 0
 var frame_time_accumulator: float = 0.0
@@ -76,6 +91,38 @@ func _ready():
 	# Wait for character to be set before initializing game
 	if selected_character:
 		setup_performance_optimized_game()
+
+func create_background():
+	print("Creating final background system...")
+	
+	# Create background sprite
+	background_sprite = Sprite2D.new()
+	background_sprite.name = "Background"
+	background_sprite.z_index = -10  # Behind everything
+	
+	# Load the cave background
+	var texture = load(background_asset)
+	if texture:
+		background_sprite.texture = texture
+		print("✨ Loaded cave background successfully")
+	else:
+		print("❌ Failed to load cave background")
+		return
+	
+	# Position background at center of arena
+	background_sprite.position = ARENA_SIZE / 2
+	
+	# Scale background to cover arena (adjust as needed)
+	background_sprite.scale = Vector2(2.0, 2.0)
+	
+	# Apply final background color
+	background_sprite.modulate = background_color
+	print("🎨 Applied final background color: Brighter Black")
+	
+	add_child(background_sprite)
+	print("Background system created with final cave background")
+
+
 
 func setup_input_actions():
 	# Define input actions for character controls
@@ -140,16 +187,17 @@ func set_selected_character(character: CharacterData.Character):
 
 func setup_performance_optimized_game():
 	# Create all nodes programmatically for guaranteed compatibility
+	create_background()
 	create_arena()
 	create_player()
 	create_camera()
 	create_combat_containers()
-	spawn_placeholder_enemies()
 	
 	print("Step 3 systems initialized successfully!")
 	print("Selected character: ", selected_character.name)
 	print("Controls: WASD to move, Left Click to attack, Right Click for special ability")
 	print("Additional: Spacebar for dodge roll, R for ultimate ability")
+	print("Enemy Testing: 1 - Spawn Sword Skeleton, 2 - Spawn Archer Skeleton")
 	print("Performance: Entity limit =", MAX_ENTITIES)
 
 func create_arena():
@@ -346,66 +394,33 @@ func create_combat_containers():
 	
 	print("Combat containers created")
 
-func spawn_placeholder_enemies():
-	print("Spawning placeholder enemies...")
-	
-	for i in range(ENEMY_SPAWN_COUNT):
-		var enemy_pos = get_random_spawn_position()
-		# Make sure enemies don't spawn too close to player
-		while enemy_pos.distance_to(player.position) < 150:
-			enemy_pos = get_random_spawn_position()
-		
-		create_placeholder_enemy(enemy_pos)
-	
-	print("Spawned ", ENEMY_SPAWN_COUNT, " placeholder enemies")
 
-func create_placeholder_enemy(pos: Vector2):
-	var enemy = CharacterBody2D.new()
-	enemy.name = "Enemy"
-	
-	# Enemy collision
-	var collision = CollisionShape2D.new()
-	var shape = RectangleShape2D.new()
-	shape.size = Vector2(20, 20)
-	collision.shape = shape
-	enemy.add_child(collision)
-	
-	# Enemy visual (red square)
-	var visual = ColorRect.new()
-	visual.size = Vector2(20, 20)
-	visual.position = Vector2(-10, -10)
-	visual.color = Color(1.0, 0.3, 0.3, 1.0)  # Red enemy
-	enemy.add_child(visual)
-	
-	# Create health bar
-	create_enemy_health_bar(enemy)
-	
-	# Enemy stats
-	enemy.set_meta("health", 50.0)
-	enemy.set_meta("max_health", 50.0)
-	enemy.set_meta("speed", 100.0)
-	
-	# Enemy configuration
-	enemy.collision_layer = 4  # Enemy layer
-	enemy.collision_mask = 1 | 2  # Collides with player and walls
-	enemy.position = pos
-	
-	enemies_container.add_child(enemy)
-	enemies.append(enemy)
-	entity_count += 1
-	
-	return enemy
+
+
+
+
 
 func _physics_process(delta):
 	# Update projectiles
 	update_projectiles(delta)
 	
-	# Simple enemy AI (basic chase behavior)
-	update_enemy_ai(delta)
+	# Update game time for enemy scaling
+	game_time += delta
+	enemy_scale_factor = 1.0 + (game_time / 30.0)  # Increase by 1.0 every 30 seconds
 
 func _input(event):
 	if not player:
 		return
+	
+	# Handle enemy spawning for testing
+	if event is InputEventKey and event.pressed:
+		match event.keycode:
+			KEY_1:
+				spawn_skeleton_enemy(Enemy.EnemyType.SWORD_SKELETON)
+				return
+			KEY_2:
+				spawn_skeleton_enemy(Enemy.EnemyType.ARCHER_SKELETON)
+				return
 	
 	# Handle combat inputs through player
 	if event.is_action_pressed("primary_attack"):
@@ -613,24 +628,15 @@ func _on_directional_attack_visual_timeout(visual: Node2D):
 		visual.queue_free()
 
 func hit_enemy(enemy: CharacterBody2D, damage: float):
+	# This function is now mainly for compatibility with old placeholder enemies
+	# New skeleton enemies use their own take_damage method
 	if not is_instance_valid(enemy):
 		return
 	
-	var current_health = enemy.get_meta("health")
-	current_health -= damage
-	enemy.set_meta("health", current_health)
-	
-	print("Enemy hit! Health: ", current_health)
-	
-	# Update health bar
-	update_enemy_health_bar(enemy)
-	
-	# Create hit visual effect
-	create_hit_visual(enemy.position)
-	
-	# Check if enemy is dead
-	if current_health <= 0:
-		destroy_enemy(enemy)
+	if enemy.has_method("take_damage"):
+		enemy.take_damage(damage)
+	else:
+		print("⚠️ Hit enemy without take_damage method - this shouldn't happen with new skeleton enemies")
 
 func create_hit_visual(pos: Vector2):
 	# Create temporary red flash for hit feedback
@@ -665,13 +671,72 @@ func destroy_enemy(enemy: CharacterBody2D):
 	if is_instance_valid(enemy):
 		enemy.queue_free()
 		entity_count -= 1
+
+# New skeleton enemy spawning functions
+func spawn_skeleton_enemy(enemy_type: Enemy.EnemyType):
+	var spawn_pos = get_random_spawn_position()
+	# Make sure enemies don't spawn too close to player
+	while spawn_pos.distance_to(player.position) < 120:
+		spawn_pos = get_random_spawn_position()
 	
-	# Spawn new enemy to maintain count (for testing)
-	if enemies.size() < ENEMY_SPAWN_COUNT:
-		var new_pos = get_random_spawn_position()
-		while new_pos.distance_to(player.position) < 150:
-			new_pos = get_random_spawn_position()
-		create_placeholder_enemy(new_pos)
+	create_skeleton_enemy(spawn_pos, enemy_type)
+
+func create_skeleton_enemy(pos: Vector2, enemy_type: Enemy.EnemyType):
+	var enemy = enemy_scene.instantiate()
+	enemy.position = pos
+	enemy.initialize_enemy(enemy_type, enemy_scale_factor)
+	
+	enemies_container.add_child(enemy)
+	enemies.append(enemy)
+	entity_count += 1
+	
+	print("✨ Spawned ", enemy.get_enemy_type_name(), " at ", pos, " with scale factor: ", enemy_scale_factor)
+	
+	return enemy
+
+# Function for archer skeletons to create arrows
+func create_enemy_arrow(start_pos: Vector2, direction: Vector2, damage: float):
+	var arrow = RigidBody2D.new()
+	arrow.name = "EnemyArrow"
+	arrow.gravity_scale = 0  # No gravity for top-down
+	
+	# Arrow collision
+	var collision = CollisionShape2D.new()
+	var shape = CircleShape2D.new()
+	shape.radius = 4.0
+	collision.shape = shape
+	arrow.add_child(collision)
+	
+	# Arrow visual using existing arrow sprite
+	var sprite = Sprite2D.new()
+	sprite.texture = load("res://assets/arrow.svg")
+	sprite.position = Vector2.ZERO
+	sprite.rotation = direction.angle()
+	sprite.scale = Vector2(1.0, 1.0)
+	sprite.modulate = Color(0.8, 0.4, 0.4, 1.0)  # Reddish tint for enemy arrows
+	arrow.add_child(sprite)
+	
+	# Arrow properties (slower than player arrows)
+	var arrow_speed = 400.0  # Slower than player arrows (600.0)
+	arrow.set_meta("velocity", direction * arrow_speed)
+	arrow.set_meta("damage", damage)
+	arrow.set_meta("enemy_projectile", true)
+	arrow.collision_layer = 32  # Enemy projectile layer
+	arrow.collision_mask = 1 | 2  # Collides with player and walls
+	arrow.position = start_pos
+	
+	projectiles_container.add_child(arrow)
+	projectiles.append(arrow)
+	entity_count += 1
+	
+	print("🏹 Created enemy arrow with damage: ", damage)
+
+# Function for Enemy class to call when removing enemies
+func remove_enemy(enemy: Enemy):
+	var index = enemies.find(enemy)
+	if index >= 0:
+		enemies.remove_at(index)
+		entity_count -= 1
 
 func update_projectiles(delta):
 	for i in range(projectiles.size() - 1, -1, -1):
@@ -694,43 +759,30 @@ func update_projectiles(delta):
 			destroy_projectile(projectile, i)
 			continue
 		
-		# Check collision with enemies
-		for enemy in enemies:
-			if is_instance_valid(enemy) and projectile.position.distance_to(enemy.position) < 15:
-				var damage = projectile.get_meta("damage")
-				hit_enemy(enemy, damage)
+		# Check if this is an enemy projectile
+		var is_enemy_projectile = projectile.has_meta("enemy_projectile")
+		var damage = projectile.get_meta("damage")
+		
+		if is_enemy_projectile:
+			# Enemy projectile - check collision with player
+			if player and projectile.position.distance_to(player.position) < 20:
+				if player.has_method("take_damage"):
+					player.take_damage(damage)
+					print("🏹 Enemy arrow hit player for ", damage, " damage!")
 				destroy_projectile(projectile, i)
-				break
-
-func update_enemy_ai(_delta):
-	for enemy in enemies:
-		if not is_instance_valid(enemy):
-			continue
-		
-		# Calculate distance to player
-		var distance_to_player = enemy.position.distance_to(player.position)
-		var min_distance = 35.0  # Minimum distance to maintain from player
-		var overlap_distance = 25.0  # Distance considered as overlapping
-		
-		# Check if enemy is overlapping with player
-		if distance_to_player < overlap_distance:
-			# Strong push-back when overlapping
-			var push_back_direction = (enemy.position - player.position).normalized()
-			# Handle case where enemy is exactly on player position
-			if push_back_direction.length() == 0:
-				push_back_direction = Vector2(randf() - 0.5, randf() - 0.5).normalized()
-			enemy.velocity = push_back_direction * 150.0  # Strong push-back force
-		elif distance_to_player < min_distance:
-			# Medium push-back when too close
-			var push_back_direction = (enemy.position - player.position).normalized()
-			enemy.velocity = push_back_direction * 80.0  # Medium push-back force
+				continue
 		else:
-			# Normal chase behavior when at proper distance
-			var direction = (player.position - enemy.position).normalized()
-			var speed = enemy.get_meta("speed")
-			enemy.velocity = direction * speed
-		
-		enemy.move_and_slide()
+			# Player projectile - check collision with enemies
+			for enemy in enemies:
+				if is_instance_valid(enemy) and projectile.position.distance_to(enemy.position) < 15:
+					if enemy.has_method("take_damage"):
+						enemy.take_damage(damage)
+					else:
+						hit_enemy(enemy, damage)  # For old placeholder enemies
+					destroy_projectile(projectile, i)
+					break
+
+
 
 func check_projectile_wall_collision(projectile) -> bool:
 	# Use Godot's physics to check if projectile is colliding with walls
@@ -778,52 +830,7 @@ func destroy_projectile(projectile, index: int):
 		entity_count -= 1
 	projectiles.remove_at(index)
 
-func create_enemy_health_bar(enemy: CharacterBody2D):
-	# Create health bar container
-	var health_bar_container = Node2D.new()
-	health_bar_container.name = "HealthBarContainer"
-	health_bar_container.position = Vector2(0, -25)  # Position above enemy
-	
-	# Background bar (red)
-	var bg_bar = ColorRect.new()
-	bg_bar.size = Vector2(30, 4)
-	bg_bar.position = Vector2(-15, -2)
-	bg_bar.color = Color(0.3, 0.0, 0.0, 1.0)  # Dark red background
-	health_bar_container.add_child(bg_bar)
-	
-	# Health bar (green)
-	var health_bar = ColorRect.new()
-	health_bar.name = "HealthBar"
-	health_bar.size = Vector2(30, 4)
-	health_bar.position = Vector2(-15, -2)
-	health_bar.color = Color(0.0, 0.8, 0.0, 1.0)  # Green health
-	health_bar_container.add_child(health_bar)
-	
-	enemy.add_child(health_bar_container)
 
-func update_enemy_health_bar(enemy: CharacterBody2D):
-	var health_bar_container = enemy.get_node("HealthBarContainer")
-	if not health_bar_container:
-		return
-	
-	var health_bar = health_bar_container.get_node("HealthBar")
-	if not health_bar:
-		return
-	
-	var current_health = enemy.get_meta("health")
-	var max_health = enemy.get_meta("max_health")
-	var health_percentage = current_health / max_health
-	
-	# Update health bar width
-	health_bar.size.x = 30 * health_percentage
-	
-	# Change color based on health
-	if health_percentage > 0.6:
-		health_bar.color = Color(0.0, 0.8, 0.0, 1.0)  # Green
-	elif health_percentage > 0.3:
-		health_bar.color = Color(0.8, 0.8, 0.0, 1.0)  # Yellow
-	else:
-		health_bar.color = Color(0.8, 0.0, 0.0, 1.0)  # Red
 
 # Performance monitoring (less frequent updates)
 func _process(delta):

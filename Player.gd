@@ -678,4 +678,9 @@ func die():
 	print("Player died")
 	character_died.emit()
 	
-	# TODO: Add death animation/VFX 
+	# TODO: Add death animation/VFX
+
+func get_character_type() -> String:
+	if character_data:
+		return character_data.name
+	return "Unknown" 
