@@ -1,1 +1,5 @@
 res://Main.tscn
+res://Enemy.gd
+res://Main.gd
+res://BlueBoss.tscn
+res://BlueBoss.gd

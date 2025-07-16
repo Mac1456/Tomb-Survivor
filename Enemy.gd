@@ -4,7 +4,8 @@ class_name Enemy
 # Enemy type definitions
 enum EnemyType {
 	SWORD_SKELETON,
-	ARCHER_SKELETON
+	ARCHER_SKELETON,
+	BOSS
 }
 
 # Proper Hades-style AI states
@@ -508,4 +509,10 @@ func die():
 	queue_free()
 
 func get_enemy_type_name() -> String:
-	return EnemyType.keys()[enemy_type] 
+	return EnemyType.keys()[enemy_type]
+
+func apply_elite_modulation():
+	# Apply purple tint for elite skeletons
+	if sprite:
+		sprite.modulate = Color(0.8, 0.3, 0.8, 1.0)  # Purple tint
+		print("Elite skeleton purple tint applied") 

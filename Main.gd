@@ -71,6 +71,13 @@ var background_color: Color = Color(0.15, 0.15, 0.15, 1.0)  # Brighter Black
 # Final barrier layout
 var barriers_container = null  # Reference to barriers container
 
+# Boss system
+var current_boss = null
+var boss_health_bar: ProgressBar = null
+var boss_health_bar_container: Control = null
+var boss_name_label: Label = null
+var boss_is_active: bool = false
+
 # Performance tracking
 var entity_count: int = 0
 var frame_time_accumulator: float = 0.0
@@ -195,12 +202,14 @@ func setup_performance_optimized_game():
 	create_player()
 	create_camera()
 	create_combat_containers()
+	create_boss_ui()
 	
 	print("Step 3 systems initialized successfully!")
 	print("Selected character: ", selected_character.name)
 	print("Controls: WASD to move, Left Click to attack, Right Click for special ability")
 	print("Additional: Spacebar for dodge roll, R for ultimate ability")
 	print("Enemy Testing: 1 - Spawn Sword Skeleton, 2 - Spawn Archer Skeleton")
+	print("Boss Testing: 3 - Spawn Blue Witch Boss")
 	print("Performance: Entity limit =", MAX_ENTITIES)
 
 func create_arena():
@@ -500,6 +509,9 @@ func _input(event):
 				return
 			KEY_2:
 				spawn_skeleton_enemy(Enemy.EnemyType.ARCHER_SKELETON)
+				return
+			KEY_3:
+				spawn_blue_witch_boss()
 				return
 	
 	# Handle combat inputs through player
@@ -959,4 +971,115 @@ func spawn_entity(_entity_type: String, _spawn_position: Vector2):
 
 func cleanup_entities():
 	# Will be used for entity pooling in future steps
-	pass 
+	pass
+
+# Boss UI System
+func create_boss_ui():
+	print("Creating boss UI system...")
+	
+	# Create UI container that follows the camera
+	boss_health_bar_container = Control.new()
+	boss_health_bar_container.name = "BossHealthBarContainer"
+	boss_health_bar_container.position = Vector2(0, 20)
+	boss_health_bar_container.size = Vector2(640, 80)
+	boss_health_bar_container.visible = false
+	add_child(boss_health_bar_container)
+	
+	# Create boss name label
+	boss_name_label = Label.new()
+	boss_name_label.name = "BossNameLabel"
+	boss_name_label.text = "Blue Witch"
+	boss_name_label.position = Vector2(20, 10)
+	boss_name_label.size = Vector2(600, 30)
+	boss_name_label.add_theme_font_size_override("font_size", 24)
+	boss_name_label.add_theme_color_override("font_color", Color.WHITE)
+	boss_health_bar_container.add_child(boss_name_label)
+	
+	# Create boss health bar background
+	var health_bar_bg = ColorRect.new()
+	health_bar_bg.name = "HealthBarBackground"
+	health_bar_bg.position = Vector2(20, 45)
+	health_bar_bg.size = Vector2(600, 20)
+	health_bar_bg.color = Color(0.2, 0.2, 0.2, 0.8)  # Dark background
+	boss_health_bar_container.add_child(health_bar_bg)
+	
+	# Create boss health bar
+	boss_health_bar = ProgressBar.new()
+	boss_health_bar.name = "BossHealthBar"
+	boss_health_bar.position = Vector2(20, 45)
+	boss_health_bar.size = Vector2(600, 20)
+	boss_health_bar.min_value = 0.0
+	boss_health_bar.max_value = 100.0
+	boss_health_bar.value = 100.0
+	boss_health_bar.show_percentage = false
+	
+	# Style the progress bar
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.8, 0.2, 0.2, 1.0)  # Red health bar
+	style_box.border_width_left = 2
+	style_box.border_width_right = 2
+	style_box.border_width_top = 2
+	style_box.border_width_bottom = 2
+	style_box.border_color = Color(0.4, 0.1, 0.1, 1.0)  # Darker red border
+	boss_health_bar.add_theme_stylebox_override("fill", style_box)
+	
+	boss_health_bar_container.add_child(boss_health_bar)
+	
+	print("Boss UI system created successfully!")
+
+func show_boss_health_bar(boss_name: String, max_health: float):
+	if boss_health_bar_container:
+		boss_name_label.text = boss_name
+		boss_health_bar.max_value = max_health
+		boss_health_bar.value = max_health
+		boss_health_bar_container.visible = true
+		boss_is_active = true
+		print("Boss health bar shown for: ", boss_name)
+
+func update_boss_health_bar(current_health: float, max_health: float):
+	if boss_health_bar and boss_is_active:
+		boss_health_bar.value = current_health
+		var percentage = (current_health / max_health) * 100
+		print("Boss health: ", current_health, "/", max_health, " (", percentage, "%)")
+
+func hide_boss_health_bar():
+	if boss_health_bar_container:
+		boss_health_bar_container.visible = false
+		boss_is_active = false
+		current_boss = null
+		print("Boss health bar hidden")
+
+func spawn_blue_witch_boss():
+	print("Spawning Blue Witch Boss...")
+	
+	# Remove any existing boss
+	if current_boss:
+		current_boss.queue_free()
+	
+	# Calculate spawn position (top of map between tombstones)
+	var spawn_position = Vector2(600, 200)  # Between top tombstones
+	
+	# Load and instantiate the BlueBoss scene
+	var boss_scene = preload("res://BlueBoss.tscn")
+	var boss = boss_scene.instantiate()
+	boss.position = spawn_position
+	boss.name = "BlueBoss"
+	
+	enemies_container.add_child(boss)
+	enemies.append(boss)
+	current_boss = boss
+	
+	# Show boss health bar
+	show_boss_health_bar("Blue Witch", boss.max_health)
+	
+	print("Blue Witch Boss spawned at position: ", spawn_position)
+	print("Boss health: ", boss.max_health)
+	entity_count += 1
+
+func add_elite_skeleton(elite_skeleton: Enemy):
+	# Add to enemies container and tracking
+	enemies_container.add_child(elite_skeleton)
+	enemies.append(elite_skeleton)
+	entity_count += 1
+	
+	print("Elite skeleton added to main scene") 
