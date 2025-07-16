@@ -68,6 +68,9 @@ var background_asset: String = "res://assets/backgrounds/cave_background.png"
 # Final background color choice
 var background_color: Color = Color(0.15, 0.15, 0.15, 1.0)  # Brighter Black
 
+# Final barrier layout
+var barriers_container = null  # Reference to barriers container
+
 # Performance tracking
 var entity_count: int = 0
 var frame_time_accumulator: float = 0.0
@@ -211,7 +214,7 @@ func create_arena():
 	# Create walls efficiently using StaticBody2D (performance optimized)
 	create_wall_boundaries(arena_container)
 	create_tactical_barriers(arena_container)
-	create_safe_zones(arena_container)
+	# Safe zones removed - no more safe corners for more dynamic gameplay
 	
 	print("Arena created with optimized collision system")
 
@@ -259,76 +262,153 @@ func create_optimized_wall(parent: Node2D, pos: Vector2, size: Vector2):
 	entity_count += 1
 
 func create_tactical_barriers(parent: Node2D):
-	var barriers_container = Node2D.new()
+	barriers_container = Node2D.new()
 	barriers_container.name = "Barriers"
 	parent.add_child(barriers_container)
 	
-	# Limited number of barriers for performance
-	var barrier_positions = [
-		Vector2(300, 200),   # Top-left
-		Vector2(900, 200),   # Top-right
-		Vector2(600, 400),   # Center
-		Vector2(300, 600),   # Bottom-left
-		Vector2(900, 600),   # Bottom-right
+	# Final barrier layout: 4 corner tombstones + 1 center statue
+	var corner_tombstone_positions = [
+		Vector2(250, 150),   # Top-left
+		Vector2(950, 150),   # Top-right
+		Vector2(250, 650),   # Bottom-left
+		Vector2(950, 650),   # Bottom-right
 	]
 	
-	for pos in barrier_positions:
-		create_optimized_barrier(barriers_container, pos)
-
-func create_optimized_barrier(parent: Node2D, pos: Vector2):
-	var barrier = StaticBody2D.new()
-	var size = Vector2(64, 64)  # Smaller for performance
+	var center_statue_position = Vector2(600, 400)  # Center
 	
-	# Collision
+	# Create corner tombstones (smaller)
+	for pos in corner_tombstone_positions:
+		create_small_tombstone(barriers_container, pos)
+	
+	# Create center statue (bigger)
+	create_large_stone_statue(barriers_container, center_statue_position)
+
+# Old create_optimized_barrier function removed
+
+# Final barrier creation functions
+func create_large_stone_statue(parent: Node2D, pos: Vector2):
+	var barrier = StaticBody2D.new()
 	var collision = CollisionShape2D.new()
 	var shape = RectangleShape2D.new()
+	
+	# Large stone statue for center - even bigger and more imposing
+	var size = Vector2(120, 160)  # Much bigger for center placement
 	shape.size = size
+	collision.position = Vector2(size.x / 2, size.y / 2)
 	collision.shape = shape
-	collision.position = size / 2
 	
-	# Visual
-	var visual = ColorRect.new()
-	visual.size = size
-	visual.color = Color(0.2, 0.15, 0.1, 1.0)  # Darker brown
+	# Base (stone platform) - proportionally bigger
+	var base = ColorRect.new()
+	base.size = Vector2(size.x, 30)
+	base.position = Vector2(0, size.y - 30)
+	base.color = Color(0.4, 0.35, 0.3, 1.0)  # Dark brown stone
+	barrier.add_child(base)
 	
+	# Main statue body - proportionally bigger
+	var body = ColorRect.new()
+	body.size = Vector2(size.x - 30, size.y - 30)
+	body.position = Vector2(15, 0)
+	body.color = Color(0.5, 0.45, 0.4, 1.0)  # Light stone
+	barrier.add_child(body)
+	
+	# Shadow/depth effect - proportionally bigger
+	var shadow = ColorRect.new()
+	shadow.size = Vector2(size.x - 30, size.y - 30)
+	shadow.position = Vector2(22, 8)
+	shadow.color = Color(0.3, 0.25, 0.2, 0.8)  # Darker shadow
+	barrier.add_child(shadow)
+	
+	# Face details - proportionally bigger
+	var face = ColorRect.new()
+	face.size = Vector2(45, 65)
+	face.position = Vector2(37, 25)
+	face.color = Color(0.45, 0.4, 0.35, 1.0)  # Slightly darker for face
+	barrier.add_child(face)
+	
+	# Eyes - proportionally bigger
+	var left_eye = ColorRect.new()
+	left_eye.size = Vector2(8, 10)
+	left_eye.position = Vector2(45, 45)
+	left_eye.color = Color(0.2, 0.2, 0.2, 1.0)  # Dark eyes
+	barrier.add_child(left_eye)
+	
+	var right_eye = ColorRect.new()
+	right_eye.size = Vector2(8, 10)
+	right_eye.position = Vector2(58, 45)
+	right_eye.color = Color(0.2, 0.2, 0.2, 1.0)  # Dark eyes
+	barrier.add_child(right_eye)
+	
+	# Set collision properties
 	barrier.collision_layer = 2
 	barrier.collision_mask = 0
-	
 	barrier.add_child(collision)
-	barrier.add_child(visual)
 	barrier.position = pos
 	parent.add_child(barrier)
 	
 	entity_count += 1
 
-func create_safe_zones(parent: Node2D):
-	var safe_zones_container = Node2D.new()
-	safe_zones_container.name = "SafeZones"
-	parent.add_child(safe_zones_container)
+func create_small_tombstone(parent: Node2D, pos: Vector2):
+	var barrier = StaticBody2D.new()
+	var collision = CollisionShape2D.new()
+	var shape = RectangleShape2D.new()
 	
-	# Corner safe zones
-	var corner_positions = [
-		Vector2(80, 80),
-		Vector2(ARENA_SIZE.x - 80, 80),
-		Vector2(80, ARENA_SIZE.y - 80),
-		Vector2(ARENA_SIZE.x - 80, ARENA_SIZE.y - 80)
-	]
+	# Smaller tombstone for center
+	var size = Vector2(50, 70)  # Smaller than before
+	shape.size = size
+	collision.position = Vector2(size.x / 2, size.y / 2)
+	collision.shape = shape
 	
-	for pos in corner_positions:
-		create_safe_zone(safe_zones_container, pos)
+	# Base (stone platform)
+	var base = ColorRect.new()
+	base.size = Vector2(size.x + 10, 15)
+	base.position = Vector2(-5, size.y - 15)
+	base.color = Color(0.35, 0.3, 0.25, 1.0)  # Very dark stone
+	barrier.add_child(base)
+	
+	# Main tombstone body
+	var tombstone = ColorRect.new()
+	tombstone.size = Vector2(size.x, size.y - 15)
+	tombstone.position = Vector2(0, 0)
+	tombstone.color = Color(0.45, 0.4, 0.35, 1.0)  # Light stone
+	barrier.add_child(tombstone)
+	
+	# Shadow/depth effect
+	var shadow = ColorRect.new()
+	shadow.size = Vector2(size.x, size.y - 15)
+	shadow.position = Vector2(4, 4)
+	shadow.color = Color(0.3, 0.25, 0.2, 0.7)  # Shadow
+	barrier.add_child(shadow)
+	
+	# Rounded top (tombstone style)
+	var top = ColorRect.new()
+	top.size = Vector2(size.x - 10, 15)
+	top.position = Vector2(5, 0)
+	top.color = Color(0.5, 0.45, 0.4, 1.0)  # Lighter top
+	barrier.add_child(top)
+	
+	# Cross symbol on tombstone
+	var cross_vertical = ColorRect.new()
+	cross_vertical.size = Vector2(3, 20)
+	cross_vertical.position = Vector2(23, 20)
+	cross_vertical.color = Color(0.25, 0.2, 0.15, 1.0)  # Dark cross
+	barrier.add_child(cross_vertical)
+	
+	var cross_horizontal = ColorRect.new()
+	cross_horizontal.size = Vector2(12, 3)
+	cross_horizontal.position = Vector2(19, 28)
+	cross_horizontal.color = Color(0.25, 0.2, 0.15, 1.0)  # Dark cross
+	barrier.add_child(cross_horizontal)
+	
+	# Set collision properties
+	barrier.collision_layer = 2
+	barrier.collision_mask = 0
+	barrier.add_child(collision)
+	barrier.position = pos
+	parent.add_child(barrier)
+	
+	entity_count += 1
 
-func create_safe_zone(parent: Node2D, pos: Vector2):
-	# Visual indicator only (no collision needed for performance)
-	var zone = Node2D.new()
-	var visual = ColorRect.new()
-	
-	visual.size = Vector2(60, 60)
-	visual.position = Vector2(-30, -30)
-	visual.color = Color(0.2, 0.4, 0.2, 0.2)  # Transparent green
-	
-	zone.add_child(visual)
-	zone.position = pos
-	parent.add_child(zone)
+# Old barrier creation functions removed - using only large stone statues and small tombstones
 
 func create_player():
 	print("Creating player with selected character: ", selected_character.name)

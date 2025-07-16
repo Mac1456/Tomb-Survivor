@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32">
+  <!-- Skeleton body (ribcage) -->
+  <rect x="8" y="12" width="8" height="12" fill="none" stroke="#e8e8e8" stroke-width="1"/>
+  <line x1="8" y1="14" x2="16" y2="14" stroke="#e8e8e8" stroke-width="0.5"/>
+  <line x1="8" y1="16" x2="16" y2="16" stroke="#e8e8e8" stroke-width="0.5"/>
+  <line x1="8" y1="18" x2="16" y2="18" stroke="#e8e8e8" stroke-width="0.5"/>
+  <line x1="8" y1="20" x2="16" y2="20" stroke="#e8e8e8" stroke-width="0.5"/>
+  
+  <!-- Skull -->
+  <circle cx="12" cy="8" r="4" fill="#f0f0f0" stroke="#d0d0d0" stroke-width="0.5"/>
+  <!-- Eye sockets -->
+  <circle cx="10" cy="7" r="1" fill="#000"/>
+  <circle cx="14" cy="7" r="1" fill="#000"/>
+  
+  <!-- Spine -->
+  <line x1="12" y1="12" x2="12" y2="24" stroke="#e8e8e8" stroke-width="1"/>
+  
+  <!-- Arms -->
+  <line x1="8" y1="14" x2="4" y2="16" stroke="#e8e8e8" stroke-width="1"/>
+  <line x1="16" y1="14" x2="20" y2="16" stroke="#e8e8e8" stroke-width="1"/>
+  
+  <!-- Legs -->
+  <line x1="10" y1="24" x2="8" y2="30" stroke="#e8e8e8" stroke-width="1"/>
+  <line x1="14" y1="24" x2="16" y2="30" stroke="#e8e8e8" stroke-width="1"/>
+  
+  <!-- Feet -->
+  <line x1="8" y1="30" x2="6" y2="30" stroke="#e8e8e8" stroke-width="1"/>
+  <line x1="16" y1="30" x2="18" y2="30" stroke="#e8e8e8" stroke-width="1"/>
+  
+  <!-- Bow -->
+  <path d="M 2 10 Q 4 14 2 18" fill="none" stroke="#8B4513" stroke-width="1"/>
+  <!-- Bowstring -->
+  <line x1="2" y1="10" x2="2" y2="18" stroke="#666" stroke-width="0.5"/>
+  
+  <!-- Arrow (if not shooting) -->
+  <line x1="5" y1="14" x2="9" y2="14" stroke="#8B4513" stroke-width="1"/>
+  <path d="M 9 14 L 8 13 L 8 15 Z" fill="#8B4513"/>
+</svg> 
