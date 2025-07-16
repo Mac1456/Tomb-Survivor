@@ -20,13 +20,13 @@ class Character:
 	var vfx_ultimate: String  # VFX for ultimate ability
 	var vfx_dodge: String  # VFX for dodge roll
 	
-	func _init(n: String, desc: String, str: int, spd: int, arm: int, hp: int, 
+	func _init(n: String, desc: String, strength_val: int, spd: int, arm: int, hp: int, 
 			   primary_type: String, special_name: String, special_desc: String,
 			   ultimate_name: String, ultimate_desc: String, sprite: String,
 			   vfx_prim: String, vfx_spec: String, vfx_ult: String, vfx_d: String):
 		name = n
 		description = desc
-		strength = str
+		strength = strength_val
 		speed = spd
 		armor = arm
 		health = hp

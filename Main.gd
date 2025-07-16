@@ -8,9 +8,31 @@ const MAX_ENTITIES = 50  # Performance cap
 # Combat constants
 const MELEE_ATTACK_RANGE = 50.0
 const MELEE_ATTACK_DAMAGE = 25.0
-const PROJECTILE_SPEED = 400.0
-const PROJECTILE_DAMAGE = 30.0
 const ENEMY_SPAWN_COUNT = 3
+
+# Projectile type definitions
+enum ProjectileType {
+	ARROW,
+	FIREBALL
+}
+
+# Projectile stats by type
+const PROJECTILE_STATS = {
+	ProjectileType.ARROW: {
+		"speed": 600.0,
+		"damage": 20.0,
+		"sprite_path": "res://assets/arrow.svg",
+		"size": Vector2(24, 8),
+		"collision_radius": 4.0
+	},
+	ProjectileType.FIREBALL: {
+		"speed": 300.0,
+		"damage": 45.0,
+		"sprite_path": "res://assets/fireball.svg",
+		"size": Vector2(12, 12),
+		"collision_radius": 6.0
+	}
+}
 
 # Player movement constants
 const DODGE_ROLL_SPEED = 600.0
@@ -297,10 +319,17 @@ func create_camera():
 		camera.position_smoothing_speed = 8.0
 		camera.enabled = true
 		
+		# Set camera bounds to arena size
+		camera.limit_left = 0
+		camera.limit_top = 0
+		camera.limit_right = int(ARENA_SIZE.x)
+		camera.limit_bottom = int(ARENA_SIZE.y)
+		camera.limit_smoothed = true
+		
 		# Add camera to player for automatic following
 		player.add_child(camera)
 		camera.make_current()
-		print("Camera attached to player and made current")
+		print("Camera attached to player with arena bounds: ", ARENA_SIZE)
 
 func create_combat_containers():
 	print("Creating combat containers...")
@@ -393,18 +422,18 @@ func _input(event):
 		get_tree().change_scene_to_file("res://GameManager.tscn")
 
 # Player attack handler - called by Player.gd
-func handle_player_attack(attack_type: String, position: Vector2, range: float, damage: float, direction: Vector2 = Vector2.ZERO):
+func handle_player_attack(attack_type: String, attack_position: Vector2, attack_range: float, damage: float, direction: Vector2 = Vector2.ZERO):
 	if attack_type == "melee":
-		handle_melee_attack(position, range, damage)
+		handle_melee_attack(attack_position, attack_range, damage)
 	elif attack_type == "ranged":
-		handle_ranged_attack(position, damage, direction)
+		handle_ranged_attack(attack_position, damage, direction)
 
 # New directional attack handler for better combat feel
-func handle_player_directional_attack(attack_type: String, position: Vector2, range: float, damage: float, direction: Vector2):
+func handle_player_directional_attack(attack_type: String, attack_position: Vector2, attack_range: float, damage: float, direction: Vector2):
 	if attack_type == "melee":
-		handle_directional_melee_attack(position, range, damage, direction)
+		handle_directional_melee_attack(attack_position, attack_range, damage, direction)
 	elif attack_type == "ranged":
-		handle_ranged_attack(position, damage, direction)
+		handle_ranged_attack(attack_position, damage, direction)
 
 func handle_directional_melee_attack(attack_center: Vector2, attack_range: float, damage: float, attack_direction: Vector2):
 	# Create visual feedback for directional attack
@@ -441,30 +470,57 @@ func handle_melee_attack(attack_center: Vector2, attack_range: float, damage: fl
 				print("Enemy hit with melee attack!")
 
 func handle_ranged_attack(start_pos: Vector2, damage: float, direction: Vector2):
-	create_projectile(start_pos, direction, damage)
+	# Determine projectile type based on player character
+	var projectile_type = ProjectileType.ARROW  # Default to arrow
+	if player and player.character_data:
+		match player.character_data.name:
+			"Wizard":
+				projectile_type = ProjectileType.FIREBALL
+				print("🔥 Wizard firing FIREBALL!")
+			"Huntress":
+				projectile_type = ProjectileType.ARROW
+				print("🏹 Huntress firing ARROW!")
+			_:
+				projectile_type = ProjectileType.ARROW
+				print("🏹 Default character firing ARROW!")
+	
+	create_projectile(start_pos, direction, damage, projectile_type)
 
-func create_projectile(start_pos: Vector2, direction: Vector2, damage: float):
+func create_projectile(start_pos: Vector2, direction: Vector2, damage: float, projectile_type: ProjectileType):
 	var projectile = RigidBody2D.new()
 	projectile.name = "Projectile"
 	projectile.gravity_scale = 0  # No gravity for top-down
 	
+	# Get projectile stats
+	var stats = PROJECTILE_STATS[projectile_type]
+	
 	# Projectile collision
 	var collision = CollisionShape2D.new()
 	var shape = CircleShape2D.new()
-	shape.radius = 5
+	shape.radius = stats.collision_radius
 	collision.shape = shape
 	projectile.add_child(collision)
 	
-	# Projectile visual (yellow circle)
-	var visual = ColorRect.new()
-	visual.size = Vector2(10, 10)
-	visual.position = Vector2(-5, -5)
-	visual.color = Color(1.0, 1.0, 0.3, 1.0)  # Yellow projectile
-	projectile.add_child(visual)
+	# Projectile visual using custom sprite
+	var sprite = Sprite2D.new()
+	sprite.texture = load(stats.sprite_path)
+	sprite.position = Vector2.ZERO
+	
+	# Rotate sprite to face direction
+	sprite.rotation = direction.angle()
+	
+	# Scale sprite appropriately
+	sprite.scale = Vector2(1.0, 1.0)
+	
+	projectile.add_child(sprite)
+	
+	# Debug information
+	print("✨ Created projectile - Type: ", projectile_type, ", Speed: ", stats.speed, ", Damage: ", damage, ", Sprite: ", stats.sprite_path)
 	
 	# Projectile properties
-	projectile.set_meta("velocity", direction * PROJECTILE_SPEED)
+	projectile.set_meta("velocity", direction * stats.speed)
 	projectile.set_meta("damage", damage)
+	projectile.set_meta("type", projectile_type)
 	projectile.collision_layer = 16  # Projectile layer
 	projectile.collision_mask = 2 | 4  # Collides with walls and enemies
 	projectile.position = start_pos
@@ -494,7 +550,7 @@ func _on_attack_visual_timeout(visual: ColorRect):
 	if is_instance_valid(visual):
 		visual.queue_free()
 
-func create_directional_attack_visual(center_pos: Vector2, direction: Vector2, range: float):
+func create_directional_attack_visual(center_pos: Vector2, direction: Vector2, attack_range: float):
 	# Create a visual representation of the attack cone
 	var attack_visual = Node2D.new()
 	attack_visual.position = center_pos
@@ -506,7 +562,7 @@ func create_directional_attack_visual(center_pos: Vector2, direction: Vector2, r
 	
 	for i in range(cone_segments):
 		var angle = start_angle + (deg_to_rad(cone_angle) * i / cone_segments)
-		var segment_pos = Vector2(cos(angle), sin(angle)) * range * 0.7
+		var segment_pos = Vector2(cos(angle), sin(angle)) * attack_range * 0.7
 		
 		var segment = ColorRect.new()
 		segment.size = Vector2(20, 8)
@@ -606,6 +662,11 @@ func update_projectiles(delta):
 			destroy_projectile(projectile, i)
 			continue
 		
+		# Check collision with walls and barriers using physics
+		if check_projectile_wall_collision(projectile):
+			destroy_projectile(projectile, i)
+			continue
+		
 		# Check collision with enemies
 		for enemy in enemies:
 			if is_instance_valid(enemy) and projectile.position.distance_to(enemy.position) < 15:
@@ -643,6 +704,46 @@ func update_enemy_ai(_delta):
 			enemy.velocity = direction * speed
 		
 		enemy.move_and_slide()
+
+func check_projectile_wall_collision(projectile) -> bool:
+	# Use Godot's physics to check if projectile is colliding with walls
+	var space_state = get_world_2d().direct_space_state
+	var query = PhysicsPointQueryParameters2D.new()
+	query.position = projectile.position
+	query.collision_mask = 2  # Wall layer
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	
+	var result = space_state.intersect_point(query)
+	
+	if result.size() > 0:
+		# Create impact effect at collision point
+		create_projectile_impact_effect(projectile.position)
+		print("💥 Projectile hit wall at position: ", projectile.position)
+		return true
+	
+	return false
+
+func create_projectile_impact_effect(pos: Vector2):
+	# Create small visual effect when projectile hits wall
+	var impact_visual = ColorRect.new()
+	impact_visual.size = Vector2(8, 8)
+	impact_visual.position = pos - Vector2(4, 4)
+	impact_visual.color = Color(1.0, 0.8, 0.0, 0.7)  # Yellow impact flash
+	
+	add_child(impact_visual)
+	
+	# Remove visual after short duration
+	var timer = Timer.new()
+	timer.wait_time = 0.1
+	timer.one_shot = true
+	timer.timeout.connect(_on_impact_visual_timeout.bind(impact_visual))
+	add_child(timer)
+	timer.start()
+
+func _on_impact_visual_timeout(visual: ColorRect):
+	if is_instance_valid(visual):
+		visual.queue_free()
 
 func destroy_projectile(projectile, index: int):
 	if is_instance_valid(projectile):

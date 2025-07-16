@@ -1,10 +1,6 @@
 res://Main.tscn
 res://Main.gd
-res://CharacterSelect.tscn
-res://MainMenu.tscn
-res://Player.tscn
-res://CharacterSelect.gd
-res://GameManager.gd
 res://Player.gd
 res://CharacterData.gd
-res://MainMenu.gd
+res://CharacterSelect.tscn
+res://MainMenu.tscn

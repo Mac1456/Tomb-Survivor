@@ -19,6 +19,7 @@ var armor_reduction: float = 0.0
 # Combat timers
 var special_ability_timer: float = 0.0
 var ultimate_ability_timer: float = 0.0
+var primary_attack_timer: float = 0.0  # For wizard attack delay
 
 # Dodge roll system
 var dodge_roll_timer: float = 0.0
@@ -412,6 +413,8 @@ func update_timers(delta):
 		special_ability_timer -= delta
 	if ultimate_ability_timer > 0:
 		ultimate_ability_timer -= delta
+	if primary_attack_timer > 0:
+		primary_attack_timer -= delta
 	if dodge_roll_cooldown_timer > 0:
 		dodge_roll_cooldown_timer -= delta
 
@@ -469,6 +472,11 @@ func perform_dodge_roll():
 	dodge_roll()
 
 func primary_attack():
+	# Check if wizard has primary attack cooldown
+	if character_data.name == "Wizard" and primary_attack_timer > 0:
+		print("🔥 Wizard primary attack on cooldown: ", primary_attack_timer)
+		return
+	
 	print("Primary attack: ", character_data.primary_attack_type)
 	
 	# Play attack animation
@@ -482,13 +490,19 @@ func primary_attack():
 	# Update facing direction to cursor direction
 	facing_direction = attack_direction
 	
+	# Set primary attack cooldown for wizard
+	if character_data.name == "Wizard":
+		primary_attack_timer = 1.0  # 1 second cooldown for wizard primary attack
+		print("🔥 Wizard primary attack cooldown set: 1.0 seconds")
+	
 	# Play attack sound
 	ability_used.emit("primary_attack")
 	
 	# Call Main.gd attack handler with directional attack
 	var main_node = get_tree().get_first_node_in_group("main")
 	if main_node:
-		main_node.handle_player_directional_attack(character_data.primary_attack_type, global_position, 80.0, 25.0, attack_direction)
+		var attack_damage = 25.0 * damage_multiplier
+		main_node.handle_player_directional_attack(character_data.primary_attack_type, global_position, 80.0, attack_damage, attack_direction)
 
 func special_ability():
 	if special_ability_timer > 0:
@@ -501,8 +515,22 @@ func special_ability():
 	if animated_sprite:
 		animated_sprite.play("attack")
 	
-	# Set cooldown
-	special_ability_timer = 5.0  # 5 second cooldown
+	# Character-specific special abilities
+	match character_data.name:
+		"Wizard":
+			# Wizard: Powerful magical attack, slower firing rate
+			perform_wizard_special_attack()
+			special_ability_timer = 1.5  # 1.5 second cooldown for wizard (slower but powerful)
+			print("🔥 Wizard special attack cooldown: 1.5 seconds")
+		"Huntress":
+			# Huntress: Quick arrow attack, faster firing rate
+			perform_huntress_special_attack()
+			special_ability_timer = 0.8  # 0.8 second cooldown for huntress (faster but weaker)
+			print("🏹 Huntress special attack cooldown: 0.8 seconds")
+		_:
+			# Default behavior for melee characters
+			special_ability_timer = 2.0  # Default cooldown
+			print("⚔️ Default special attack cooldown: 2.0 seconds")
 	
 	# Play ability sound
 	ability_used.emit("special_ability")
@@ -568,6 +596,41 @@ func create_dodge_effect():
 func _on_dodge_effect_finished():
 	if dodge_effect_sprite:
 		dodge_effect_sprite.visible = false
+
+# Character-specific special attack functions
+func perform_wizard_special_attack():
+	# Wizard shoots powerful magical projectiles
+	var cursor_pos = get_global_mouse_position()
+	var attack_direction = (cursor_pos - global_position).normalized()
+	
+	# Update facing direction
+	facing_direction = attack_direction
+	
+	# Call Main.gd attack handler for ranged attack
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node:
+		# Use higher damage for wizard's special attack
+		var special_damage = 45.0 * damage_multiplier
+		main_node.handle_ranged_attack(global_position, special_damage, attack_direction)
+	
+	print("Wizard special attack: Fireball launched!")
+
+func perform_huntress_special_attack():
+	# Huntress shoots rapid arrows
+	var cursor_pos = get_global_mouse_position()
+	var attack_direction = (cursor_pos - global_position).normalized()
+	
+	# Update facing direction
+	facing_direction = attack_direction
+	
+	# Call Main.gd attack handler for ranged attack
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node:
+		# Use moderate damage for huntress's special attack
+		var special_damage = 25.0 * damage_multiplier
+		main_node.handle_ranged_attack(global_position, special_damage, attack_direction)
+	
+	print("Huntress special attack: Arrow fired!")
 
 func take_damage(damage: float):
 	if not is_alive:

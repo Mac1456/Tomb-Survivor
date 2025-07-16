@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24" height="8" viewBox="0 0 24 8" xmlns="http://www.w3.org/2000/svg">
+  <!-- Arrow shaft outline -->
+  <rect x="3" y="2" width="18" height="4" fill="#2F1B14" stroke="#000" stroke-width="0.5"/>
+  
+  <!-- Arrow shaft -->
+  <rect x="3" y="2.5" width="18" height="3" fill="#8B4513"/>
+  
+  <!-- Arrow head outline -->
+  <polygon points="21,1 24,4 21,7" fill="#A0A0A0" stroke="#000" stroke-width="0.5"/>
+  
+  <!-- Arrow head -->
+  <polygon points="21,1.5 23,4 21,6.5" fill="#C0C0C0"/>
+  
+  <!-- Arrow fletching outline -->
+  <polygon points="0,2 3,1 3,3" fill="#4A2C17" stroke="#000" stroke-width="0.3"/>
+  <polygon points="0,6 3,5 3,7" fill="#4A2C17" stroke="#000" stroke-width="0.3"/>
+  
+  <!-- Arrow fletching -->
+  <polygon points="0,2.5 3,1.5 3,2.5" fill="#654321"/>
+  <polygon points="0,5.5 3,5.5 3,6.5" fill="#654321"/>
+</svg> 

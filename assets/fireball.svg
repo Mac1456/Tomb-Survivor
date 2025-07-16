@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer flame glow -->
+  <circle cx="6" cy="6" r="5" fill="#FF4500" opacity="0.6"/>
+  
+  <!-- Main fireball body -->
+  <circle cx="6" cy="6" r="4" fill="#FF6600"/>
+  
+  <!-- Inner flame core -->
+  <circle cx="6" cy="6" r="2.5" fill="#FFD700"/>
+  
+  <!-- Flame spark effects -->
+  <circle cx="3" cy="4" r="1" fill="#FF4500" opacity="0.8"/>
+  <circle cx="9" cy="3" r="0.8" fill="#FF6600" opacity="0.7"/>
+  <circle cx="8" cy="9" r="1.2" fill="#FF4500" opacity="0.6"/>
+  
+  <!-- Central bright core -->
+  <circle cx="6" cy="6" r="1.5" fill="#FFFF00" opacity="0.9"/>
+</svg> 
