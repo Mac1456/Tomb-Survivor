@@ -43,15 +43,29 @@ var is_stationary: bool = false
 # Reference to main scene
 var main_scene: Node2D = null
 
-# Sprite reference
-var sprite: Sprite2D = null
+# Animation system
+var animated_sprite: AnimatedSprite2D = null
+var current_animation: String = "idle"
+var animation_queue: Array = []
+var is_casting: bool = false
+
+# Animation state tracking
+enum AnimationState {
+	IDLE,
+	MOVING,
+	CASTING,
+	SHIELDED,
+	DYING
+}
+
+var animation_state: AnimationState = AnimationState.IDLE
 
 func _ready():
 	# Set up boss properties before calling super._ready()
 	enemy_type = EnemyType.BOSS
 	max_health = calculate_scaled_health()
 	current_health = max_health
-	movement_speed = 50.0  # Slower than regular enemies
+	movement_speed = 45.0  # Slower than regular enemies
 	
 	# Initialize wander target
 	wander_target = global_position
@@ -60,17 +74,109 @@ func _ready():
 	main_scene = get_tree().get_first_node_in_group("main")
 	
 	# Don't call super._ready() as it might interfere with boss logic
-	# Just set up the basic collision and sprite
-	setup_boss_sprite()
+	# Just set up the basic collision and animated sprite
+	setup_boss_animated_sprite()
 	
 	print("BlueBoss initialized with health: ", max_health)
 
-func setup_boss_sprite():
-	# Get the sprite node from the scene
-	var sprite_node = get_node("Sprite2D")
-	if sprite_node:
-		sprite = sprite_node
-		print("Boss sprite setup complete")
+func setup_boss_animated_sprite():
+	# Get the animated sprite node from the scene
+	if has_node("AnimatedSprite2D"):
+		var anim_sprite_node = get_node("AnimatedSprite2D")
+		if anim_sprite_node and is_instance_valid(anim_sprite_node):
+			animated_sprite = anim_sprite_node
+			# Don't assign to sprite since it's a different type
+			
+			# Connect animation finished signal if not already connected
+			if not animated_sprite.is_connected("animation_finished", _on_animation_finished):
+				animated_sprite.connect("animation_finished", _on_animation_finished)
+			
+			# Start with idle animation
+			play_animation("idle")
+			
+			print("Boss animated sprite setup complete")
+		else:
+			print("ERROR: AnimatedSprite2D node is invalid in BlueBoss scene!")
+	else:
+		print("ERROR: Could not find AnimatedSprite2D node in BlueBoss scene!")
+
+func get_sprite_node() -> Node2D:
+	# Try to use cached animated sprite first
+	if animated_sprite and is_instance_valid(animated_sprite):
+		return animated_sprite
+	
+	# If cached sprite is invalid, try to get it from the scene
+	if has_node("AnimatedSprite2D"):
+		var anim_sprite_node = get_node("AnimatedSprite2D")
+		if anim_sprite_node and is_instance_valid(anim_sprite_node):
+			animated_sprite = anim_sprite_node
+			return anim_sprite_node
+	
+	# If still no sprite, print error and return null
+	print("ERROR: Could not find valid AnimatedSprite2D node in BlueBoss!")
+	return null
+
+func play_animation(animation_name: String, force: bool = false):
+	var sprite_node = get_sprite_node()
+	if not sprite_node:
+		print("ERROR: No valid animated sprite available for animation: ", animation_name)
+		return
+	
+	# Don't interrupt certain animations unless forced
+	if not force and is_casting and animation_name != "shield":
+		animation_queue.append(animation_name)
+		return
+	
+	# Play the animation
+	if sprite_node.sprite_frames and sprite_node.sprite_frames.has_animation(animation_name):
+		sprite_node.play(animation_name)
+		current_animation = animation_name
+		print("Playing boss animation: ", animation_name)
+	else:
+		print("WARNING: Animation not found: ", animation_name)
+		# Fall back to idle if animation doesn't exist
+		if animation_name != "idle":
+			play_animation("idle")
+
+func _on_animation_finished():
+	var finished_animation = current_animation
+	is_casting = false
+	
+	# Handle specific animation completions
+	match finished_animation:
+		"death":
+			animation_state = AnimationState.DYING
+			# Don't queue anything after death
+			return
+		"shield":
+			# Return to previous state after shield
+			if animation_state == AnimationState.MOVING:
+				play_animation("move")
+			elif animation_state == AnimationState.SHIELDED:
+				# Shield animation finished, return to idle
+				animation_state = AnimationState.IDLE
+				play_animation("idle")
+			else:
+				play_animation("idle")
+		"attack_fireball", "attack_orb", "attack_missile", "attack_lightning", "repel", "summon":
+			# After casting, return to appropriate state
+			if animation_state == AnimationState.MOVING:
+				play_animation("move")
+			else:
+				animation_state = AnimationState.IDLE
+				play_animation("idle")
+	
+	# Process animation queue
+	if not animation_queue.is_empty():
+		var next_animation = animation_queue.pop_front()
+		play_animation(next_animation)
+	elif finished_animation != "idle" and finished_animation != "move":
+		# Default back to idle or move based on state
+		if animation_state == AnimationState.MOVING:
+			play_animation("move")
+		else:
+			animation_state = AnimationState.IDLE
+			play_animation("idle")
 
 # Health property for compatibility with main scene
 func get_health() -> float:
@@ -107,6 +213,10 @@ func _physics_process(delta):
 		shield_timer -= delta
 		if shield_timer <= 0:
 			is_shielded = false
+			# Ensure we're not in shielded state when shield ends
+			if animation_state == AnimationState.SHIELDED:
+				animation_state = AnimationState.IDLE
+				play_animation("idle")
 			print("Boss shield deactivated")
 	
 	# Handle movement
@@ -131,11 +241,15 @@ func handle_movement(delta: float):
 	if not player:
 		return
 	
+	var was_moving = velocity.length() > 0
+	
 	if is_stationary:
 		stationary_timer -= delta
 		if stationary_timer <= 0:
 			is_stationary = false
 			set_new_wander_target()
+		else:
+			velocity = Vector2.ZERO
 	else:
 		wander_timer -= delta
 		if wander_timer <= 0:
@@ -160,6 +274,21 @@ func handle_movement(delta: float):
 				set_new_wander_target()
 	
 	move_and_slide()
+	
+	# Update animation based on movement state
+	var is_moving = velocity.length() > 0
+	if is_moving != was_moving and not is_casting:
+		if is_moving:
+			animation_state = AnimationState.MOVING
+			play_animation("move")
+		else:
+			animation_state = AnimationState.IDLE
+			play_animation("idle")
+	
+	# Update sprite facing direction
+	var sprite_node = get_sprite_node()
+	if sprite_node and velocity.x != 0:
+		sprite_node.flip_h = velocity.x < 0
 
 func set_new_wander_target():
 	var arena_bounds = Rect2(Vector2(100, 100), Vector2(1000, 600))
@@ -204,28 +333,46 @@ func get_available_spells() -> Array:
 
 func cast_fireball_barrage():
 	print("Boss casts Fireball Barrage!")
+	is_casting = true
+	animation_state = AnimationState.CASTING
+	play_animation("attack_fireball")
 	# TODO: Implement fireball barrage spell
 	
 func cast_large_magic_orb():
 	print("Boss casts Large Magic Orb!")
+	is_casting = true
+	animation_state = AnimationState.CASTING
+	play_animation("attack_orb")
 	# TODO: Implement large magic orb spell
 
 func cast_magic_missile_storm():
 	print("Boss casts Magic Missile Storm!")
+	is_casting = true
+	animation_state = AnimationState.CASTING
+	play_animation("attack_missile")
 	# TODO: Implement magic missile storm spell
 
 func cast_area_lightning():
 	print("Boss casts Area Lightning!")
+	is_casting = true
+	animation_state = AnimationState.CASTING
+	play_animation("attack_lightning")
 	# TODO: Implement area lightning spell
 
 func cast_repel_wave():
 	print("Boss casts Repel Wave!")
 	repel_cooldown = repel_cooldown_duration
+	is_casting = true
+	animation_state = AnimationState.CASTING
+	play_animation("repel")
 	# TODO: Implement repel wave spell
 
 func spawn_elite_skeleton():
 	print("Boss spawns Elite Skeleton!")
 	elite_spawn_cooldown = elite_spawn_cooldown_duration
+	is_casting = true
+	animation_state = AnimationState.CASTING
+	play_animation("summon")
 	
 	# Clean up dead elite skeletons from tracking
 	elite_skeletons = elite_skeletons.filter(func(skeleton): return is_instance_valid(skeleton))
@@ -288,10 +435,13 @@ func take_damage(damage: float):
 	current_health -= damage
 	print("💔 Boss took ", damage, " damage! Health: ", current_health, "/", max_health)
 	
-	# Flash red when hit
-	if sprite:
-		sprite.modulate = Color.RED
-		create_tween().tween_property(sprite, "modulate", Color.WHITE, 0.2)
+	# Flash red when hit - ensure sprite is valid
+	var sprite_node = get_sprite_node()
+	if sprite_node:
+		sprite_node.modulate = Color.RED
+		create_tween().tween_property(sprite_node, "modulate", Color.WHITE, 0.2)
+	else:
+		print("WARNING: Sprite node not found for boss damage flash!")
 	
 	# Check for phase transitions
 	check_phase_transition(old_health)
@@ -315,10 +465,22 @@ func check_phase_transition(_old_health: float):
 func activate_shield():
 	is_shielded = true
 	shield_timer = shield_duration
+	animation_state = AnimationState.SHIELDED
+	play_animation("shield", true)  # Force shield animation
 	print("Boss activated shield for ", shield_duration, " seconds!")
 
 func die():
 	print("Boss defeated!")
+	animation_state = AnimationState.DYING
+	play_animation("death", true)  # Force death animation
+	
+	# Wait for death animation to complete before cleanup
+	var sprite_node = get_sprite_node()
+	if sprite_node:
+		await sprite_node.animation_finished
+	else:
+		# If no sprite, wait a short time before cleanup
+		await get_tree().create_timer(1.0).timeout
 	
 	# Clean up elite skeletons
 	for skeleton in elite_skeletons:

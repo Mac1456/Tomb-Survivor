@@ -1,15 +1,17 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1752708166
+::res://::1752711356
+BlueBoss.gd::GDScript::7270457921056161596::1752711450::0::1::::BlueBoss<>Enemy<><>0<>0<><>::
+BlueBoss.tscn::PackedScene::7318445039766458713::1752711589::0::1::::<><><>0<>0<><>::res://BlueBoss.gd<>uid://ddfts4am6pqi5::::res://assets/enemies/witch_boss/Blue_witch/B_witch_idle.png<>uid://cbiuypuedfhpj::::res://assets/enemies/witch_boss/Blue_witch/B_witch_run.png<>uid://bn4l4f1vwhgvm::::res://assets/enemies/witch_boss/Blue_witch/B_witch_attack.png<>uid://chyhrsmvabfag::::res://assets/enemies/witch_boss/Blue_witch/B_witch_charge.png<>uid://vfvjhxtee3u7::::res://assets/enemies/witch_boss/Blue_witch/B_witch_death.png
 CharacterData.gd::GDScript/GDScript::8413615799191029048::1752691612::0::1::::CharacterData<>Resource<><>0<>0<><>::
 CharacterSelect.gd::GDScript/GDScript::3194704387276368365::1752620789::0::1::::<>Control<><>0<>0<><>::
 CharacterSelect.tscn::PackedScene/PackedScene::5890476765815332538::1752692265::0::1::::<><><>0<>0<><>::res://CharacterSelect.gd<>uid://cb1jqlycdvlpc::::res://assets/backgrounds/cave_background.png
-Enemy.gd::GDScript::5105833382960195933::1752705715::0::1::::Enemy<>CharacterBody2D<><>0<>0<><>::
+Enemy.gd::GDScript::5105833382960195933::1752710182::0::1::::Enemy<>CharacterBody2D<><>0<>0<><>::
 Enemy.tscn::PackedScene::3795453093072928179::1752697247::0::1::::<><><>0<>0<><>::res://Enemy.gd
 GameManager.gd::GDScript/GDScript::5835283763766782598::1752609421::0::1::::<>Node<><>0<>0<><>::
 GameManager.tscn::PackedScene/PackedScene::-1::1752609421::0::1::::<><><>0<>0<><>::
 icon.svg::CompressedTexture2D/CompressedTexture2D::8147195070487690825::1752599119::1752599311::1::::<><><>0<>0<>eb2270cb6abc191feb82cb4a5341f47f<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
-Main.gd::GDScript::9153910678461787690::1752708083::0::1::::<>Node2D<><>0<>0<><>::
-Main.tscn::PackedScene::6117390032067590720::1752707953::0::1::::<><><>0<>0<><>::uid://d3ohtovdrji15::::res://Main.gd
+Main.gd::GDScript::9153910678461787690::1752710203::0::1::::<>Node2D<><>0<>0<><>::
+Main.tscn::PackedScene::6117390032067590720::1752711356::0::1::::<><><>0<>0<><>::uid://d3ohtovdrji15::::res://Main.gd
 MainMenu.gd::GDScript/GDScript::6638678925605926134::1752609421::0::1::::<>Control<><>0<>0<><>::
 MainMenu.tscn::PackedScene/PackedScene::2932686198337325253::1752692257::0::1::::<><><>0<>0<><>::res://MainMenu.gd<>uid://cb1jqlycdvlpc::::res://assets/backgrounds/cave_background.png
 Player.gd::GDScript::2241717817019650423::1752705751::0::1::::Player<>CharacterBody2D<><>0<>0<><>::
@@ -325,7 +327,12 @@ Skeleton Hit.png::CompressedTexture2D/CompressedTexture2D::1246374990083696841::
 Skeleton Idle.png::CompressedTexture2D/CompressedTexture2D::4720522285326738469::1493954552::1752597332::1::::<><><>0<>0<>349fd3e490043b4a39546fa535d3b8b2<>res://.godot/imported/Skeleton Idle.png-5897f573f25ffa1b3b78812edf5e47e4.ctex::
 Skeleton React.png::CompressedTexture2D/CompressedTexture2D::8341628819601975668::1493954565::1752597332::1::::<><><>0<>0<>3a178f6e7179174ff757caeac30e127c<>res://.godot/imported/Skeleton React.png-da97d8b93935838ed35b48aa75e477f2.ctex::
 Skeleton Walk.png::CompressedTexture2D/CompressedTexture2D::1033560519225991838::1493954575::1752597332::1::::<><><>0<>0<>f657478424c3a8ba69cbec55b3e166c7<>res://.godot/imported/Skeleton Walk.png-8ca7575afb740befeb6e229826c7caf8.ctex::
-::res://assets/enemies/witch_boss/::1752591606
+::res://assets/enemies/witch_boss/::1752711635
+blue_witch_attack.svg::CompressedTexture2D::9128931788586252680::1752711513::1752711675::1::::<><><>0<>0<>a2ce6a9fc1dd28d542f1fd547cee4d78<>res://.godot/imported/blue_witch_attack.svg-380237aed749c74d4092bbd9fc8cc55d.ctex::
+blue_witch_charge.svg::CompressedTexture2D::2364233670766722087::1752711538::1752711675::1::::<><><>0<>0<>4a31e1e10d805f4075187df6dad97c88<>res://.godot/imported/blue_witch_charge.svg-ea446791a3d8c17bffb3f6f733517e03.ctex::
+blue_witch_death.svg::CompressedTexture2D::4822907629932137382::1752711566::1752711675::1::::<><><>0<>0<>bf30dec92301b70fc6e0177c56c63610<>res://.godot/imported/blue_witch_death.svg-bb839684c6e89d1efc2738bd2381e338.ctex::
+blue_witch_idle.svg::CompressedTexture2D::4211583870184647146::1752711472::1752711675::1::::<><><>0<>0<>846f0c504fe4cefb56aff5778a01892b<>res://.godot/imported/blue_witch_idle.svg-ac8e846755f3f64cb2f3159e140ebed8.ctex::
+blue_witch_move.svg::CompressedTexture2D::6670257829386104209::1752711491::1752711675::1::::<><><>0<>0<>17a85aff5c20945591cb2e099de6bcd9<>res://.godot/imported/blue_witch_move.svg-ff6994bbfff3b577ab88463204590dd8.ctex::
 ::res://assets/enemies/witch_boss/Blue_witch/::1752597332
 B_witch_attack.png::CompressedTexture2D/CompressedTexture2D::3359462584564420262::1752515747::1752597332::1::::<><><>0<>0<>c695daff34604f004a6f058a911f734f<>res://.godot/imported/B_witch_attack.png-0bdd63e810780d2ac50cd941759c048d.ctex::
 B_witch_charge.png::CompressedTexture2D/CompressedTexture2D::5314164681307756482::1752515747::1752597332::1::::<><><>0<>0<>7c861810d3fab82612f6221ebd615b5f<>res://.godot/imported/B_witch_charge.png-bdd56cff4d6cba971abd2288d46e7aad.ctex::
