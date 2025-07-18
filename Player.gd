@@ -50,6 +50,9 @@ func _ready():
 	if not character_data:
 		character_data = CharacterData.get_character(0)  # Default to Hero Knight
 	
+	# Add player to the "player" group so enemies can find it
+	add_to_group("player")
+	
 	configure_character()
 	create_health_bar()
 	setup_dodge_effect()
@@ -59,6 +62,7 @@ func _ready():
 		animated_sprite.animation_finished.connect(_on_animation_finished)
 	
 	print("Player created: ", character_data.name)
+	print("Player added to 'player' group")
 
 func setup_dodge_effect():
 	# Create dodge effect sprite

@@ -76,6 +76,7 @@ var current_boss = null
 var boss_health_bar: ProgressBar = null
 var boss_health_bar_container: Control = null
 var boss_name_label: Label = null
+var boss_ui_canvas: CanvasLayer = null
 var boss_is_active: bool = false
 
 # Performance tracking
@@ -634,6 +635,8 @@ func create_projectile(start_pos: Vector2, direction: Vector2, damage: float, pr
 	projectiles_container.add_child(projectile)
 	projectiles.append(projectile)
 	entity_count += 1
+	
+	return projectile  # Return the projectile so boss can mark it
 
 func create_attack_visual(center_pos: Vector2):
 	# Create temporary visual feedback for melee attack
@@ -882,34 +885,113 @@ func update_projectiles(delta):
 			projectiles.remove_at(i)
 			continue
 		
+		# Handle lifetime tracking for special projectiles
+		if projectile.has_meta("lifetime"):
+			var created_time = projectile.get_meta("created_time")
+			created_time += delta
+			projectile.set_meta("created_time", created_time)
+			
+			var lifetime = projectile.get_meta("lifetime")
+			if created_time >= lifetime:
+				print("🔮 Large orb expired after ", lifetime, " seconds")
+				destroy_projectile(projectile, i)
+				continue
+		
 		# Move projectile
-		var velocity = projectile.get_meta("velocity")
+		var velocity = projectile.get_meta("velocity") if projectile.has_meta("velocity") else Vector2.ZERO
+		
+		# Skip projectiles with zero velocity to avoid issues
+		if velocity.length() == 0.0:
+			destroy_projectile(projectile, i)
+			continue
+		
+		# Handle homing behavior for special projectiles
+		if projectile.has_meta("homing") and projectile.get_meta("homing"):
+			var homing_strength = projectile.get_meta("homing_strength") if projectile.has_meta("homing_strength") else 1.0
+			var max_turn_rate = projectile.get_meta("max_turn_rate") if projectile.has_meta("max_turn_rate") else 1.0
+			
+			# Find the player for homing
+			if player:
+				var to_player = (player.global_position - projectile.position).normalized()
+				var current_direction = velocity.normalized()
+				
+				# Calculate the angle to turn towards player
+				var angle_to_player = current_direction.angle_to(to_player)
+				
+				# Limit turning rate
+				var turn_amount = clamp(angle_to_player, -max_turn_rate * delta, max_turn_rate * delta)
+				
+				# Apply homing force
+				var new_direction = current_direction.rotated(turn_amount * homing_strength)
+				var speed = velocity.length()
+				velocity = new_direction * speed
+				
+				# Update stored velocity
+				projectile.set_meta("velocity", velocity)
+				
+				# Debug homing behavior occasionally
+				if randf() < 0.01:  # 1% chance per frame for debug
+					var projectile_name = "missile"
+					if projectile.has_meta("type"):
+						var debug_type = projectile.get_meta("type")
+						if typeof(debug_type) == TYPE_STRING and debug_type == "large_orb":
+							projectile_name = "large orb"
+					print("🎯 ", projectile_name, " homing: distance=", projectile.position.distance_to(player.position), " angle=", rad_to_deg(angle_to_player))
+		
 		projectile.position += velocity * delta
 		
-		# Check if projectile is out of bounds
-		if not get_arena_bounds().has_point(projectile.position):
+		# Check if projectile is out of bounds (but allow large orbs more leeway)
+		var bounds_check = get_arena_bounds()
+		var projectile_type = projectile.get_meta("type") if projectile.has_meta("type") else null
+		
+		# Check if this is a large orb (handle both string and potential future enum cases)
+		var is_large_orb = false
+		if projectile_type != null:
+			# Handle string type safely
+			if typeof(projectile_type) == TYPE_STRING and projectile_type == "large_orb":
+				is_large_orb = true
+			# Handle enum type (future-proofing) - no current large orb enum exists
+			elif typeof(projectile_type) == TYPE_INT:
+				# No enum case for large orb currently, but kept for future compatibility
+				pass
+		
+		if is_large_orb:
+			# Expand bounds for large orbs
+			bounds_check = bounds_check.grow(100)
+		
+		if not bounds_check.has_point(projectile.position):
 			destroy_projectile(projectile, i)
 			continue
 		
 		# Check collision with walls and barriers using physics
 		if check_projectile_wall_collision(projectile):
-			destroy_projectile(projectile, i)
-			continue
+			# Large orbs can pass through some obstacles
+			if is_large_orb:
+				print("🔮 Large orb passed through obstacle")
+				# Don't destroy large orbs on wall hits
+				continue
+			else:
+				destroy_projectile(projectile, i)
+				continue
 		
 		# Check if this is an enemy projectile
-		var is_enemy_projectile = projectile.has_meta("enemy_projectile")
-		var damage = projectile.get_meta("damage")
+		var is_enemy_projectile = projectile.has_meta("enemy_projectile") and projectile.get_meta("enemy_projectile")
+		var damage = projectile.get_meta("damage") if projectile.has_meta("damage") else 0.0
 		
 		if is_enemy_projectile:
 			# Enemy projectile - check collision with player
-			if player and projectile.position.distance_to(player.position) < 20:
+			var collision_radius = 20.0
+			if is_large_orb:
+				collision_radius = 30.0  # Larger collision for large orbs
+			
+			if player and projectile.position.distance_to(player.position) < collision_radius:
 				if player.has_method("take_damage"):
 					player.take_damage(damage)
-					print("🏹 Enemy arrow hit player for ", damage, " damage!")
+					print("🔮 Projectile hit player for ", damage, " damage!")
 				destroy_projectile(projectile, i)
 				continue
 		else:
-			# Player projectile - use physics-based collision detection
+			# Player projectile OR boss projectile - use physics-based collision detection
 			var space_state = get_world_2d().direct_space_state
 			var query = PhysicsPointQueryParameters2D.new()
 			query.position = projectile.position
@@ -922,10 +1004,24 @@ func update_projectiles(delta):
 			if results.size() > 0:
 				var body = results[0].collider
 				if body and body.has_method("take_damage"):
+					# Check if this is a boss projectile hitting the boss itself
+					var is_boss_projectile = projectile.has_meta("boss_projectile") and projectile.get_meta("boss_projectile")
+					var is_boss = body.has_method("is_boss_entity") and body.is_boss_entity()
+					
+					if is_boss_projectile and is_boss:
+						# Boss projectile hitting boss - destroy projectile without damage
+						print("🚫 Boss projectile blocked from hitting boss")
+						destroy_projectile(projectile, i)
+						break
+					
 					body.take_damage(damage)
 					print("🏹 Projectile hit ", body.name, " for ", damage, " damage!")
-				destroy_projectile(projectile, i)
-				break
+					destroy_projectile(projectile, i)
+					break
+				else:
+					# Hit something without take_damage method (wall, etc.)
+					destroy_projectile(projectile, i)
+					break
 
 
 
@@ -971,6 +1067,17 @@ func _on_impact_visual_timeout(visual: ColorRect):
 
 func destroy_projectile(projectile, index: int):
 	if is_instance_valid(projectile):
+		# Clean up any stored tweens to prevent warnings
+		if projectile.has_meta("pulse_tween"):
+			var pulse_tween = projectile.get_meta("pulse_tween")
+			if pulse_tween:
+				pulse_tween.kill()
+		
+		if projectile.has_meta("homing_pulse"):
+			var homing_pulse = projectile.get_meta("homing_pulse")
+			if homing_pulse:
+				homing_pulse.kill()
+		
 		projectile.queue_free()
 		entity_count -= 1
 	projectiles.remove_at(index)
@@ -1030,37 +1137,55 @@ func cleanup_entities():
 func create_boss_ui():
 	print("Creating boss UI system...")
 	
-	# Create UI container that follows the camera
+	# Create CanvasLayer for HUD overlay - this ensures it stays on screen
+	boss_ui_canvas = CanvasLayer.new()
+	boss_ui_canvas.name = "BossUICanvas"
+	boss_ui_canvas.layer = 10  # High layer to ensure it's on top
+	add_child(boss_ui_canvas)
+	
+	# Create UI container for boss health bar
 	boss_health_bar_container = Control.new()
 	boss_health_bar_container.name = "BossHealthBarContainer"
-	boss_health_bar_container.position = Vector2(0, 20)
-	boss_health_bar_container.size = Vector2(640, 80)
+	# Position at top of screen, centered horizontally
+	var viewport_size = get_viewport().get_visible_rect().size
+	var container_size = Vector2(640, 80)
+	boss_health_bar_container.position = Vector2(
+		(viewport_size.x - container_size.x) / 2,  # Center horizontally
+		20  # Top of screen with margin
+	)
+	boss_health_bar_container.size = container_size
 	boss_health_bar_container.visible = false
-	add_child(boss_health_bar_container)
+	# Add to canvas layer instead of world space
+	boss_ui_canvas.add_child(boss_health_bar_container)
 	
 	# Create boss name label
 	boss_name_label = Label.new()
 	boss_name_label.name = "BossNameLabel"
 	boss_name_label.text = "Blue Witch"
-	boss_name_label.position = Vector2(20, 10)
-	boss_name_label.size = Vector2(600, 30)
+	boss_name_label.position = Vector2(0, 0)
+	boss_name_label.size = Vector2(640, 30)  # Match container width
+	boss_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER  # Center the text
 	boss_name_label.add_theme_font_size_override("font_size", 24)
 	boss_name_label.add_theme_color_override("font_color", Color.WHITE)
+	# Add shadow for better visibility
+	boss_name_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	boss_name_label.add_theme_constant_override("shadow_offset_x", 2)
+	boss_name_label.add_theme_constant_override("shadow_offset_y", 2)
 	boss_health_bar_container.add_child(boss_name_label)
 	
 	# Create boss health bar background
 	var health_bar_bg = ColorRect.new()
 	health_bar_bg.name = "HealthBarBackground"
-	health_bar_bg.position = Vector2(20, 45)
-	health_bar_bg.size = Vector2(600, 20)
-	health_bar_bg.color = Color(0.2, 0.2, 0.2, 0.8)  # Dark background
+	health_bar_bg.position = Vector2(0, 35)
+	health_bar_bg.size = Vector2(600, 24)
+	health_bar_bg.color = Color(0.1, 0.1, 0.1, 0.9)  # Darker background for better contrast
 	boss_health_bar_container.add_child(health_bar_bg)
 	
 	# Create boss health bar
 	boss_health_bar = ProgressBar.new()
 	boss_health_bar.name = "BossHealthBar"
-	boss_health_bar.position = Vector2(20, 45)
-	boss_health_bar.size = Vector2(600, 20)
+	boss_health_bar.position = Vector2(2, 37)  # Slight inset from background
+	boss_health_bar.size = Vector2(596, 20)
 	boss_health_bar.min_value = 0.0
 	boss_health_bar.max_value = 100.0
 	boss_health_bar.value = 100.0
@@ -1068,17 +1193,17 @@ func create_boss_ui():
 	
 	# Style the progress bar
 	var style_box = StyleBoxFlat.new()
-	style_box.bg_color = Color(0.8, 0.2, 0.2, 1.0)  # Red health bar
-	style_box.border_width_left = 2
-	style_box.border_width_right = 2
-	style_box.border_width_top = 2
-	style_box.border_width_bottom = 2
-	style_box.border_color = Color(0.4, 0.1, 0.1, 1.0)  # Darker red border
+	style_box.bg_color = Color(0.8, 0.2, 0.2, 0.85)  # Red health bar with slightly more transparency
+	style_box.border_width_left = 1
+	style_box.border_width_right = 1
+	style_box.border_width_top = 1
+	style_box.border_width_bottom = 1
+	style_box.border_color = Color(0.4, 0.1, 0.1, 0.85)  # Darker red border with matching transparency
 	boss_health_bar.add_theme_stylebox_override("fill", style_box)
 	
 	boss_health_bar_container.add_child(boss_health_bar)
 	
-	print("Boss UI system created successfully!")
+	print("Boss UI system created successfully as HUD overlay!")
 
 func show_boss_health_bar(boss_name: String, max_health: float):
 	if boss_health_bar_container:

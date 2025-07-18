@@ -620,14 +620,18 @@ func update_sword_skeleton_hades_ai(delta):
 				if int(windup_timer * 8) % 2 == 0:
 					sprite.modulate = Color.RED
 				else:
-					sprite.modulate = Color.WHITE
+					# Restore to elite color if it exists, otherwise use white
+					var restore_color = Color.WHITE
+					if sprite.has_meta("elite_color"):
+						restore_color = sprite.get_meta("elite_color")
+					sprite.modulate = restore_color
 			
 			# After windup, commit to attack
 			if windup_timer >= SWORD_WINDUP_TIME:
 				ai_state = AIState.ATTACK
 				state_timer = 0.0
 				if not is_dead:
-					sprite.modulate = Color.WHITE
+					sprite.modulate = get_restore_color()
 				print("💥 Sword skeleton executing dash attack!")
 		
 		AIState.ATTACK:
@@ -656,14 +660,14 @@ func update_sword_skeleton_hades_ai(delta):
 				if int(state_timer * 4) % 2 == 0:
 					sprite.modulate = Color(0.7, 0.7, 1.0)  # Slightly blue
 				else:
-					sprite.modulate = Color.WHITE
+					sprite.modulate = get_restore_color()
 			
 			# Return to patrol after individual cooldown time
 			if state_timer >= individual_cooldown_time:
 				ai_state = AIState.PATROL
 				state_timer = 0.0
 				if not is_dead:
-					sprite.modulate = Color.WHITE
+					sprite.modulate = get_restore_color()
 				print("🔄 Sword skeleton ready after ", individual_cooldown_time, " seconds - returning to patrol")
 
 # Hades-style AI for archer skeletons: Idle → Patrol → Reposition → Windup → Attack → Cooldown
@@ -732,14 +736,14 @@ func update_archer_skeleton_hades_ai(delta):
 				if int(windup_timer * 6) % 2 == 0:
 					sprite.modulate = Color.YELLOW
 				else:
-					sprite.modulate = Color.WHITE
+					sprite.modulate = get_restore_color()
 			
 			# After windup, commit to attack
 			if windup_timer >= ARCHER_WINDUP_TIME:
 				ai_state = AIState.ATTACK
 				state_timer = 0.0
 				if not is_dead:
-					sprite.modulate = Color.WHITE
+					sprite.modulate = get_restore_color()
 				print("💥 Archer skeleton firing arrow!")
 		
 		AIState.ATTACK:
@@ -772,14 +776,14 @@ func update_archer_skeleton_hades_ai(delta):
 				if int(state_timer * 3) % 2 == 0:
 					sprite.modulate = Color(0.7, 1.0, 0.7)  # Slightly green
 				else:
-					sprite.modulate = Color.WHITE
+					sprite.modulate = get_restore_color()
 			
 			# Return to patrol after individual cooldown time
 			if state_timer >= individual_cooldown_time:
 				ai_state = AIState.PATROL
 				state_timer = 0.0
 				if not is_dead:
-					sprite.modulate = Color.WHITE
+					sprite.modulate = get_restore_color()
 				print("🔄 Archer skeleton ready after ", individual_cooldown_time, " seconds - returning to patrol")
 
 # Stone Golem AI: Similar to sword skeleton but slower and with ground pound attack
@@ -840,14 +844,14 @@ func update_stone_golem_ai(delta):
 				if int(windup_timer * 10) % 2 == 0:
 					sprite.modulate = Color.ORANGE  # Orange for ground pound energy
 				else:
-					sprite.modulate = Color.WHITE
+					sprite.modulate = get_restore_color()
 			
 			# Much longer windup than skeletons
 			if windup_timer >= GOLEM_WINDUP_TIME:
 				ai_state = AIState.ATTACK
 				state_timer = 0.0
 				if not is_dead:
-					sprite.modulate = Color.WHITE
+					sprite.modulate = get_restore_color()
 				print("💥 Stone golem executing GROUND POUND!")
 		
 		AIState.ATTACK:
@@ -875,14 +879,14 @@ func update_stone_golem_ai(delta):
 				if int(state_timer * 2) % 2 == 0:
 					sprite.modulate = Color(0.6, 0.6, 1.0)  # Blue vulnerability
 				else:
-					sprite.modulate = Color.WHITE
+					sprite.modulate = get_restore_color()
 			
 			# Return to patrol after cooldown
 			if state_timer >= individual_cooldown_time:
 				ai_state = AIState.PATROL
 				state_timer = 0.0
 				if not is_dead:
-					sprite.modulate = Color.WHITE
+					sprite.modulate = get_restore_color()
 				print("🔄 Stone golem ready after ", individual_cooldown_time, " seconds - resuming patrol")
 
 func perform_ground_pound_attack():
@@ -942,7 +946,7 @@ func take_damage(amount: float):
 	# Flash red when hit (only if not dead)
 	if not is_dead:
 		sprite.modulate = Color.RED
-		create_tween().tween_property(sprite, "modulate", Color.WHITE, 0.2)
+		create_tween().tween_property(sprite, "modulate", get_restore_color(), 0.2)
 
 func update_health_bar():
 	if health_bar:
@@ -990,4 +994,12 @@ func apply_elite_modulation():
 	# Apply purple tint for elite skeletons
 	if sprite:
 		sprite.modulate = Color(0.8, 0.3, 0.8, 1.0)  # Purple tint
-		print("Elite skeleton purple tint applied") 
+		# Store the elite color for restoration after hit flashes
+		sprite.set_meta("elite_color", Color(0.8, 0.3, 0.8, 1.0))
+		print("Elite skeleton purple tint applied")
+
+func get_restore_color() -> Color:
+	# Get the proper color to restore sprite to (elite color if exists, otherwise white)
+	if sprite and sprite.has_meta("elite_color"):
+		return sprite.get_meta("elite_color")
+	return Color.WHITE 
