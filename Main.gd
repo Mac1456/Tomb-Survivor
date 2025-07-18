@@ -300,122 +300,78 @@ func create_large_stone_statue(parent: Node2D, pos: Vector2):
 	var collision = CollisionShape2D.new()
 	var shape = RectangleShape2D.new()
 	
-	# Large stone statue for center - even bigger and more imposing
-	var size = Vector2(120, 160)  # Much bigger for center placement
+	# Large stone statue for center - detailed SVG asset
+	var size = Vector2(120, 160)
 	shape.size = size
 	collision.position = Vector2(size.x / 2, size.y / 2)
 	collision.shape = shape
 	
-	# Base (stone platform) - proportionally bigger
-	var base = ColorRect.new()
-	base.size = Vector2(size.x, 30)
-	base.position = Vector2(0, size.y - 30)
-	base.color = Color(0.4, 0.35, 0.3, 1.0)  # Dark brown stone
-	barrier.add_child(base)
+	# Load detailed stone statue SVG
+	var sprite = Sprite2D.new()
+	var texture = load("res://assets/environments/stone_statue.svg")
+	if texture:
+		sprite.texture = texture
+		sprite.position = Vector2(size.x / 2, size.y / 2)  # Center the sprite
+		print("✨ Loaded detailed stone statue SVG")
+	else:
+		print("❌ Failed to load stone statue SVG, using fallback")
+		# Fallback to simple visual if SVG fails
+		var fallback = ColorRect.new()
+		fallback.size = size
+		fallback.color = Color(0.5, 0.45, 0.4, 1.0)
+		barrier.add_child(fallback)
 	
-	# Main statue body - proportionally bigger
-	var body = ColorRect.new()
-	body.size = Vector2(size.x - 30, size.y - 30)
-	body.position = Vector2(15, 0)
-	body.color = Color(0.5, 0.45, 0.4, 1.0)  # Light stone
-	barrier.add_child(body)
-	
-	# Shadow/depth effect - proportionally bigger
-	var shadow = ColorRect.new()
-	shadow.size = Vector2(size.x - 30, size.y - 30)
-	shadow.position = Vector2(22, 8)
-	shadow.color = Color(0.3, 0.25, 0.2, 0.8)  # Darker shadow
-	barrier.add_child(shadow)
-	
-	# Face details - proportionally bigger
-	var face = ColorRect.new()
-	face.size = Vector2(45, 65)
-	face.position = Vector2(37, 25)
-	face.color = Color(0.45, 0.4, 0.35, 1.0)  # Slightly darker for face
-	barrier.add_child(face)
-	
-	# Eyes - proportionally bigger
-	var left_eye = ColorRect.new()
-	left_eye.size = Vector2(8, 10)
-	left_eye.position = Vector2(45, 45)
-	left_eye.color = Color(0.2, 0.2, 0.2, 1.0)  # Dark eyes
-	barrier.add_child(left_eye)
-	
-	var right_eye = ColorRect.new()
-	right_eye.size = Vector2(8, 10)
-	right_eye.position = Vector2(58, 45)
-	right_eye.color = Color(0.2, 0.2, 0.2, 1.0)  # Dark eyes
-	barrier.add_child(right_eye)
+	barrier.add_child(sprite)
 	
 	# Set collision properties
 	barrier.collision_layer = 2
 	barrier.collision_mask = 0
 	barrier.add_child(collision)
 	barrier.position = pos
+	barrier.name = "StoneStatue"
 	parent.add_child(barrier)
 	
 	entity_count += 1
+	print("✨ Created enhanced stone statue at ", pos)
 
 func create_small_tombstone(parent: Node2D, pos: Vector2):
 	var barrier = StaticBody2D.new()
 	var collision = CollisionShape2D.new()
 	var shape = RectangleShape2D.new()
 	
-	# Smaller tombstone for center
-	var size = Vector2(50, 70)  # Smaller than before
+	# Small tombstone - detailed SVG asset
+	var size = Vector2(50, 70)
 	shape.size = size
 	collision.position = Vector2(size.x / 2, size.y / 2)
 	collision.shape = shape
 	
-	# Base (stone platform)
-	var base = ColorRect.new()
-	base.size = Vector2(size.x + 10, 15)
-	base.position = Vector2(-5, size.y - 15)
-	base.color = Color(0.35, 0.3, 0.25, 1.0)  # Very dark stone
-	barrier.add_child(base)
+	# Load detailed tombstone SVG
+	var sprite = Sprite2D.new()
+	var texture = load("res://assets/environments/tombstone.svg")
+	if texture:
+		sprite.texture = texture
+		sprite.position = Vector2(size.x / 2, size.y / 2)  # Center the sprite
+		print("✨ Loaded detailed tombstone SVG")
+	else:
+		print("❌ Failed to load tombstone SVG, using fallback")
+		# Fallback to simple visual if SVG fails
+		var fallback = ColorRect.new()
+		fallback.size = size
+		fallback.color = Color(0.45, 0.4, 0.35, 1.0)
+		barrier.add_child(fallback)
 	
-	# Main tombstone body
-	var tombstone = ColorRect.new()
-	tombstone.size = Vector2(size.x, size.y - 15)
-	tombstone.position = Vector2(0, 0)
-	tombstone.color = Color(0.45, 0.4, 0.35, 1.0)  # Light stone
-	barrier.add_child(tombstone)
-	
-	# Shadow/depth effect
-	var shadow = ColorRect.new()
-	shadow.size = Vector2(size.x, size.y - 15)
-	shadow.position = Vector2(4, 4)
-	shadow.color = Color(0.3, 0.25, 0.2, 0.7)  # Shadow
-	barrier.add_child(shadow)
-	
-	# Rounded top (tombstone style)
-	var top = ColorRect.new()
-	top.size = Vector2(size.x - 10, 15)
-	top.position = Vector2(5, 0)
-	top.color = Color(0.5, 0.45, 0.4, 1.0)  # Lighter top
-	barrier.add_child(top)
-	
-	# Cross symbol on tombstone
-	var cross_vertical = ColorRect.new()
-	cross_vertical.size = Vector2(3, 20)
-	cross_vertical.position = Vector2(23, 20)
-	cross_vertical.color = Color(0.25, 0.2, 0.15, 1.0)  # Dark cross
-	barrier.add_child(cross_vertical)
-	
-	var cross_horizontal = ColorRect.new()
-	cross_horizontal.size = Vector2(12, 3)
-	cross_horizontal.position = Vector2(19, 28)
-	cross_horizontal.color = Color(0.25, 0.2, 0.15, 1.0)  # Dark cross
-	barrier.add_child(cross_horizontal)
+	barrier.add_child(sprite)
 	
 	# Set collision properties
 	barrier.collision_layer = 2
 	barrier.collision_mask = 0
 	barrier.add_child(collision)
 	barrier.position = pos
+	barrier.name = "Tombstone"
 	parent.add_child(barrier)
 	
 	entity_count += 1
+	print("✨ Created enhanced tombstone at ", pos)
 
 # Old barrier creation functions removed - using only large stone statues and small tombstones
 
