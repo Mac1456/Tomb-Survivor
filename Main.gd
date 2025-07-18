@@ -79,6 +79,13 @@ var boss_name_label: Label = null
 var boss_ui_canvas: CanvasLayer = null
 var boss_is_active: bool = false
 
+# HUD Cooldown System
+var hud_canvas: CanvasLayer = null
+var hud_container: Control = null
+var cooldown_icons: Dictionary = {}
+var cooldown_progress_bars: Dictionary = {}
+var cooldown_labels: Dictionary = {}
+
 # Performance tracking
 var entity_count: int = 0
 var frame_time_accumulator: float = 0.0
@@ -204,6 +211,7 @@ func setup_performance_optimized_game():
 	create_camera()
 	create_combat_containers()
 	create_boss_ui()
+	create_hud_cooldown_system()
 	
 	print("Step 3 systems initialized successfully!")
 	print("Selected character: ", selected_character.name)
@@ -985,6 +993,11 @@ func update_projectiles(delta):
 				collision_radius = 30.0  # Larger collision for large orbs
 			
 			if player and projectile.position.distance_to(player.position) < collision_radius:
+				# Check if player is invincible (dodging) - projectiles pass through
+				if player.is_invincible:
+					print("💫 Projectile passed through invincible player!")
+					continue  # Projectile continues without being destroyed
+				
 				if player.has_method("take_damage"):
 					player.take_damage(damage)
 					print("🔮 Projectile hit player for ", damage, " damage!")
@@ -1094,6 +1107,9 @@ func _process(delta):
 		else:
 			print("Performance Good: FPS =", fps, " Entities =", entity_count)
 		frame_time_accumulator = 0.0
+	
+	# Update HUD cooldown indicators
+	update_hud_cooldowns()
 
 # Player signal handlers
 func _on_player_health_changed(new_health: float, max_health: float):
@@ -1226,6 +1242,165 @@ func hide_boss_health_bar():
 		boss_is_active = false
 		current_boss = null
 		print("Boss health bar hidden")
+
+func create_hud_cooldown_system():
+	print("Creating HUD cooldown indicator system...")
+	
+	# Create CanvasLayer for HUD overlay
+	hud_canvas = CanvasLayer.new()
+	hud_canvas.name = "HUDCanvas"
+	hud_canvas.layer = 5  # Lower than boss UI (10) but above game world
+	add_child(hud_canvas)
+	
+	# Create HUD container positioned at bottom left
+	hud_container = Control.new()
+	hud_container.name = "HUDContainer"
+	hud_container.position = Vector2(20, 0)  # 20px margin from left edge
+	hud_container.size = Vector2(300, 150)  # Enough space for 4 cooldown icons
+	hud_canvas.add_child(hud_container)
+	
+	# Position at bottom of screen with margin
+	var viewport_size = get_viewport().get_visible_rect().size
+	hud_container.position.y = viewport_size.y - 170  # 170px from bottom to fit icons + margins
+	
+	# Create cooldown icons for each ability
+	create_cooldown_icon("dodge", "Dodge (Space)", Vector2(0, 0), Color.GREEN)
+	create_cooldown_icon("special", "Special (RClick)", Vector2(0, 40), Color.BLUE) 
+	create_cooldown_icon("ultimate", "Ultimate (R)", Vector2(0, 80), Color.PURPLE)
+	create_cooldown_icon("primary", "Primary Attack", Vector2(0, 120), Color.ORANGE)
+	
+	print("HUD cooldown system created successfully!")
+
+func create_cooldown_icon(ability_name: String, display_name: String, position: Vector2, color: Color):
+	# Create container for this cooldown icon
+	var icon_container = Control.new()
+	icon_container.name = ability_name + "_container"
+	icon_container.position = position
+	icon_container.size = Vector2(200, 35)
+	hud_container.add_child(icon_container)
+	
+	# Create background for the icon
+	var background = ColorRect.new()
+	background.name = ability_name + "_background"
+	background.size = Vector2(32, 32)
+	background.color = Color(0.2, 0.2, 0.2, 0.8)  # Dark semi-transparent background
+	icon_container.add_child(background)
+	
+	# Create the actual icon/indicator
+	var icon = ColorRect.new()
+	icon.name = ability_name + "_icon"
+	icon.size = Vector2(28, 28)
+	icon.position = Vector2(2, 2)  # Slight inset from background
+	icon.color = color
+	background.add_child(icon)
+	cooldown_icons[ability_name] = icon
+	
+	# Create progress bar for cooldown visualization
+	var progress_bar = ProgressBar.new()
+	progress_bar.name = ability_name + "_progress"
+	progress_bar.position = Vector2(2, 2)
+	progress_bar.size = Vector2(28, 28)
+	progress_bar.min_value = 0.0
+	progress_bar.max_value = 1.0
+	progress_bar.value = 1.0  # Start ready (full)
+	progress_bar.show_percentage = false
+	
+	# Style the progress bar with circular/overlay appearance
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(1.0, 1.0, 1.0, 0.3)  # Semi-transparent white overlay
+	progress_bar.add_theme_stylebox_override("fill", style_box)
+	
+	var bg_style = StyleBoxFlat.new()
+	bg_style.bg_color = Color.TRANSPARENT  # Transparent background
+	progress_bar.add_theme_stylebox_override("background", bg_style)
+	
+	background.add_child(progress_bar)
+	cooldown_progress_bars[ability_name] = progress_bar
+	
+	# Create label for ability name
+	var label = Label.new()
+	label.name = ability_name + "_label" 
+	label.position = Vector2(40, 6)  # To the right of the icon
+	label.size = Vector2(150, 20)
+	label.text = display_name
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color.WHITE)
+	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	icon_container.add_child(label)
+	cooldown_labels[ability_name] = label
+	
+	print("Created cooldown icon for: ", ability_name)
+
+func update_hud_cooldowns():
+	if not player or not hud_container:
+		return
+	
+	# Update dodge cooldown
+	var dodge_cooldown = player.dodge_roll_cooldown_timer
+	var dodge_max = 1.0  # 1 second cooldown
+	update_cooldown_display("dodge", dodge_cooldown, dodge_max)
+	
+	# Update special ability cooldown  
+	var special_cooldown = player.special_ability_timer
+	var special_max = get_special_ability_max_cooldown()
+	update_cooldown_display("special", special_cooldown, special_max)
+	
+	# Update ultimate ability cooldown
+	var ultimate_cooldown = player.ultimate_ability_timer  
+	var ultimate_max = 15.0  # 15 second cooldown
+	update_cooldown_display("ultimate", ultimate_cooldown, ultimate_max)
+	
+	# Update primary attack cooldown (only for characters that have it)
+	var primary_cooldown = player.primary_attack_timer
+	var primary_max = get_primary_attack_max_cooldown()
+	if primary_max > 0:
+		update_cooldown_display("primary", primary_cooldown, primary_max)
+		cooldown_icons["primary"].get_parent().visible = true
+	else:
+		cooldown_icons["primary"].get_parent().visible = false  # Hide for characters without primary cooldown
+
+func get_special_ability_max_cooldown() -> float:
+	if not player or not player.character_data:
+		return 2.0  # Default
+	
+	match player.character_data.name:
+		"Wizard":
+			return 1.5
+		"Huntress": 
+			return 0.8
+		_:
+			return 2.0
+
+func get_primary_attack_max_cooldown() -> float:
+	if not player or not player.character_data:
+		return 0.0
+	
+	match player.character_data.name:
+		"Wizard":
+			return 1.0
+		"Berserker":
+			return 1.2
+		_:
+			return 0.0  # Knight and Huntress have no primary cooldown
+
+func update_cooldown_display(ability_name: String, current_cooldown: float, max_cooldown: float):
+	if not cooldown_progress_bars.has(ability_name) or not cooldown_icons.has(ability_name):
+		return
+	
+	var progress_bar = cooldown_progress_bars[ability_name]
+	var icon = cooldown_icons[ability_name]
+	
+	if current_cooldown <= 0:
+		# Ability ready
+		progress_bar.value = 1.0  # Full bar = ready
+		icon.modulate = Color.WHITE  # Full brightness
+	else:
+		# Ability on cooldown
+		var progress = 1.0 - (current_cooldown / max_cooldown)  # Inverted so bar fills as cooldown completes
+		progress_bar.value = progress
+		icon.modulate = Color(0.5, 0.5, 0.5, 0.7)  # Dimmed while on cooldown
 
 func spawn_blue_witch_boss():
 	print("Spawning Blue Witch Boss...")

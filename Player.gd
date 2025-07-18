@@ -27,12 +27,17 @@ var dodge_roll_cooldown_timer: float = 0.0
 var dodge_roll_direction: Vector2 = Vector2.ZERO
 var is_dodge_rolling: bool = false
 
+# Invincibility frames during dodge
+var is_invincible: bool = false
+var original_collision_mask: int = 0
+
 # Player state
 var facing_direction: Vector2 = Vector2.RIGHT
 var is_alive: bool = true
 
 # Custom effects
 var dodge_effect_sprite: AnimatedSprite2D = null
+var invincibility_tween: Tween = null
 
 # Node references
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
@@ -572,7 +577,9 @@ func handle_dodge_roll(delta):
 	
 	if dodge_roll_timer <= 0:
 		is_dodge_rolling = false
-		print("Dodge roll ended")
+		is_invincible = false  # Disable invincibility frames
+		stop_invincibility_visual_feedback()  # Stop visual feedback
+		print("Dodge roll ended - invincibility frames disabled")
 
 func update_timers(delta):
 	# Update ability cooldowns
@@ -842,6 +849,9 @@ func dodge_roll():
 	dodge_roll_timer = 0.3  # 0.3 second duration
 	dodge_roll_cooldown_timer = 1.0  # 1 second cooldown
 	
+	# Enable invincibility frames during dodge
+	is_invincible = true
+	
 	# Set direction (use facing direction or movement direction)
 	dodge_roll_direction = facing_direction
 	if dodge_roll_direction == Vector2.ZERO:
@@ -849,6 +859,9 @@ func dodge_roll():
 	
 	# Create custom dodge effect
 	create_dodge_effect()
+	
+	# Apply visual feedback for invincibility
+	start_invincibility_visual_feedback()
 	
 	# Play dodge sound
 	ability_used.emit("dodge_roll")
@@ -874,6 +887,30 @@ func create_dodge_effect():
 func _on_dodge_effect_finished():
 	if dodge_effect_sprite:
 		dodge_effect_sprite.visible = false
+
+func start_invincibility_visual_feedback():
+	# Create pulsing transparency effect during invincibility frames
+	if animated_sprite:
+		# Stop any existing invincibility tween
+		if invincibility_tween:
+			invincibility_tween.kill()
+		
+		# Create new tween for invincibility effect
+		invincibility_tween = create_tween()
+		invincibility_tween.set_loops()  # Loop indefinitely
+		invincibility_tween.tween_property(animated_sprite, "modulate:a", 0.5, 0.1)
+		invincibility_tween.tween_property(animated_sprite, "modulate:a", 1.0, 0.1)
+		print("💫 Invincibility visual feedback started")
+
+func stop_invincibility_visual_feedback():
+	# Stop the invincibility tween and restore normal transparency
+	if invincibility_tween:
+		invincibility_tween.kill()
+		invincibility_tween = null
+	
+	if animated_sprite:
+		animated_sprite.modulate.a = 1.0  # Restore full opacity
+		print("💫 Invincibility visual feedback stopped")
 
 # Character-specific special attack functions
 func perform_wizard_special_attack():
@@ -912,6 +949,11 @@ func perform_huntress_special_attack():
 
 func take_damage(damage: float):
 	if not is_alive:
+		return
+	
+	# Check for invincibility frames during dodge
+	if is_invincible:
+		print("💫 Damage blocked by invincibility frames!")
 		return
 	
 	# Apply armor reduction
