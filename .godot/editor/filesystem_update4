@@ -3,3 +3,6 @@ res://Enemy.gd
 res://Main.gd
 res://BlueBoss.tscn
 res://BlueBoss.gd
+res://CharacterData.gd
+res://CharacterSelect.gd
+res://Player.gd

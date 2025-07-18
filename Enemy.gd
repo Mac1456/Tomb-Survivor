@@ -32,6 +32,7 @@ var attack_damage: float
 var attack_range: float
 var attack_cooldown: float
 var movement_speed: float
+var is_dead: bool = false
 
 # Hades-style AI variables
 var target_player: Node2D = null
@@ -50,7 +51,7 @@ var windup_timer: float = 0.0
 var individual_cooldown_time: float = 0.0
 
 # Visual and collision components
-var sprite: Sprite2D
+var sprite: Node2D
 var health_bar_container: Node2D
 var health_bar: ColorRect
 var collision_shape: CollisionShape2D
@@ -82,16 +83,14 @@ const BASE_ENEMY_STATS = {
 		"damage": 15.0,
 		"speed": 70.0,
 		"attack_cooldown": SWORD_COOLDOWN_TIME,
-		"attack_range": SWORD_ATTACK_RANGE,
-		"sprite_path": "res://assets/skeleton_sword.svg"
+		"attack_range": SWORD_ATTACK_RANGE
 	},
 	EnemyType.ARCHER_SKELETON: {
 		"health": 25.0,
 		"damage": 24.0,
 		"speed": 80.0,
 		"attack_cooldown": ARCHER_COOLDOWN_TIME,
-		"attack_range": 180.0,
-		"sprite_path": "res://assets/skeleton_archer.svg"
+		"attack_range": 180.0
 	}
 }
 
@@ -99,9 +98,25 @@ func _ready():
 	# Set up collision
 	collision_shape = CollisionShape2D.new()
 	var shape = RectangleShape2D.new()
-	shape.size = Vector2(20, 20)
+	
+	# Set collision size based on skeleton type and sprite scaling
+	match enemy_type:
+		EnemyType.SWORD_SKELETON:
+			# Sword skeletons: 24x30 sprite * 1.5 scale = 36x45 visual
+			# Use slightly smaller collision for better gameplay
+			shape.size = Vector2(30, 40)
+		EnemyType.ARCHER_SKELETON:
+			# Archer skeletons: 24x30 sprite * 1.5 scale = 36x45 visual
+			# Use slightly smaller collision for better gameplay
+			shape.size = Vector2(28, 38)
+		_:
+			# Default collision for other enemy types
+			shape.size = Vector2(20, 20)
+	
 	collision_shape.shape = shape
 	add_child(collision_shape)
+	
+	print("✨ Set collision size: ", shape.size, " for ", EnemyType.keys()[enemy_type])
 	
 	# Set collision layers
 	collision_layer = 4  # Enemy layer
@@ -130,10 +145,7 @@ func initialize_enemy(type: EnemyType, scaling: float = 1.0):
 	# Apply scaling to stats
 	current_stats = {}
 	for key in base_stats:
-		if key == "sprite_path":
-			current_stats[key] = base_stats[key]
-		else:
-			current_stats[key] = base_stats[key] * scale_factor
+		current_stats[key] = base_stats[key] * scale_factor
 	
 	# Set current stats
 	max_health = current_stats.health
@@ -151,16 +163,151 @@ func initialize_enemy(type: EnemyType, scaling: float = 1.0):
 	print("   Health: ", max_health, " Damage: ", attack_damage, " Speed: ", movement_speed)
 
 func create_sprite():
-	sprite = Sprite2D.new()
-	sprite.texture = load(current_stats.sprite_path)
-	sprite.scale = Vector2(1.0, 1.0)
-	add_child(sprite)
+	# Create AnimatedSprite2D for multi-frame animations
+	var animated_sprite = AnimatedSprite2D.new()
+	animated_sprite.name = "AnimatedSprite2D"
+	
+	# Set up animation frames based on enemy type
+	var sprite_frames = SpriteFrames.new()
+	setup_skeleton_animations(sprite_frames)
+	
+	animated_sprite.sprite_frames = sprite_frames
+	animated_sprite.play("idle")
+	animated_sprite.scale = Vector2(1.5, 1.5)  # Scale up for better visibility
+	
+	# Store reference as sprite for backward compatibility
+	sprite = animated_sprite
+	add_child(animated_sprite)
+	
+	print("✨ Created enhanced skeleton animations for ", EnemyType.keys()[enemy_type])
+
+func setup_skeleton_animations(sprite_frames: SpriteFrames):
+	match enemy_type:
+		EnemyType.SWORD_SKELETON:
+			setup_sword_skeleton_animations(sprite_frames)
+		EnemyType.ARCHER_SKELETON:
+			setup_archer_skeleton_animations(sprite_frames)
+		_:
+			print("No enhanced animations for enemy type: ", EnemyType.keys()[enemy_type])
+
+func setup_sword_skeleton_animations(sprite_frames: SpriteFrames):
+	# Setup idle animation (6 FPS for menacing presence)
+	sprite_frames.add_animation("idle")
+	sprite_frames.set_animation_speed("idle", 6.0)
+	sprite_frames.set_animation_loop("idle", true)
+	
+	for i in range(1, 4):  # 3 frames
+		var idle_texture = load("res://assets/enemies/skeletons/sword_skeleton/sword_skeleton_idle_%02d.svg" % i)
+		if idle_texture:
+			sprite_frames.add_frame("idle", idle_texture)
+	print("Loaded Sword Skeleton idle animation (3 frames)")
+	
+	# Setup move animation (8 FPS for walking)
+	sprite_frames.add_animation("move")
+	sprite_frames.set_animation_speed("move", 8.0)
+	sprite_frames.set_animation_loop("move", true)
+	
+	for i in range(1, 5):  # 4 frames
+		var move_texture = load("res://assets/enemies/skeletons/sword_skeleton/sword_skeleton_move_%02d.svg" % i)
+		if move_texture:
+			sprite_frames.add_frame("move", move_texture)
+	print("Loaded Sword Skeleton move animation (4 frames)")
+	
+	# Setup attack animation (12 FPS for impact)
+	sprite_frames.add_animation("attack")
+	sprite_frames.set_animation_speed("attack", 12.0)
+	sprite_frames.set_animation_loop("attack", false)
+	
+	var attack_texture = load("res://assets/enemies/skeletons/sword_skeleton/sword_skeleton_attack_01.svg")
+	if attack_texture:
+		sprite_frames.add_frame("attack", attack_texture)
+	print("Loaded Sword Skeleton attack animation")
+	
+	# Setup hit animation (8 FPS for impact reaction)
+	sprite_frames.add_animation("hit")
+	sprite_frames.set_animation_speed("hit", 8.0)
+	sprite_frames.set_animation_loop("hit", false)
+	
+	var hit_texture = load("res://assets/enemies/skeletons/sword_skeleton/sword_skeleton_hit.svg")
+	if hit_texture:
+		sprite_frames.add_frame("hit", hit_texture)
+	print("Loaded Sword Skeleton hit animation")
+	
+	# Setup death animation (6 FPS for dramatic death)
+	sprite_frames.add_animation("death")
+	sprite_frames.set_animation_speed("death", 6.0)
+	sprite_frames.set_animation_loop("death", false)
+	
+	var death_texture = load("res://assets/enemies/skeletons/sword_skeleton/sword_skeleton_death.svg")
+	if death_texture:
+		sprite_frames.add_frame("death", death_texture)
+	print("Loaded Sword Skeleton death animation")
+
+func setup_archer_skeleton_animations(sprite_frames: SpriteFrames):
+	# Setup idle animation (6 FPS for alert stance)
+	sprite_frames.add_animation("idle")
+	sprite_frames.set_animation_speed("idle", 6.0)
+	sprite_frames.set_animation_loop("idle", true)
+	
+	var idle_texture = load("res://assets/enemies/skeletons/archer_skeleton/archer_skeleton_idle.svg")
+	if idle_texture:
+		sprite_frames.add_frame("idle", idle_texture)
+	print("Loaded Archer Skeleton idle animation")
+	
+	# Setup move animation (2-frame walking cycle)
+	sprite_frames.add_animation("move")
+	sprite_frames.set_animation_speed("move", 8.0)
+	sprite_frames.set_animation_loop("move", true)
+	
+	for i in range(1, 3):  # 2 frames
+		var move_texture = load("res://assets/enemies/skeletons/archer_skeleton/archer_skeleton_move_%02d.svg" % i)
+		if move_texture:
+			sprite_frames.add_frame("move", move_texture)
+	print("Loaded Archer Skeleton move animation (", sprite_frames.get_frame_count("move"), " frames)")
+	
+	# Setup attack animation (10 FPS for bow draw and release)
+	sprite_frames.add_animation("attack")
+	sprite_frames.set_animation_speed("attack", 10.0)
+	sprite_frames.set_animation_loop("attack", false)
+	
+	var attack_texture = load("res://assets/enemies/skeletons/archer_skeleton/archer_skeleton_attack.svg")
+	if attack_texture:
+		sprite_frames.add_frame("attack", attack_texture)
+	print("Loaded Archer Skeleton attack animation")
+	
+	# Setup hit animation
+	sprite_frames.add_animation("hit")
+	sprite_frames.set_animation_speed("hit", 8.0)
+	sprite_frames.set_animation_loop("hit", false)
+	
+	var hit_texture = load("res://assets/enemies/skeletons/archer_skeleton/archer_skeleton_hit.svg")
+	if hit_texture:
+		sprite_frames.add_frame("hit", hit_texture)
+	print("Loaded Archer Skeleton hit animation")
+	
+	# Setup death animation
+	sprite_frames.add_animation("death")
+	sprite_frames.set_animation_speed("death", 6.0)
+	sprite_frames.set_animation_loop("death", false)
+	
+	var death_texture = load("res://assets/enemies/skeletons/archer_skeleton/archer_skeleton_death.svg")
+	if death_texture:
+		sprite_frames.add_frame("death", death_texture)
+	print("Loaded Archer Skeleton death animation")
 
 func create_health_bar():
 	# Create health bar container
 	health_bar_container = Node2D.new()
 	health_bar_container.name = "HealthBarContainer"
-	health_bar_container.position = Vector2(0, -25)
+	
+	# Position health bar based on enemy type and sprite size
+	match enemy_type:
+		EnemyType.SWORD_SKELETON, EnemyType.ARCHER_SKELETON:
+			# Enhanced skeletons are taller (45 pixels scaled), position bar higher
+			health_bar_container.position = Vector2(0, -35)
+		_:
+			# Default position for other enemy types
+			health_bar_container.position = Vector2(0, -25)
 	
 	# Background bar (dark red)
 	var bg_bar = ColorRect.new()
@@ -180,7 +327,7 @@ func create_health_bar():
 	add_child(health_bar_container)
 
 func _physics_process(delta):
-	if not target_player or not is_instance_valid(target_player):
+	if not target_player or not is_instance_valid(target_player) or is_dead:
 		return
 	
 	state_timer += delta
@@ -195,11 +342,58 @@ func _physics_process(delta):
 	# Move the enemy
 	move_and_slide()
 	
-	# Update sprite facing direction
+	# Update sprite facing direction and animations
 	if velocity.x < 0:
 		sprite.flip_h = true
 	elif velocity.x > 0:
 		sprite.flip_h = false
+	
+	# Update animations based on state and movement
+	update_skeleton_animations()
+
+func update_skeleton_animations():
+	if not sprite or not sprite.has_method("play") or is_dead:
+		return
+	
+	var animated_sprite = sprite as AnimatedSprite2D
+	if not animated_sprite:
+		return
+	
+	var current_anim = animated_sprite.animation
+	var should_play_anim = ""
+	
+	# Determine animation based on AI state
+	match ai_state:
+		AIState.IDLE:
+			should_play_anim = "idle"
+		AIState.PATROL:
+			should_play_anim = "move" if velocity.length() > 10 else "idle"
+		AIState.CHASE:
+			should_play_anim = "move"
+		AIState.WINDUP:
+			should_play_anim = "idle"  # Windup uses idle with flashing
+		AIState.ATTACK:
+			should_play_anim = "attack"
+		AIState.COOLDOWN:
+			should_play_anim = "move" if velocity.length() > 10 else "idle"  # Fixed: Check velocity during cooldown
+		AIState.REPOSITION:
+			should_play_anim = "move"
+	
+	# Only change animation if different and not playing a one-shot animation
+	if should_play_anim != current_anim and not (current_anim in ["attack", "hit", "death"] and animated_sprite.is_playing()):
+		animated_sprite.play(should_play_anim)
+
+func play_hit_animation():
+	if sprite and sprite.has_method("play") and not is_dead:
+		var animated_sprite = sprite as AnimatedSprite2D
+		if animated_sprite:
+			animated_sprite.play("hit")
+
+func play_death_animation():
+	if sprite and sprite.has_method("play"):
+		var animated_sprite = sprite as AnimatedSprite2D
+		if animated_sprite:
+			animated_sprite.play("death")
 
 # Hades-style AI for sword skeletons: Idle → Patrol → Chase → Windup → Attack → Cooldown
 func update_sword_skeleton_hades_ai(delta):
@@ -294,17 +488,19 @@ func update_sword_skeleton_hades_ai(delta):
 			velocity = Vector2.ZERO
 			windup_timer += delta
 			
-			# Flash sprite to show windup
-			if int(windup_timer * 8) % 2 == 0:
-				sprite.modulate = Color.RED
-			else:
-				sprite.modulate = Color.WHITE
+			# Flash sprite to show windup (only if not dead)
+			if not is_dead:
+				if int(windup_timer * 8) % 2 == 0:
+					sprite.modulate = Color.RED
+				else:
+					sprite.modulate = Color.WHITE
 			
 			# After windup, commit to attack
 			if windup_timer >= SWORD_WINDUP_TIME:
 				ai_state = AIState.ATTACK
 				state_timer = 0.0
-				sprite.modulate = Color.WHITE
+				if not is_dead:
+					sprite.modulate = Color.WHITE
 				print("💥 Sword skeleton executing dash attack!")
 		
 		AIState.ATTACK:
@@ -328,17 +524,19 @@ func update_sword_skeleton_hades_ai(delta):
 			# Recovery phase - vulnerable and slow
 			velocity = Vector2.ZERO
 			
-			# Flash sprite to show vulnerability
-			if int(state_timer * 4) % 2 == 0:
-				sprite.modulate = Color(0.7, 0.7, 1.0)  # Slightly blue
-			else:
-				sprite.modulate = Color.WHITE
+			# Flash sprite to show vulnerability (only if not dead)
+			if not is_dead:
+				if int(state_timer * 4) % 2 == 0:
+					sprite.modulate = Color(0.7, 0.7, 1.0)  # Slightly blue
+				else:
+					sprite.modulate = Color.WHITE
 			
 			# Return to patrol after individual cooldown time
 			if state_timer >= individual_cooldown_time:
 				ai_state = AIState.PATROL
 				state_timer = 0.0
-				sprite.modulate = Color.WHITE
+				if not is_dead:
+					sprite.modulate = Color.WHITE
 				print("🔄 Sword skeleton ready after ", individual_cooldown_time, " seconds - returning to patrol")
 
 # Hades-style AI for archer skeletons: Idle → Patrol → Reposition → Windup → Attack → Cooldown
@@ -402,17 +600,19 @@ func update_archer_skeleton_hades_ai(delta):
 			velocity = Vector2.ZERO
 			windup_timer += delta
 			
-			# Flash sprite to show windup
-			if int(windup_timer * 6) % 2 == 0:
-				sprite.modulate = Color.YELLOW
-			else:
-				sprite.modulate = Color.WHITE
+			# Flash sprite to show windup (only if not dead)
+			if not is_dead:
+				if int(windup_timer * 6) % 2 == 0:
+					sprite.modulate = Color.YELLOW
+				else:
+					sprite.modulate = Color.WHITE
 			
 			# After windup, commit to attack
 			if windup_timer >= ARCHER_WINDUP_TIME:
 				ai_state = AIState.ATTACK
 				state_timer = 0.0
-				sprite.modulate = Color.WHITE
+				if not is_dead:
+					sprite.modulate = Color.WHITE
 				print("💥 Archer skeleton firing arrow!")
 		
 		AIState.ATTACK:
@@ -440,17 +640,19 @@ func update_archer_skeleton_hades_ai(delta):
 			
 			velocity = patrol_direction * movement_speed * 0.3  # Slow patrol during cooldown
 			
-			# Flash sprite to show cooldown
-			if int(state_timer * 3) % 2 == 0:
-				sprite.modulate = Color(0.7, 1.0, 0.7)  # Slightly green
-			else:
-				sprite.modulate = Color.WHITE
+			# Flash sprite to show cooldown (only if not dead)
+			if not is_dead:
+				if int(state_timer * 3) % 2 == 0:
+					sprite.modulate = Color(0.7, 1.0, 0.7)  # Slightly green
+				else:
+					sprite.modulate = Color.WHITE
 			
 			# Return to patrol after individual cooldown time
 			if state_timer >= individual_cooldown_time:
 				ai_state = AIState.PATROL
 				state_timer = 0.0
-				sprite.modulate = Color.WHITE
+				if not is_dead:
+					sprite.modulate = Color.WHITE
 				print("🔄 Archer skeleton ready after ", individual_cooldown_time, " seconds - returning to patrol")
 
 func find_reposition_target():
@@ -476,18 +678,27 @@ func fire_arrow():
 		main_node.create_enemy_arrow(global_position, arrow_direction, attack_damage)
 
 func take_damage(amount: float):
+	if is_dead:
+		return  # Don't take damage if already dead
+	
 	current_health -= amount
 	print("💔 Enemy took ", amount, " damage! Health: ", current_health, "/", max_health)
-	
-	# Flash red when hit
-	sprite.modulate = Color.RED
-	create_tween().tween_property(sprite, "modulate", Color.WHITE, 0.2)
 	
 	# Update health bar
 	update_health_bar()
 	
+	# Check if dead
 	if current_health <= 0:
 		die()
+		return  # Exit immediately after death
+	
+	# Play hit animation only if not dead
+	play_hit_animation()
+	
+	# Flash red when hit (only if not dead)
+	if not is_dead:
+		sprite.modulate = Color.RED
+		create_tween().tween_property(sprite, "modulate", Color.WHITE, 0.2)
 
 func update_health_bar():
 	if health_bar:
@@ -503,10 +714,30 @@ func update_health_bar():
 			health_bar.color = Color(0.8, 0.0, 0.0, 1.0)  # Red
 
 func die():
-	print("💀 Enemy died!")
+	if is_dead:
+		return  # Prevent multiple death calls
 	
-	# Remove from parent
-	queue_free()
+	is_dead = true
+	velocity = Vector2.ZERO  # Stop all movement immediately
+	current_health = 0  # Ensure health is exactly 0
+	
+	print("💀 ", EnemyType.keys()[enemy_type], " has died!")
+	play_death_animation()
+	
+	# Update health bar to show empty
+	update_health_bar()
+	
+	# Notify main scene for cleanup
+	if get_tree().get_first_node_in_group("main").has_method("remove_enemy"):
+		get_tree().get_first_node_in_group("main").remove_enemy(self)
+	
+	# Remove after death animation
+	var timer = Timer.new()
+	timer.wait_time = 1.0
+	timer.one_shot = true
+	timer.timeout.connect(queue_free)
+	add_child(timer)
+	timer.start()
 
 func get_enemy_type_name() -> String:
 	return EnemyType.keys()[enemy_type]

@@ -1,0 +1,83 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Archer Skeleton Hit Animation: Impact Reaction -->
+  
+  <!-- Bow (dropped/loose grip) -->
+  <path d="M 1 12 Q 4 15 1 18" fill="none" stroke="#8B4513" stroke-width="1.2"/>
+  <line x1="1" y1="12" x2="1" y2="18" stroke="#666" stroke-width="0.4"/>
+  
+  <!-- Arrow (falling) -->
+  <line x1="3" y1="16" x2="7" y2="17" stroke="#8B4513" stroke-width="0.8" transform="rotate(15 5 16.5)"/>
+  <path d="M 7 17 L 6 16.5 L 6 17.5 Z" fill="#8B4513" transform="rotate(15 5 16.5)"/>
+  
+  <!-- Skull (detailed, recoiling from impact) -->
+  <circle cx="10" cy="8" r="3.5" fill="#F5F5DC" stroke="#E0E0E0" stroke-width="0.4"/>
+  <circle cx="8.5" cy="7" r="0.8" fill="#000"/>
+  <circle cx="11.5" cy="7" r="0.8" fill="#000"/>
+  <circle cx="8.5" cy="7" r="0.3" fill="#FF0000" opacity="0.8"/>
+  <circle cx="11.5" cy="7" r="0.3" fill="#FF0000" opacity="0.8"/>
+  
+  <!-- Nasal cavity -->
+  <path d="M 10 8.5 L 9.2 10 L 10.8 10 Z" fill="#000"/>
+  
+  <!-- Jaw (grimacing from pain) -->
+  <path d="M 7.5 9.5 Q 10 11.5 12.5 9.5" stroke="#E0E0E0" stroke-width="0.5" fill="none"/>
+  <rect x="8.5" y="10" width="0.3" height="0.8" fill="#F5F5DC"/>
+  <rect x="9.2" y="10" width="0.3" height="0.8" fill="#F5F5DC"/>
+  <rect x="10.5" y="10" width="0.3" height="0.8" fill="#F5F5DC"/>
+  <rect x="11.2" y="10" width="0.3" height="0.8" fill="#F5F5DC"/>
+  
+  <!-- Spine (bent from impact) -->
+  <path d="M 10 11.5 Q 8 15 10 20" stroke="#E0E0E0" stroke-width="0.8" fill="none"/>
+  <circle cx="9" cy="13" r="0.4" fill="#E0E0E0"/>
+  <circle cx="8.5" cy="15" r="0.4" fill="#E0E0E0"/>
+  <circle cx="9" cy="17" r="0.4" fill="#E0E0E0"/>
+  <circle cx="10" cy="19" r="0.4" fill="#E0E0E0"/>
+  
+  <!-- Ribcage (detailed, compressed from impact) -->
+  <ellipse cx="9" cy="15" rx="3.5" ry="2" fill="none" stroke="#E0E0E0" stroke-width="0.6"/>
+  <path d="M 6 13 Q 9 11.5 13 13" stroke="#E0E0E0" stroke-width="0.4" fill="none"/>
+  <path d="M 6.3 14.5 Q 9 13 12.7 14.5" stroke="#E0E0E0" stroke-width="0.4" fill="none"/>
+  <path d="M 6.3 16.5 Q 9 15 12.7 16.5" stroke="#E0E0E0" stroke-width="0.4" fill="none"/>
+  <path d="M 6.7 17.8 Q 9 16.5 12.3 17.8" stroke="#E0E0E0" stroke-width="0.4" fill="none"/>
+  
+  <!-- Arms (recoiling from impact) -->
+  <line x1="6" y1="13" x2="1.5" y2="13.5" stroke="#E0E0E0" stroke-width="0.6"/>
+  <line x1="1.5" y1="13.5" x2="0.5" y2="16" stroke="#E0E0E0" stroke-width="0.6"/>
+  <circle cx="1.5" cy="13.5" r="0.5" fill="#E0E0E0"/>
+  <circle cx="0.5" cy="16" r="0.4" fill="#E0E0E0"/>
+  
+  <line x1="12" y1="13" x2="16" y2="16" stroke="#E0E0E0" stroke-width="0.6"/>
+  <line x1="16" y1="16" x2="18" y2="19" stroke="#E0E0E0" stroke-width="0.6"/>
+  <circle cx="16" cy="16" r="0.5" fill="#E0E0E0"/>
+  <circle cx="18" cy="19" r="0.4" fill="#E0E0E0"/>
+  
+  <!-- Pelvis (shifted from impact) -->
+  <ellipse cx="10" cy="20" rx="2.5" ry="1.2" fill="none" stroke="#E0E0E0" stroke-width="0.6"/>
+  
+  <!-- Legs (staggering) -->
+  <line x1="8" y1="20" x2="6" y2="24" stroke="#E0E0E0" stroke-width="0.6"/>
+  <line x1="6" y1="24" x2="4" y2="27" stroke="#E0E0E0" stroke-width="0.6"/>
+  <circle cx="6" cy="24" r="0.5" fill="#E0E0E0"/>
+  
+  <line x1="12" y1="20" x2="15" y2="25" stroke="#E0E0E0" stroke-width="0.6"/>
+  <line x1="15" y1="25" x2="17" y2="28" stroke="#E0E0E0" stroke-width="0.6"/>
+  <circle cx="15" cy="25" r="0.5" fill="#E0E0E0"/>
+  
+  <!-- Feet (unbalanced) -->
+  <ellipse cx="3" cy="27.5" rx="1.5" ry="0.8" fill="#E0E0E0"/>
+  <ellipse cx="18" cy="28.5" rx="1.5" ry="0.8" fill="#E0E0E0"/>
+  
+  <!-- Quiver (tilted from impact) -->
+  <rect x="17.5" y="17.5" width="1" height="4" fill="#654321" stroke="#8B4513" stroke-width="0.3" transform="rotate(15 18 19.5)"/>
+  <line x1="18" y1="17.5" x2="18" y2="16.5" stroke="#8B4513" stroke-width="0.5"/>
+  
+  <!-- Impact effects -->
+  <circle cx="10" cy="8" r="5" fill="none" stroke="#FF0000" stroke-width="0.6" opacity="0.8"/>
+  <circle cx="7" cy="12" r="0.4" fill="#FF0000" opacity="0.7"/>
+  <circle cx="13" cy="14" r="0.4" fill="#FF0000" opacity="0.7"/>
+  <circle cx="5" cy="16" r="0.3" fill="#FF0000" opacity="0.6"/>
+  
+  <!-- Pain indicators -->
+  <circle cx="8" cy="5" r="0.3" fill="#FF0000" opacity="0.9"/>
+  <circle cx="12" cy="5" r="0.3" fill="#FF0000" opacity="0.9"/>
+</svg> 

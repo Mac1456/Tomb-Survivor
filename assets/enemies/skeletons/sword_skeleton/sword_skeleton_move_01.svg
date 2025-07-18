@@ -1,0 +1,76 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sword Skeleton Move Animation Frame 1: Left Leg Forward -->
+  
+  <!-- Sword (swaying with movement) -->
+  <rect x="18.5" y="7.5" width="1.5" height="10" fill="#C0C0C0" stroke="#808080" stroke-width="0.3"/>
+  <rect x="18" y="12.5" width="2.5" height="0.8" fill="#404040"/>
+  <rect x="18.5" y="13.3" width="1.5" height="2.5" fill="#654321"/>
+  <circle cx="19.25" cy="16" r="0.8" fill="#404040"/>
+  
+  <!-- Skull (detailed, slightly forward lean) -->
+  <circle cx="12.3" cy="7.5" r="3.5" fill="#F5F5DC" stroke="#E0E0E0" stroke-width="0.4"/>
+  <circle cx="10.8" cy="6.5" r="0.8" fill="#000"/>
+  <circle cx="13.8" cy="6.5" r="0.8" fill="#000"/>
+  <circle cx="10.8" cy="6.5" r="0.3" fill="#FF0000" opacity="0.6"/>
+  <circle cx="13.8" cy="6.5" r="0.3" fill="#FF0000" opacity="0.6"/>
+  
+  <!-- Nasal cavity -->
+  <path d="M 12.3 8 L 11.5 9.5 L 13.1 9.5 Z" fill="#000"/>
+  
+  <!-- Jaw -->
+  <path d="M 9.8 9 Q 12.3 10.5 14.8 9" stroke="#E0E0E0" stroke-width="0.5" fill="none"/>
+  <rect x="10.8" y="9.3" width="0.3" height="0.8" fill="#F5F5DC"/>
+  <rect x="11.5" y="9.3" width="0.3" height="0.8" fill="#F5F5DC"/>
+  <rect x="12.8" y="9.3" width="0.3" height="0.8" fill="#F5F5DC"/>
+  <rect x="13.5" y="9.3" width="0.3" height="0.8" fill="#F5F5DC"/>
+  
+  <!-- Spine (slight forward lean) -->
+  <path d="M 12.3 11 Q 12.1 15.5 12.2 19.5" stroke="#E0E0E0" stroke-width="0.8" fill="none"/>
+  <circle cx="12.2" cy="12.5" r="0.4" fill="#E0E0E0"/>
+  <circle cx="12.1" cy="14.5" r="0.4" fill="#E0E0E0"/>
+  <circle cx="12.1" cy="16.5" r="0.4" fill="#E0E0E0"/>
+  <circle cx="12.2" cy="18.5" r="0.4" fill="#E0E0E0"/>
+  
+  <!-- Ribcage (detailed, moving) -->
+  <ellipse cx="12.1" cy="14.5" rx="4" ry="2.5" fill="none" stroke="#E0E0E0" stroke-width="0.6"/>
+  <path d="M 8.6 12.5 Q 12.1 11 15.6 12.5" stroke="#E0E0E0" stroke-width="0.4" fill="none"/>
+  <path d="M 8.9 14 Q 12.1 12.7 15.3 14" stroke="#E0E0E0" stroke-width="0.4" fill="none"/>
+  <path d="M 8.9 16 Q 12.1 14.7 15.3 16" stroke="#E0E0E0" stroke-width="0.4" fill="none"/>
+  <path d="M 9.3 17.3 Q 12.1 16.3 14.9 17.3" stroke="#E0E0E0" stroke-width="0.4" fill="none"/>
+  
+  <!-- Arms (bone structure, swinging) -->
+  <line x1="8.1" y1="12.5" x2="5.5" y2="15" stroke="#E0E0E0" stroke-width="0.6"/>
+  <line x1="5.5" y1="15" x2="6.5" y2="18.5" stroke="#E0E0E0" stroke-width="0.6"/>
+  <circle cx="5.5" cy="15" r="0.5" fill="#E0E0E0"/>
+  <circle cx="6.5" cy="18.5" r="0.4" fill="#E0E0E0"/>
+  
+  <line x1="16.1" y1="12.5" x2="18" y2="14.5" stroke="#E0E0E0" stroke-width="0.6"/>
+  <line x1="18" y1="14.5" x2="19.5" y2="17.5" stroke="#E0E0E0" stroke-width="0.6"/>
+  <circle cx="18" cy="14.5" r="0.5" fill="#E0E0E0"/>
+  <circle cx="19.5" cy="17.5" r="0.4" fill="#E0E0E0"/>
+  
+  <!-- Pelvis -->
+  <ellipse cx="12.1" cy="19.5" rx="2.5" ry="1.2" fill="none" stroke="#E0E0E0" stroke-width="0.6"/>
+  
+  <!-- Legs (bone structure, left leg forward) -->
+  <line x1="10.1" y1="19.5" x2="8.5" y2="24" stroke="#E0E0E0" stroke-width="0.6"/>
+  <line x1="8.5" y1="24" x2="7.5" y2="27.5" stroke="#E0E0E0" stroke-width="0.6"/>
+  <circle cx="8.5" cy="24" r="0.5" fill="#E0E0E0"/>
+  
+  <line x1="14.1" y1="19.5" x2="15.5" y2="25.5" stroke="#E0E0E0" stroke-width="0.6"/>
+  <line x1="15.5" y1="25.5" x2="16.5" y2="28.5" stroke="#E0E0E0" stroke-width="0.6"/>
+  <circle cx="15.5" cy="25.5" r="0.5" fill="#E0E0E0"/>
+  
+  <!-- Feet (bone structure, left foot forward) -->
+  <ellipse cx="6.5" cy="28" rx="1.5" ry="0.8" fill="#E0E0E0"/>
+  <ellipse cx="17.5" cy="29" rx="1.5" ry="0.8" fill="#E0E0E0"/>
+  
+  <!-- Motion lines -->
+  <line x1="6" y1="26" x2="4" y2="26" stroke="#E0E0E0" stroke-width="0.3" opacity="0.5"/>
+  <line x1="18" y1="28" x2="20" y2="28" stroke="#E0E0E0" stroke-width="0.3" opacity="0.5"/>
+  
+  <!-- Menacing details -->
+  <circle cx="11.3" cy="4.5" r="0.2" fill="#E0E0E0" opacity="0.7"/>
+  <circle cx="13.3" cy="4.5" r="0.2" fill="#E0E0E0" opacity="0.7"/>
+  <circle cx="15.3" cy="5.5" r="0.2" fill="#E0E0E0" opacity="0.7"/>
+</svg> 
