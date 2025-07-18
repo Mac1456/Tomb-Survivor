@@ -296,15 +296,19 @@ func setup_berserker_animations(sprite_frames: SpriteFrames):
 	print("Loaded Berserker dodge animation (3 frames)")
 	
 	# Setup death animation (8 FPS as per design guide) - single frame for now
-	var death_texture = load("res://assets/characters/berserker/Sprites/berserker_death.svg")
-	if death_texture:
-		sprite_frames.add_animation("death")
-		sprite_frames.set_animation_speed("death", 8.0)
-		sprite_frames.set_animation_loop("death", false)
-		sprite_frames.add_frame("death", death_texture)
-		print("Loaded Berserker death animation")
+	var death_path = "res://assets/characters/berserker/Sprites/berserker_death.svg"
+	if ResourceLoader.exists(death_path):
+		var death_texture = load(death_path)
+		if death_texture:
+			sprite_frames.add_animation("death")
+			sprite_frames.set_animation_speed("death", 8.0)
+			sprite_frames.set_animation_loop("death", false)
+			sprite_frames.add_frame("death", death_texture)
+			print("Loaded Berserker death animation")
+		else:
+			print("Berserker death texture failed to load, skipping")
 	else:
-		print("Berserker death animation not found, skipping")
+		print("Berserker death animation not found (berserker_death.svg missing), skipping")
 	
 	# Keep legacy run animation as alias to move for compatibility
 	sprite_frames.add_animation("run")
@@ -745,9 +749,12 @@ func primary_attack():
 			"Berserker":
 				print("⚔️ Berserker primary attack on cooldown: ", primary_attack_timer)
 				return
-			_:
-				# Knight and Huntress have no primary attack cooldown
-				pass
+			"Knight":
+				print("🗡️ Knight primary attack on cooldown: ", primary_attack_timer)
+				return
+			"Huntress":
+				print("🏹 Huntress primary attack on cooldown: ", primary_attack_timer)
+				return
 	
 	print("Primary attack: ", character_data.primary_attack_type)
 	
@@ -766,19 +773,21 @@ func primary_attack():
 	
 	match character_data.name:
 		"Wizard":
-			primary_attack_timer = 1.0  # 1 second cooldown for wizard
-			print("🔥 Wizard primary attack cooldown set: 1.0 seconds")
+			primary_attack_timer = 0.6  # Reduced from 1.0 to 0.6 seconds - faster attack
+			attack_damage = 55.0 * damage_multiplier  # Increased from 45 to 55 damage - stronger
+			print("🔥 Wizard primary attack cooldown set: 0.6 seconds (faster & stronger)")
 		"Berserker":
-			primary_attack_timer = 1.2  # 1.2 second cooldown for berserker (slower but powerful)
-			attack_damage = 40.0 * damage_multiplier  # Higher damage for berserker
-			print("⚔️ Berserker powerful strike cooldown set: 1.2 seconds")
+			primary_attack_timer = 0.8  # Reduced from 1.2 to 0.8 seconds - shorter cooldown
+			attack_damage = 40.0 * damage_multiplier  # Keep same high damage for berserker
+			print("⚔️ Berserker powerful strike cooldown set: 0.8 seconds (shorter cooldown)")
 		"Knight":
-			# Knight has no cooldown but lower damage (quick slashes)
-			attack_damage = 18.0 * damage_multiplier  # Lower damage for knight
-			print("🗡️ Knight quick slash - no cooldown")
+			primary_attack_timer = 0.3  # Added 0.3 second cooldown - prevent spamming
+			attack_damage = 18.0 * damage_multiplier  # Keep same lower damage for knight
+			print("🗡️ Knight slash cooldown set: 0.3 seconds (added brief cooldown)")
 		"Huntress":
-			# Huntress has no cooldown for primary attack (already differentiated in special)
-			print("🏹 Huntress quick shot - no cooldown")
+			primary_attack_timer = 0.2  # Added 0.2 second cooldown - still fastest but not spammable
+			attack_damage = 22.0 * damage_multiplier  # Keep similar damage for huntress
+			print("🏹 Huntress quick shot cooldown set: 0.2 seconds (fastest attack)")
 	
 	# Play attack sound
 	ability_used.emit("primary_attack")

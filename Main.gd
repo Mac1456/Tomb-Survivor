@@ -591,7 +591,7 @@ func handle_ranged_attack(start_pos: Vector2, damage: float, direction: Vector2)
 		match player.character_data.name:
 			"Wizard":
 				projectile_type = ProjectileType.FIREBALL
-				print("🔥 Wizard firing FIREBALL!")
+				print("🔥 Wizard firing HOMING FIREBALL!")
 			"Huntress":
 				projectile_type = ProjectileType.ARROW
 				print("🏹 Huntress firing ARROW!")
@@ -599,7 +599,14 @@ func handle_ranged_attack(start_pos: Vector2, damage: float, direction: Vector2)
 				projectile_type = ProjectileType.ARROW
 				print("🏹 Default character firing ARROW!")
 	
-	create_projectile(start_pos, direction, damage, projectile_type)
+	var projectile = create_projectile(start_pos, direction, damage, projectile_type)
+	
+	# Add homing abilities for wizard fireballs
+	if player and player.character_data and player.character_data.name == "Wizard" and projectile:
+		projectile.set_meta("homing", true)
+		projectile.set_meta("homing_strength", 2.0)  # Strong homing force
+		projectile.set_meta("max_turn_rate", 3.0)  # Fast turning ability
+		print("🎯 Wizard fireball enhanced with HOMING capabilities!")
 
 func create_projectile(start_pos: Vector2, direction: Vector2, damage: float, projectile_type: ProjectileType):
 	var projectile = RigidBody2D.new()
@@ -918,16 +925,26 @@ func update_projectiles(delta):
 			var homing_strength = projectile.get_meta("homing_strength") if projectile.has_meta("homing_strength") else 1.0
 			var max_turn_rate = projectile.get_meta("max_turn_rate") if projectile.has_meta("max_turn_rate") else 1.0
 			
-			# Find the player for homing
-			if player:
-				var to_player = (player.global_position - projectile.position).normalized()
+			# Determine homing target based on projectile type
+			var is_enemy_projectile = projectile.has_meta("enemy_projectile") and projectile.get_meta("enemy_projectile")
+			var target = null
+			
+			if is_enemy_projectile:
+				# Enemy projectiles home toward player
+				target = player
+			else:
+				# Player projectiles home toward nearest enemy
+				target = find_nearest_enemy_to_position(projectile.position)
+			
+			if target:
+				var to_target = (target.global_position - projectile.position).normalized()
 				var current_direction = velocity.normalized()
 				
-				# Calculate the angle to turn towards player
-				var angle_to_player = current_direction.angle_to(to_player)
+				# Calculate the angle to turn towards target
+				var angle_to_target = current_direction.angle_to(to_target)
 				
 				# Limit turning rate
-				var turn_amount = clamp(angle_to_player, -max_turn_rate * delta, max_turn_rate * delta)
+				var turn_amount = clamp(angle_to_target, -max_turn_rate * delta, max_turn_rate * delta)
 				
 				# Apply homing force
 				var new_direction = current_direction.rotated(turn_amount * homing_strength)
@@ -944,7 +961,8 @@ func update_projectiles(delta):
 						var debug_type = projectile.get_meta("type")
 						if typeof(debug_type) == TYPE_STRING and debug_type == "large_orb":
 							projectile_name = "large orb"
-					print("🎯 ", projectile_name, " homing: distance=", projectile.position.distance_to(player.position), " angle=", rad_to_deg(angle_to_player))
+					var target_name = "player" if is_enemy_projectile else "enemy"
+					print("🎯 ", projectile_name, " homing toward ", target_name, ": distance=", projectile.position.distance_to(target.position), " angle=", rad_to_deg(angle_to_target))
 		
 		projectile.position += velocity * delta
 		
@@ -1098,6 +1116,28 @@ func destroy_projectile(projectile, index: int):
 
 
 # Performance monitoring (less frequent updates)
+var performance_timer: float = 0.0
+
+func find_nearest_enemy_to_position(pos: Vector2) -> Node2D:
+	var nearest_enemy = null
+	var nearest_distance = 999999.0
+	
+	# Search through all enemies
+	for enemy in enemies:
+		if is_instance_valid(enemy) and not enemy.is_dead:
+			var distance = enemy.position.distance_to(pos)
+			if distance < nearest_distance:
+				nearest_distance = distance
+				nearest_enemy = enemy
+	
+	# Also check boss if it exists and is active
+	if current_boss and is_instance_valid(current_boss) and current_boss.current_health > 0:
+		var boss_distance = current_boss.position.distance_to(pos)
+		if boss_distance < nearest_distance:
+			nearest_enemy = current_boss
+	
+	return nearest_enemy
+
 func _process(delta):
 	frame_time_accumulator += delta
 	if frame_time_accumulator >= 5.0:  # Update every 5 seconds instead of 1
@@ -1375,15 +1415,19 @@ func get_special_ability_max_cooldown() -> float:
 
 func get_primary_attack_max_cooldown() -> float:
 	if not player or not player.character_data:
-		return 0.0
+		return 0.0  # Default
 	
 	match player.character_data.name:
 		"Wizard":
-			return 1.0
-		"Berserker":
-			return 1.2
+			return 0.6  # Updated from 1.0 to 0.6
+		"Berserker": 
+			return 0.8  # Updated from 1.2 to 0.8
+		"Knight":
+			return 0.3  # New cooldown added
+		"Huntress":
+			return 0.2  # New cooldown added
 		_:
-			return 0.0  # Knight and Huntress have no primary cooldown
+			return 0.0
 
 func update_cooldown_display(ability_name: String, current_cooldown: float, max_cooldown: float):
 	if not cooldown_progress_bars.has(ability_name) or not cooldown_icons.has(ability_name):
