@@ -1,0 +1,60 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Knight Dodge Animation Frame 2 - Mid-Dodge Roll -->
+  
+  <!-- Sword (tucked during roll) -->
+  <line x1="8" y1="18" x2="10" y2="28" stroke="#C0C0C0" stroke-width="1"/>
+  <line x1="7" y1="18" x2="9" y2="18" stroke="#8B4513" stroke-width="1"/>
+  <circle cx="10" cy="29" r="1" fill="#8B4513"/>
+  
+  <!-- Shield (protected during roll) -->
+  <ellipse cx="14" cy="16" rx="2" ry="3" fill="#4169E1" transform="rotate(-45 14 16)"/>
+  <ellipse cx="14" cy="16" rx="1.5" ry="2.5" fill="#FFD700" transform="rotate(-45 14 16)"/>
+  
+  <!-- Body Armor (horizontal during roll) -->
+  <ellipse cx="12" cy="20" rx="3" ry="4" fill="#708090" transform="rotate(-15 12 20)"/>
+  <ellipse cx="12" cy="18" rx="2.5" ry="3.5" fill="#778899" transform="rotate(-15 12 18)"/>
+  <ellipse cx="12" cy="16" rx="2" ry="3" fill="#708090" transform="rotate(-15 12 16)"/>
+  
+  <!-- Arms (tucked during roll) -->
+  <!-- Right arm (sword arm, protecting) -->
+  <ellipse cx="10" cy="17" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(45 10 17)"/>
+  <ellipse cx="9" cy="19" rx="1" ry="2" fill="#708090" transform="rotate(45 9 19)"/>
+  
+  <!-- Left arm (shield arm, rolling) -->
+  <ellipse cx="14" cy="15" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(-60 14 15)"/>
+  <ellipse cx="15" cy="17" rx="1" ry="2" fill="#708090" transform="rotate(-60 15 17)"/>
+  
+  <!-- Hands -->
+  <circle cx="8" cy="21" r="1" fill="#DEB887"/>
+  <circle cx="16" cy="18" r="1" fill="#DEB887"/>
+  
+  <!-- Head (tucked during roll) -->
+  <circle cx="12" cy="13" r="3" fill="#DEB887"/>
+  
+  <!-- Helmet -->
+  <path d="M9 11 Q12 9 15 11 Q15 13 12 13 Q9 13 9 11" fill="#708090"/>
+  <line x1="9" y1="12" x2="15" y2="12" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Face (concentrated during roll) -->
+  <circle cx="11" cy="12" r="0.5" fill="#000000"/>
+  <circle cx="13" cy="12" r="0.5" fill="#000000"/>
+  <path d="M11 14 Q12 13 13 14" stroke="#000000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Hair (visible under helmet) -->
+  <path d="M10 11 Q12 10 14 11" stroke="#8B4513" stroke-width="0.5" fill="none"/>
+  
+  <!-- Legs (tucked during roll) -->
+  <ellipse cx="10" cy="24" rx="1.5" ry="2" fill="#708090" transform="rotate(-30 10 24)"/>
+  <ellipse cx="14" cy="25" rx="1.5" ry="2" fill="#708090" transform="rotate(30 14 25)"/>
+  
+  <!-- Feet (off ground during roll) -->
+  <ellipse cx="9" cy="26" rx="1" ry="1" fill="#2F4F4F" transform="rotate(-20 9 26)"/>
+  <ellipse cx="15" cy="27" rx="1" ry="1" fill="#2F4F4F" transform="rotate(20 15 27)"/>
+  
+  <!-- Armor Details -->
+  <line x1="12" y1="14" x2="12" y2="18" stroke="#556B2F" stroke-width="0.5"/>
+  <line x1="10" y1="16" x2="14" y2="16" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Motion blur effect -->
+  <ellipse cx="12" cy="18" rx="5" ry="7" fill="#708090" opacity="0.2" transform="rotate(-15 12 18)"/>
+</svg> 

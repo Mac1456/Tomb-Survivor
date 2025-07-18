@@ -1,0 +1,70 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Berserker Ultimate 02 - Rage Slam Axe Raising -->
+  
+  <!-- Enhanced Two-handed Battle Axe (Lifting Higher) -->
+  <line x1="12" y1="5" x2="12" y2="17" stroke="#654321" stroke-width="1.5"/>
+  <!-- Axe Handle Grip -->
+  <ellipse cx="12" cy="13" rx="0.6" ry="1.2" fill="#4A4A4A"/>
+  <ellipse cx="12" cy="9" rx="0.6" ry="1.2" fill="#4A4A4A"/>
+  <!-- Detailed Axe Head (Much Bigger) -->
+  <ellipse cx="12" cy="3" rx="4" ry="2.5" fill="#696969"/>
+  <ellipse cx="12" cy="3.5" rx="3.5" ry="2" fill="#C0C0C0"/>
+  <!-- Axe Blade Edge (Larger and More Intimidating) -->
+  <ellipse cx="9.5" cy="3" rx="1.8" ry="1.2" fill="#E0E0E0"/>
+  <ellipse cx="14.5" cy="3" rx="1.8" ry="1.2" fill="#E0E0E0"/>
+  <!-- Blade Sharp Points -->
+  <ellipse cx="8.5" cy="2.5" rx="0.8" ry="0.5" fill="#F0F0F0"/>
+  <ellipse cx="15.5" cy="2.5" rx="0.8" ry="0.5" fill="#F0F0F0"/>
+  
+  <!-- Torso (Straining with Rage) -->
+  <ellipse cx="12" cy="15" rx="4.8" ry="3" fill="#8B4513"/>
+  <ellipse cx="12" cy="13.5" rx="3.8" ry="2.5" fill="#CD853F"/>
+  
+  <!-- Muscular Arms (Lifting with Power) -->
+  <ellipse cx="8" cy="9" rx="2" ry="4" fill="#DEB887"/>
+  <ellipse cx="16" cy="9" rx="2" ry="4" fill="#DEB887"/>
+  
+  <!-- Hands Gripping Axe with Rage -->
+  <circle cx="10" cy="7" r="1.2" fill="#DEB887"/>
+  <circle cx="14" cy="11" r="1.2" fill="#DEB887"/>
+  
+  <!-- Head (Intense Focus) -->
+  <circle cx="12" cy="8.5" r="2.5" fill="#DEB887"/>
+  
+  <!-- Eyes (Glowing with Rage) -->
+  <circle cx="11" cy="8" r="0.4" fill="#DC143C"/>
+  <circle cx="13" cy="8" r="0.4" fill="#DC143C"/>
+  
+  <!-- Mouth (Rage Intensifying) -->
+  <path d="M 10.5 9.5 Q 12 10 13.5 9.5" stroke="#000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Wild Hair (Energy Surging) -->
+  <ellipse cx="12" cy="6" rx="3.5" ry="2" fill="#654321"/>
+  <ellipse cx="11" cy="5" rx="1.3" ry="1.3" fill="#654321"/>
+  <ellipse cx="13" cy="5" rx="1.3" ry="1.3" fill="#654321"/>
+  
+  <!-- Legs (Planted for Power) -->
+  <ellipse cx="10" cy="23" rx="1.8" ry="4.5" fill="#8B4513"/>
+  <ellipse cx="14" cy="23" rx="1.8" ry="4.5" fill="#8B4513"/>
+  
+  <!-- Feet (Solid Stance) -->
+  <ellipse cx="9" cy="27" rx="1.8" ry="1.2" fill="#654321"/>
+  <ellipse cx="15" cy="27" rx="1.8" ry="1.2" fill="#654321"/>
+  
+  <!-- Intensifying Rage Aura -->
+  <ellipse cx="12" cy="15" rx="7" ry="9" fill="#DC143C" opacity="0.25"/>
+  <ellipse cx="12" cy="15" rx="5" ry="7" fill="#8B0000" opacity="0.2"/>
+  
+  <!-- Battle Scars -->
+  <line x1="9" y1="9" x2="10" y2="10" stroke="#8B0000" stroke-width="0.3"/>
+  <line x1="14" y1="8" x2="15" y2="9" stroke="#8B0000" stroke-width="0.3"/>
+  
+  <!-- Rage Energy Sparks -->
+  <circle cx="8" cy="11" r="0.6" fill="#DC143C" opacity="0.5"/>
+  <circle cx="16" cy="11" r="0.6" fill="#DC143C" opacity="0.5"/>
+  <circle cx="12" cy="3" r="0.8" fill="#8B0000" opacity="0.4"/>
+  
+  <!-- Energy Crackles -->
+  <line x1="10" y1="5" x2="8" y2="3" stroke="#DC143C" stroke-width="0.5" opacity="0.3"/>
+  <line x1="14" y1="5" x2="16" y2="3" stroke="#DC143C" stroke-width="0.5" opacity="0.3"/>
+</svg> 

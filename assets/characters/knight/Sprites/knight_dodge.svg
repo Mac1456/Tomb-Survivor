@@ -1,0 +1,64 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Knight Dodge Animation - Quick Sidestep -->
+  
+  <!-- Sword (held close to body) -->
+  <line x1="6" y1="15" x2="8" y2="25" stroke="#C0C0C0" stroke-width="1"/>
+  <line x1="5" y1="15" x2="7" y2="15" stroke="#8B4513" stroke-width="1"/>
+  <circle cx="8" cy="26" r="1" fill="#8B4513"/>
+  
+  <!-- Shield (protective position) -->
+  <ellipse cx="16" cy="18" rx="2" ry="3" fill="#4169E1" transform="rotate(-20 16 18)"/>
+  <ellipse cx="16" cy="18" rx="1.5" ry="2.5" fill="#FFD700" transform="rotate(-20 16 18)"/>
+  
+  <!-- Body Armor (crouched/leaning) -->
+  <ellipse cx="12" cy="24" rx="4" ry="2.5" fill="#708090"/>
+  <ellipse cx="12" cy="22" rx="3.5" ry="3.5" fill="#778899"/>
+  <ellipse cx="12" cy="20" rx="3" ry="2.5" fill="#708090"/>
+  
+  <!-- Arms (positioned for dodge) -->
+  <!-- Right arm (sword arm, tucked) -->
+  <ellipse cx="9" cy="19" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(25 9 19)"/>
+  <ellipse cx="8" cy="21" rx="1" ry="2" fill="#708090" transform="rotate(25 8 21)"/>
+  
+  <!-- Left arm (shield arm, extended) -->
+  <ellipse cx="15" cy="18" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(-25 15 18)"/>
+  <ellipse cx="16" cy="20" rx="1" ry="2" fill="#708090" transform="rotate(-25 16 20)"/>
+  
+  <!-- Hands -->
+  <circle cx="7" cy="23" r="1" fill="#DEB887"/>
+  <circle cx="17" cy="21" r="1" fill="#DEB887"/>
+  
+  <!-- Head (looking toward danger) -->
+  <circle cx="12" cy="14" r="3" fill="#DEB887"/>
+  
+  <!-- Helmet -->
+  <path d="M9 12 Q12 10 15 12 Q15 14 12 14 Q9 14 9 12" fill="#708090"/>
+  <line x1="9" y1="13" x2="15" y2="13" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Face (alert expression) -->
+  <circle cx="11" cy="13" r="0.5" fill="#000000"/>
+  <circle cx="13" cy="13" r="0.5" fill="#000000"/>
+  <path d="M11 15 Q12 16 13 15" stroke="#000000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Hair (visible under helmet) -->
+  <path d="M10 12 Q12 11 14 12" stroke="#8B4513" stroke-width="0.5" fill="none"/>
+  
+  <!-- Legs (dynamic dodge position) -->
+  <!-- Leading leg (bent low) -->
+  <ellipse cx="10" cy="27" rx="1.5" ry="2" fill="#708090" transform="rotate(-30 10 27)"/>
+  <!-- Trailing leg (extended) -->
+  <ellipse cx="14" cy="28" rx="1.5" ry="2" fill="#708090" transform="rotate(20 14 28)"/>
+  
+  <!-- Feet -->
+  <ellipse cx="9" cy="29" rx="1" ry="1" fill="#2F4F4F"/>
+  <ellipse cx="15" cy="29" rx="1" ry="1" fill="#2F4F4F"/>
+  
+  <!-- Armor Details -->
+  <line x1="12" y1="18" x2="12" y2="22" stroke="#556B2F" stroke-width="0.5"/>
+  <line x1="10" y1="20" x2="14" y2="20" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Motion lines -->
+  <line x1="18" y1="16" x2="20" y2="16" stroke="#C0C0C0" stroke-width="0.5" opacity="0.4"/>
+  <line x1="18" y1="18" x2="20" y2="18" stroke="#C0C0C0" stroke-width="0.5" opacity="0.3"/>
+  <line x1="18" y1="20" x2="20" y2="20" stroke="#C0C0C0" stroke-width="0.5" opacity="0.2"/>
+</svg> 

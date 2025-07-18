@@ -1,0 +1,58 @@
+<svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Huntress Idle Frame 3 - Bounce down + breathing out -->
+  
+  <!-- Bow (held at side, bounce down position) -->
+  <path d="M 8 12.5 Q 6 16.5 6 20.5 Q 6 24.5 8 28.5" stroke="#4A4A4A" stroke-width="1.5" fill="none"/>
+  <line x1="8" y1="12.5" x2="8" y2="28.5" stroke="#8B4513" stroke-width="1"/>
+  <circle cx="8" cy="20.5" r="1" fill="#228B22" opacity="0.6"/>
+  
+  <!-- Quiver on back (bounce down) -->
+  <ellipse cx="22" cy="18.5" rx="2" ry="6" fill="#654321"/>
+  <rect x="21" y="12.5" width="2" height="2" fill="#8B4513"/>
+  <rect x="21" y="14.5" width="2" height="2" fill="#A0522D"/>
+  <rect x="21" y="16.5" width="2" height="2" fill="#8B4513"/>
+  
+  <!-- Body - leather armor with nature details (bounce down + breathing out) -->
+  <ellipse cx="16" cy="32.5" rx="6.8" ry="4.8" fill="#8B4513"/>
+  <ellipse cx="16" cy="28.5" rx="4.8" ry="6.8" fill="#A0522D"/>
+  <ellipse cx="16" cy="26.5" rx="3.8" ry="4.8" fill="#CD853F"/>
+  
+  <!-- Nature emblem on chest (bounce down) -->
+  <circle cx="16" cy="26.5" r="1.5" fill="#228B22" opacity="0.7"/>
+  <polygon points="16,25.5 15.5,27 16.5,27" fill="#90EE90"/>
+  
+  <!-- Arms - relaxed position (bounce down) -->
+  <ellipse cx="11" cy="22.5" rx="1.5" ry="3" fill="#DEB887"/>
+  <ellipse cx="21" cy="22.5" rx="1.5" ry="3" fill="#DEB887"/>
+  
+  <!-- Hands (bounce down) -->
+  <circle cx="10" cy="25.5" r="1" fill="#DEB887"/>
+  <circle cx="22" cy="25.5" r="1" fill="#DEB887"/>
+  
+  <!-- Head (bounce down) -->
+  <circle cx="16" cy="16.5" r="3.5" fill="#DEB887"/>
+  
+  <!-- Hair - flowing ranger style (bounce down) -->
+  <path d="M 12.5 14.5 Q 14 12.5 16 12.5 Q 18 12.5 19.5 14.5" fill="#654321"/>
+  <ellipse cx="13" cy="16.5" rx="1" ry="3" fill="#654321"/>
+  <ellipse cx="19" cy="16.5" rx="1" ry="3" fill="#654321"/>
+  
+  <!-- Face - alert expression (bounce down) -->
+  <circle cx="14.5" cy="16" r="0.3" fill="#000"/>
+  <circle cx="17.5" cy="16" r="0.3" fill="#000"/>
+  <path d="M 15 18 Q 16 18.5 17 18" stroke="#000" stroke-width="0.3" fill="none"/>
+  
+  <!-- Hood/cap (bounce down) -->
+  <path d="M 12.5 14.5 Q 16 10.5 19.5 14.5 Q 19 13.5 16 11.5 Q 13 13.5 12.5 14.5" fill="#2F4F2F"/>
+  
+  <!-- Leg armor/boots (bounce down) -->
+  <ellipse cx="14" cy="37.5" rx="2" ry="2.5" fill="#654321"/>
+  <ellipse cx="18" cy="37.5" rx="2" ry="2.5" fill="#654321"/>
+  
+  <!-- Nature magic aura (subtle, bounce down) -->
+  <circle cx="14" cy="14.5" r="0.6" fill="#90EE90" opacity="0.5"/>
+  <circle cx="18" cy="18.5" r="0.4" fill="#90EE90" opacity="0.6"/>
+  <circle cx="12" cy="20.5" r="0.5" fill="#90EE90" opacity="0.4"/>
+  <circle cx="20" cy="15.5" r="0.4" fill="#90EE90" opacity="0.5"/>
+  <circle cx="15" cy="12.5" r="0.3" fill="#90EE90" opacity="0.3"/>
+</svg> 

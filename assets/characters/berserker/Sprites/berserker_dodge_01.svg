@@ -1,0 +1,54 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Berserker Dodge 01 - Preparation Crouch -->
+  
+  <!-- Two-handed Battle Axe (Lowered for Dodge) -->
+  <line x1="12" y1="12" x2="12" y2="24" stroke="#8B4513" stroke-width="1.5"/>
+  <ellipse cx="12" cy="10" rx="3" ry="1.5" fill="#696969"/>
+  <ellipse cx="12" cy="11" rx="2.5" ry="1" fill="#A0A0A0"/>
+  
+  <!-- Torso (Crouched Low) -->
+  <ellipse cx="12" cy="19" rx="4" ry="2" fill="#8B4513"/>
+  <ellipse cx="12" cy="17.5" rx="3" ry="1.5" fill="#CD853F"/>
+  
+  <!-- Muscular Arms (Preparing for Dodge) -->
+  <ellipse cx="8" cy="16" rx="1.5" ry="2.5" fill="#DEB887"/>
+  <ellipse cx="16" cy="16" rx="1.5" ry="2.5" fill="#DEB887"/>
+  
+  <!-- Hands Gripping Axe -->
+  <circle cx="10" cy="14" r="1" fill="#DEB887"/>
+  <circle cx="14" cy="18" r="1" fill="#DEB887"/>
+  
+  <!-- Head (Focused on Dodge) -->
+  <circle cx="12" cy="14" r="2.5" fill="#DEB887"/>
+  
+  <!-- Alert Eyes -->
+  <circle cx="11" cy="13.5" r="0.3" fill="#000"/>
+  <circle cx="13" cy="13.5" r="0.3" fill="#000"/>
+  
+  <!-- Determined Mouth -->
+  <path d="M 10.5 15 Q 12 15.5 13.5 15" stroke="#000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Wild Hair (Preparing for Motion) -->
+  <ellipse cx="12" cy="11.5" rx="3" ry="1.5" fill="#654321"/>
+  <ellipse cx="11" cy="10.5" rx="1" ry="1" fill="#654321"/>
+  <ellipse cx="13" cy="10.5" rx="1" ry="1" fill="#654321"/>
+  
+  <!-- Legs (Crouched for Spring) -->
+  <ellipse cx="10" cy="24" rx="1.5" ry="3" fill="#8B4513"/>
+  <ellipse cx="14" cy="24" rx="1.5" ry="3" fill="#8B4513"/>
+  
+  <!-- Feet (Ready to Push Off) -->
+  <ellipse cx="9" cy="27" rx="1.5" ry="1" fill="#654321"/>
+  <ellipse cx="15" cy="27" rx="1.5" ry="1" fill="#654321"/>
+  
+  <!-- Tension Aura -->
+  <ellipse cx="12" cy="19" rx="5" ry="7" fill="#DC143C" opacity="0.15"/>
+  
+  <!-- Battle Scars -->
+  <line x1="9" y1="15" x2="10" y2="16" stroke="#8B0000" stroke-width="0.3"/>
+  <line x1="14" y1="14" x2="15" y2="15" stroke="#8B0000" stroke-width="0.3"/>
+  
+  <!-- Ground Contact Lines -->
+  <line x1="9" y1="28" x2="9" y2="29" stroke="#654321" stroke-width="0.8" opacity="0.5"/>
+  <line x1="15" y1="28" x2="15" y2="29" stroke="#654321" stroke-width="0.8" opacity="0.5"/>
+</svg> 

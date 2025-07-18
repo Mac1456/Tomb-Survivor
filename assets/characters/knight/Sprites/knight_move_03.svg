@@ -1,0 +1,62 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Knight Move Animation Frame 3 - Right Foot Forward -->
+  
+  <!-- Sword (angled forward for movement) -->
+  <line x1="5" y1="12" x2="6" y2="23" stroke="#C0C0C0" stroke-width="1"/>
+  <line x1="4" y1="12" x2="6" y2="12" stroke="#8B4513" stroke-width="1"/>
+  <circle cx="6" cy="24" r="1" fill="#8B4513"/>
+  
+  <!-- Shield (angled back during movement) -->
+  <ellipse cx="18" cy="15" rx="2" ry="3" fill="#4169E1" transform="rotate(-15 18 15)"/>
+  <ellipse cx="18" cy="15" rx="1.5" ry="2.5" fill="#FFD700" transform="rotate(-15 18 15)"/>
+  
+  <!-- Body Armor (leaning forward) -->
+  <ellipse cx="12" cy="21" rx="4" ry="3" fill="#708090"/>
+  <ellipse cx="12" cy="19" rx="3.5" ry="4" fill="#778899"/>
+  <ellipse cx="12" cy="17" rx="3" ry="3" fill="#708090"/>
+  
+  <!-- Arms (positioned for movement) -->
+  <!-- Right arm (sword arm, forward) -->
+  <ellipse cx="9" cy="16" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(15 9 16)"/>
+  <ellipse cx="8" cy="18" rx="1" ry="2" fill="#708090" transform="rotate(15 8 18)"/>
+  
+  <!-- Left arm (shield arm, back) -->
+  <ellipse cx="15" cy="16" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(-10 15 16)"/>
+  <ellipse cx="16" cy="18" rx="1" ry="2" fill="#708090" transform="rotate(-10 16 18)"/>
+  
+  <!-- Hands -->
+  <circle cx="7" cy="20" r="1" fill="#DEB887"/>
+  <circle cx="17" cy="19" r="1" fill="#DEB887"/>
+  
+  <!-- Head (slightly forward) -->
+  <circle cx="12" cy="11" r="3" fill="#DEB887"/>
+  
+  <!-- Helmet -->
+  <path d="M9 9 Q12 7 15 9 Q15 11 12 11 Q9 11 9 9" fill="#708090"/>
+  <line x1="9" y1="10" x2="15" y2="10" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Face -->
+  <circle cx="11" cy="10" r="0.5" fill="#000000"/>
+  <circle cx="13" cy="10" r="0.5" fill="#000000"/>
+  <path d="M11 12 Q12 13 13 12" stroke="#000000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Hair (visible under helmet) -->
+  <path d="M10 9 Q12 8 14 9" stroke="#8B4513" stroke-width="0.5" fill="none"/>
+  
+  <!-- Legs (walking stance - right foot forward) -->
+  <!-- Left leg (back) -->
+  <ellipse cx="10" cy="27" rx="1.5" ry="2.5" fill="#708090" transform="rotate(-15 10 27)"/>
+  <!-- Right leg (forward) -->
+  <ellipse cx="14" cy="24" rx="1.5" ry="2.5" fill="#708090" transform="rotate(15 14 24)"/>
+  
+  <!-- Feet -->
+  <ellipse cx="9" cy="29" rx="1" ry="1" fill="#2F4F4F"/>
+  <ellipse cx="15" cy="27" rx="1" ry="1" fill="#2F4F4F"/>
+  
+  <!-- Armor Details -->
+  <line x1="12" y1="15" x2="12" y2="19" stroke="#556B2F" stroke-width="0.5"/>
+  <line x1="10" y1="17" x2="14" y2="17" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Cape/Cloak flowing with movement -->
+  <path d="M15 16 Q18 18 17 22 Q15 20 14 18" fill="#4169E1" opacity="0.6"/>
+</svg> 

@@ -1,0 +1,110 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Knight Ultimate Animation Frame 3 - Peak Divine Energy Charge -->
+  
+  <!-- Sword (fully raised, glowing) -->
+  <line x1="12" y1="4" x2="12" y2="16" stroke="#C0C0C0" stroke-width="1.5"/>
+  <line x1="11" y1="4" x2="13" y2="4" stroke="#8B4513" stroke-width="1"/>
+  <circle cx="12" cy="17" r="1" fill="#8B4513"/>
+  
+  <!-- Shield (strapped to back) -->
+  <ellipse cx="8" cy="18" rx="1.5" ry="2.5" fill="#4169E1" transform="rotate(-45 8 18)"/>
+  <ellipse cx="8" cy="18" rx="1" ry="2" fill="#FFD700" transform="rotate(-45 8 18)"/>
+  
+  <!-- Body Armor (coiled for power) -->
+  <ellipse cx="12" cy="22" rx="4" ry="3" fill="#708090"/>
+  <ellipse cx="12" cy="20" rx="3.5" ry="4" fill="#778899"/>
+  <ellipse cx="12" cy="18" rx="3" ry="3" fill="#708090"/>
+  
+  <!-- Arms (both hands on sword) -->
+  <!-- Right arm (high grip) -->
+  <ellipse cx="14" cy="12" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(-45 14 12)"/>
+  <ellipse cx="15" cy="14" rx="1" ry="2" fill="#708090" transform="rotate(-45 15 14)"/>
+  
+  <!-- Left arm (lower grip) -->
+  <ellipse cx="10" cy="14" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(45 10 14)"/>
+  <ellipse cx="9" cy="16" rx="1" ry="2" fill="#708090" transform="rotate(45 9 16)"/>
+  
+  <!-- Hands (both on sword hilt) -->
+  <circle cx="13" cy="16" r="1" fill="#DEB887"/>
+  <circle cx="11" cy="16" r="1" fill="#DEB887"/>
+  
+  <!-- Head (looking down at target) -->
+  <circle cx="12" cy="10" r="3" fill="#DEB887"/>
+  
+  <!-- Helmet -->
+  <path d="M9 8 Q12 6 15 8 Q15 10 12 10 Q9 10 9 8" fill="#708090"/>
+  <line x1="9" y1="9" x2="15" y2="9" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Face (focused downward) -->
+  <circle cx="11" cy="9" r="0.5" fill="#000000"/>
+  <circle cx="13" cy="9" r="0.5" fill="#000000"/>
+  <path d="M11 11 Q12 12 13 11" stroke="#000000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Hair (visible under helmet) -->
+  <path d="M10 8 Q12 7 14 8" stroke="#8B4513" stroke-width="0.5" fill="none"/>
+  
+  <!-- Legs (wide stance for power) -->
+  <ellipse cx="9" cy="26" rx="1.5" ry="2.5" fill="#708090" transform="rotate(-10 9 26)"/>
+  <ellipse cx="15" cy="26" rx="1.5" ry="2.5" fill="#708090" transform="rotate(10 15 26)"/>
+  
+  <!-- Feet (planted wide) -->
+  <ellipse cx="8" cy="29" rx="1" ry="1" fill="#2F4F4F"/>
+  <ellipse cx="16" cy="29" rx="1" ry="1" fill="#2F4F4F"/>
+  
+  <!-- Armor Details -->
+  <line x1="12" y1="16" x2="12" y2="20" stroke="#556B2F" stroke-width="0.5"/>
+  <line x1="10" y1="18" x2="14" y2="18" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Peak divine energy (massive gold flash) -->
+  <ellipse cx="12" cy="12" rx="12" ry="15" fill="#FFD700" opacity="0.25"/>
+  <ellipse cx="12" cy="12" rx="10" ry="13" fill="#FFFF00" opacity="0.35"/>
+  <ellipse cx="12" cy="12" rx="8" ry="11" fill="#FFF8DC" opacity="0.45"/>
+  <ellipse cx="12" cy="12" rx="6" ry="9" fill="#FFFACD" opacity="0.55"/>
+  
+  <!-- Divine rays -->
+  <line x1="12" y1="2" x2="12" y2="6" stroke="#FFD700" stroke-width="2" opacity="0.7"/>
+  <line x1="8" y1="4" x2="10" y2="8" stroke="#FFFF00" stroke-width="2" opacity="0.7"/>
+  <line x1="16" y1="4" x2="14" y2="8" stroke="#FFF8DC" stroke-width="2" opacity="0.7"/>
+  <line x1="6" y1="8" x2="8" y2="12" stroke="#FFD700" stroke-width="2" opacity="0.7"/>
+  <line x1="18" y1="8" x2="16" y2="12" stroke="#FFFF00" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Divine sparkles (more intense) -->
+  <circle cx="4" cy="8" r="0.8" fill="#FFD700" opacity="0.9"/>
+  <circle cx="20" cy="6" r="0.8" fill="#FFFF00" opacity="0.9"/>
+  <circle cx="22" cy="14" r="0.8" fill="#FFF8DC" opacity="0.9"/>
+  <circle cx="2" cy="16" r="0.8" fill="#FFD700" opacity="0.9"/>
+  <circle cx="6" cy="20" r="0.8" fill="#FFFF00" opacity="0.9"/>
+  <circle cx="18" cy="22" r="0.8" fill="#FFF8DC" opacity="0.9"/>
+  
+  <!-- Sword energy glow (maximum) -->
+  <line x1="12" y1="4" x2="12" y2="16" stroke="#FFFF00" stroke-width="4" opacity="0.6"/>
+  <line x1="12" y1="4" x2="12" y2="16" stroke="#FFF8DC" stroke-width="2" opacity="0.8"/>
+  
+  <!-- Maximum divine energy (yellow) -->
+  <circle cx="12" cy="6" r="3" fill="#FFD700" opacity="0.5"/>
+  <circle cx="12" cy="6" r="2" fill="#FFFF00" opacity="0.7"/>
+  <circle cx="12" cy="6" r="1" fill="#FFF8DC" opacity="0.9"/>
+  
+  <!-- Energy around entire sword -->
+  <line x1="12" y1="3" x2="12" y2="15" stroke="#FFD700" stroke-width="1" opacity="0.8"/>
+  <line x1="11" y1="4" x2="11" y2="16" stroke="#FFFF00" stroke-width="0.5" opacity="0.6"/>
+  <line x1="13" y1="4" x2="13" y2="16" stroke="#FFFF00" stroke-width="0.5" opacity="0.6"/>
+  
+  <!-- Divine aura around character -->
+  <circle cx="12" cy="16" r="8" fill="#FFD700" opacity="0.2"/>
+  <circle cx="12" cy="16" r="6" fill="#FFFF00" opacity="0.3"/>
+  
+  <!-- Maximum divine sparkles -->
+  <circle cx="8" cy="4" r="0.5" fill="#FFD700"/>
+  <circle cx="16" cy="6" r="0.5" fill="#FFFF00"/>
+  <circle cx="10" cy="8" r="0.5" fill="#FFF8DC"/>
+  <circle cx="14" cy="10" r="0.5" fill="#FFD700"/>
+  <circle cx="9" cy="12" r="0.5" fill="#FFFF00"/>
+  <circle cx="15" cy="14" r="0.5" fill="#FFF8DC"/>
+  
+  <!-- Divine rays -->
+  <line x1="12" y1="6" x2="8" y2="2" stroke="#FFD700" stroke-width="1" opacity="0.6"/>
+  <line x1="12" y1="6" x2="16" y2="2" stroke="#FFD700" stroke-width="1" opacity="0.6"/>
+  <line x1="12" y1="6" x2="6" y2="10" stroke="#FFFF00" stroke-width="1" opacity="0.6"/>
+  <line x1="12" y1="6" x2="18" y2="10" stroke="#FFFF00" stroke-width="1" opacity="0.6"/>
+</svg> 

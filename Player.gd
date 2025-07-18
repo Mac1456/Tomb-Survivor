@@ -54,6 +54,10 @@ func _ready():
 	create_health_bar()
 	setup_dodge_effect()
 	
+	# Connect animation finished signal for Knight
+	if animated_sprite:
+		animated_sprite.animation_finished.connect(_on_animation_finished)
+	
 	print("Player created: ", character_data.name)
 
 func setup_dodge_effect():
@@ -123,208 +127,367 @@ func setup_character_animations():
 	animated_sprite.scale = Vector2(1.5, 1.5)  # Scale up for better visibility
 
 func setup_knight_animations(sprite_frames: SpriteFrames):
-	# Knight uses sprite sheets
+	# Knight uses new multi-frame SVG animations following Blue Witch design guide
 	
-	# Setup idle animation (8 frames)
+	# Setup idle animation (8 FPS to match other characters) - 4 frames
 	sprite_frames.add_animation("idle")
 	sprite_frames.set_animation_speed("idle", 8.0)
 	sprite_frames.set_animation_loop("idle", true)
 	
-	var idle_sheet = load("res://assets/characters/knight/Sprites/Idle.png")
-	if idle_sheet:
-		var frame_width = idle_sheet.get_width() / 8
-		var frame_height = idle_sheet.get_height()
-		for i in range(8):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = idle_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("idle", atlas_tex)
-		print("Split idle animation for Knight")
+	for i in range(1, 5):  # 4 frames
+		var idle_texture = load("res://assets/characters/knight/sprites/knight_idle_%02d.svg" % i)
+		if idle_texture:
+			sprite_frames.add_frame("idle", idle_texture)
+	print("Loaded Knight idle animation (4 frames)")
 	
-	# Setup attack animation (6 frames)
+	# Setup move animation (8 FPS as per design guide) - 4 frames
+	sprite_frames.add_animation("move")
+	sprite_frames.set_animation_speed("move", 8.0)
+	sprite_frames.set_animation_loop("move", true)
+	
+	for i in range(1, 5):  # 4 frames
+		var move_texture = load("res://assets/characters/knight/sprites/knight_move_%02d.svg" % i)
+		if move_texture:
+			sprite_frames.add_frame("move", move_texture)
+	print("Loaded Knight move animation (4 frames)")
+	
+	# Setup attack animation (12 FPS as per design guide) - single frame for now
 	sprite_frames.add_animation("attack")
 	sprite_frames.set_animation_speed("attack", 12.0)
 	sprite_frames.set_animation_loop("attack", false)
 	
-	var attack_sheet = load("res://assets/characters/knight/Sprites/Attack.png")
-	if attack_sheet:
-		var frame_width = attack_sheet.get_width() / 6
-		var frame_height = attack_sheet.get_height()
-		for i in range(6):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = attack_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("attack", atlas_tex)
-		print("Split attack animation for Knight")
+	var attack_texture = load("res://assets/characters/knight/sprites/knight_attack.svg")
+	if attack_texture:
+		sprite_frames.add_frame("attack", attack_texture)
+		print("Loaded Knight attack animation")
 	
-	# Setup run animation (8 frames)
+	# Setup special animation (6 FPS as per design guide) - 5 frames with blue flash
+	sprite_frames.add_animation("special")
+	sprite_frames.set_animation_speed("special", 6.0)
+	sprite_frames.set_animation_loop("special", false)
+	
+	for i in range(1, 6):  # 5 frames
+		var special_texture = load("res://assets/characters/knight/sprites/knight_special_%02d.svg" % i)
+		if special_texture:
+			sprite_frames.add_frame("special", special_texture)
+	print("Loaded Knight special animation (5 frames with blue flash)")
+	
+	# Setup ultimate animation (8 FPS as per design guide) - 5 frames with yellow flash
+	sprite_frames.add_animation("ultimate")
+	sprite_frames.set_animation_speed("ultimate", 8.0)
+	sprite_frames.set_animation_loop("ultimate", false)
+	
+	for i in range(1, 6):  # 5 frames
+		var ultimate_texture = load("res://assets/characters/knight/sprites/knight_ultimate_%02d.svg" % i)
+		if ultimate_texture:
+			sprite_frames.add_frame("ultimate", ultimate_texture)
+	print("Loaded Knight ultimate animation (5 frames with yellow flash)")
+	
+	# Setup dodge animation (12 FPS for quick dodge) - 3 frames
+	sprite_frames.add_animation("dodge")
+	sprite_frames.set_animation_speed("dodge", 12.0)
+	sprite_frames.set_animation_loop("dodge", false)
+	
+	for i in range(1, 4):  # 3 frames
+		var dodge_texture = load("res://assets/characters/knight/sprites/knight_dodge_%02d.svg" % i)
+		if dodge_texture:
+			sprite_frames.add_frame("dodge", dodge_texture)
+	print("Loaded Knight dodge animation (3 frames)")
+	
+	# Setup death animation (8 FPS as per design guide) - single frame for now
+	var death_texture = load("res://assets/characters/knight/sprites/knight_death.svg")
+	if death_texture:
+		sprite_frames.add_animation("death")
+		sprite_frames.set_animation_speed("death", 8.0)
+		sprite_frames.set_animation_loop("death", false)
+		sprite_frames.add_frame("death", death_texture)
+		print("Loaded Knight death animation")
+	else:
+		print("Knight death animation not found, skipping")
+	
+	# Keep legacy run animation as alias to move for compatibility
 	sprite_frames.add_animation("run")
-	sprite_frames.set_animation_speed("run", 10.0)
+	sprite_frames.set_animation_speed("run", 8.0)
 	sprite_frames.set_animation_loop("run", true)
 	
-	var run_sheet = load("res://assets/characters/knight/Sprites/Run.png")
-	if run_sheet:
-		var frame_width = run_sheet.get_width() / 8
-		var frame_height = run_sheet.get_height()
-		for i in range(8):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = run_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("run", atlas_tex)
-		print("Split run animation for Knight")
+	# Copy move frames to run animation
+	for i in range(1, 5):  # 4 frames
+		var move_texture = load("res://assets/characters/knight/sprites/knight_move_%02d.svg" % i)
+		if move_texture:
+			sprite_frames.add_frame("run", move_texture)
+	print("Added Knight run animation alias (4 frames)")
 
 func setup_berserker_animations(sprite_frames: SpriteFrames):
-	# Berserker uses custom sprite sheets
+	# Berserker uses new multi-frame SVG animations following Blue Witch design guide
 	
-	# Setup idle animation (8 frames)
+	# Setup idle animation (8 FPS to match other characters) - 4 frames
 	sprite_frames.add_animation("idle")
 	sprite_frames.set_animation_speed("idle", 8.0)
 	sprite_frames.set_animation_loop("idle", true)
 	
-	var idle_sheet = load("res://assets/characters/berserker/Sprites/Idle.png")
-	if idle_sheet:
-		var frame_width = idle_sheet.get_width() / 8
-		var frame_height = idle_sheet.get_height()
-		for i in range(8):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = idle_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("idle", atlas_tex)
-		print("Split idle animation for Berserker")
+	for i in range(1, 5):  # 4 frames
+		var idle_texture = load("res://assets/characters/berserker/Sprites/berserker_idle_%02d.svg" % i)
+		if idle_texture:
+			sprite_frames.add_frame("idle", idle_texture)
+	print("Loaded Berserker idle animation (4 frames)")
 	
-	# Setup attack animation (6 frames)
+	# Setup move animation (8 FPS as per design guide) - 4 frames
+	sprite_frames.add_animation("move")
+	sprite_frames.set_animation_speed("move", 8.0)
+	sprite_frames.set_animation_loop("move", true)
+	
+	for i in range(1, 5):  # 4 frames
+		var move_texture = load("res://assets/characters/berserker/Sprites/berserker_move_%02d.svg" % i)
+		if move_texture:
+			sprite_frames.add_frame("move", move_texture)
+	print("Loaded Berserker move animation (4 frames)")
+	
+	# Setup attack animation (8 FPS for lingering effect) - 3 frames with enhanced effects
 	sprite_frames.add_animation("attack")
-	sprite_frames.set_animation_speed("attack", 12.0)
+	sprite_frames.set_animation_speed("attack", 8.0)
 	sprite_frames.set_animation_loop("attack", false)
 	
-	var attack_sheet = load("res://assets/characters/berserker/Sprites/Attack.png")
-	if attack_sheet:
-		var frame_width = attack_sheet.get_width() / 6
-		var frame_height = attack_sheet.get_height()
-		for i in range(6):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = attack_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("attack", atlas_tex)
-		print("Split attack animation for Berserker")
+	for i in range(1, 4):  # 3 frames
+		var attack_texture = load("res://assets/characters/berserker/Sprites/berserker_attack_%02d.svg" % i)
+		if attack_texture:
+			sprite_frames.add_frame("attack", attack_texture)
+	print("Loaded Berserker attack animation (3 frames with enhanced effects)")
 	
-	# Setup run animation (8 frames)
+	# Setup special animation (6 FPS as per design guide) - 5 frames with blue flash
+	sprite_frames.add_animation("special")
+	sprite_frames.set_animation_speed("special", 6.0)
+	sprite_frames.set_animation_loop("special", false)
+	
+	for i in range(1, 6):  # 5 frames
+		var special_texture = load("res://assets/characters/berserker/Sprites/berserker_special_%02d.svg" % i)
+		if special_texture:
+			sprite_frames.add_frame("special", special_texture)
+	print("Loaded Berserker special animation (5 frames with blue flash)")
+	
+	# Setup ultimate animation (8 FPS as per design guide) - 5 frames with yellow flash
+	sprite_frames.add_animation("ultimate")
+	sprite_frames.set_animation_speed("ultimate", 8.0)
+	sprite_frames.set_animation_loop("ultimate", false)
+	
+	for i in range(1, 6):  # 5 frames
+		var ultimate_texture = load("res://assets/characters/berserker/Sprites/berserker_ultimate_%02d.svg" % i)
+		if ultimate_texture:
+			sprite_frames.add_frame("ultimate", ultimate_texture)
+	print("Loaded Berserker ultimate animation (5 frames with yellow flash)")
+	
+	# Setup dodge animation (12 FPS for quick dodge) - 3 frames
+	sprite_frames.add_animation("dodge")
+	sprite_frames.set_animation_speed("dodge", 12.0)
+	sprite_frames.set_animation_loop("dodge", false)
+	
+	for i in range(1, 4):  # 3 frames
+		var dodge_texture = load("res://assets/characters/berserker/Sprites/berserker_dodge_%02d.svg" % i)
+		if dodge_texture:
+			sprite_frames.add_frame("dodge", dodge_texture)
+	print("Loaded Berserker dodge animation (3 frames)")
+	
+	# Setup death animation (8 FPS as per design guide) - single frame for now
+	var death_texture = load("res://assets/characters/berserker/Sprites/berserker_death.svg")
+	if death_texture:
+		sprite_frames.add_animation("death")
+		sprite_frames.set_animation_speed("death", 8.0)
+		sprite_frames.set_animation_loop("death", false)
+		sprite_frames.add_frame("death", death_texture)
+		print("Loaded Berserker death animation")
+	else:
+		print("Berserker death animation not found, skipping")
+	
+	# Keep legacy run animation as alias to move for compatibility
 	sprite_frames.add_animation("run")
-	sprite_frames.set_animation_speed("run", 10.0)
+	sprite_frames.set_animation_speed("run", 8.0)
 	sprite_frames.set_animation_loop("run", true)
 	
-	var run_sheet = load("res://assets/characters/berserker/Sprites/Run.png")
-	if run_sheet:
-		var frame_width = run_sheet.get_width() / 8
-		var frame_height = run_sheet.get_height()
-		for i in range(8):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = run_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("run", atlas_tex)
-		print("Split run animation for Berserker")
+	# Copy move frames to run animation
+	for i in range(1, 5):  # 4 frames
+		var move_texture = load("res://assets/characters/berserker/Sprites/berserker_move_%02d.svg" % i)
+		if move_texture:
+			sprite_frames.add_frame("run", move_texture)
+	print("Added Berserker run animation alias (4 frames)")
 
 func setup_huntress_animations(sprite_frames: SpriteFrames):
-	# Huntress uses custom sprite sheets
+	# Huntress uses new multi-frame SVG animations following Blue Witch design guide
 	
-	# Setup idle animation (8 frames)
+	# Setup idle animation (8 FPS to match other characters) - 4 frames with subtle breathing
 	sprite_frames.add_animation("idle")
 	sprite_frames.set_animation_speed("idle", 8.0)
 	sprite_frames.set_animation_loop("idle", true)
 	
-	var idle_sheet = load("res://assets/characters/huntress/Sprites/Idle.png")
-	if idle_sheet:
-		var frame_width = idle_sheet.get_width() / 8
-		var frame_height = idle_sheet.get_height()
-		for i in range(8):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = idle_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("idle", atlas_tex)
-		print("Split idle animation for Huntress")
+	for i in range(1, 5):  # 4 frames
+		var idle_texture = load("res://assets/characters/huntress/Sprites/huntress_idle_%02d.svg" % i)
+		if idle_texture:
+			sprite_frames.add_frame("idle", idle_texture)
+	print("Loaded Huntress idle animation (4 frames with subtle breathing)")
 	
-	# Setup attack animation (6 frames)
+	# Setup move animation (8 FPS as per design guide) - 4 frames
+	sprite_frames.add_animation("move")
+	sprite_frames.set_animation_speed("move", 8.0)
+	sprite_frames.set_animation_loop("move", true)
+	
+	for i in range(1, 5):  # 4 frames
+		var move_texture = load("res://assets/characters/huntress/Sprites/huntress_move_%02d.svg" % i)
+		if move_texture:
+			sprite_frames.add_frame("move", move_texture)
+	print("Loaded Huntress move animation (4 frames)")
+	
+	# Setup attack animation (8 FPS for lingering archery effect) - 3 frames (draw, aim, release)
 	sprite_frames.add_animation("attack")
-	sprite_frames.set_animation_speed("attack", 12.0)
+	sprite_frames.set_animation_speed("attack", 8.0)
 	sprite_frames.set_animation_loop("attack", false)
 	
-	var attack_sheet = load("res://assets/characters/huntress/Sprites/Attack.png")
-	if attack_sheet:
-		var frame_width = attack_sheet.get_width() / 6
-		var frame_height = attack_sheet.get_height()
-		for i in range(6):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = attack_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("attack", atlas_tex)
-		print("Split attack animation for Huntress")
+	for i in range(1, 4):  # 3 frames
+		var attack_texture = load("res://assets/characters/huntress/Sprites/huntress_attack_%02d.svg" % i)
+		if attack_texture:
+			sprite_frames.add_frame("attack", attack_texture)
+	print("Loaded Huntress attack animation (3 frames: draw, aim, release)")
 	
-	# Setup run animation (8 frames)
+	# Setup special animation (6 FPS as per design guide) - 5 frames with nature magic
+	sprite_frames.add_animation("special")
+	sprite_frames.set_animation_speed("special", 6.0)
+	sprite_frames.set_animation_loop("special", false)
+	
+	for i in range(1, 6):  # 5 frames
+		var special_texture = load("res://assets/characters/huntress/Sprites/huntress_special_%02d.svg" % i)
+		if special_texture:
+			sprite_frames.add_frame("special", special_texture)
+	print("Loaded Huntress special animation (5 frames with nature magic)")
+	
+	# Setup ultimate animation (8 FPS as per design guide) - 5 frames with forest's vengeance
+	sprite_frames.add_animation("ultimate")
+	sprite_frames.set_animation_speed("ultimate", 8.0)
+	sprite_frames.set_animation_loop("ultimate", false)
+	
+	for i in range(1, 6):  # 5 frames
+		var ultimate_texture = load("res://assets/characters/huntress/Sprites/huntress_ultimate_%02d.svg" % i)
+		if ultimate_texture:
+			sprite_frames.add_frame("ultimate", ultimate_texture)
+	print("Loaded Huntress ultimate animation (5 frames with forest's vengeance)")
+	
+	# Setup dodge animation (12 FPS for quick dodge) - 3 frames
+	sprite_frames.add_animation("dodge")
+	sprite_frames.set_animation_speed("dodge", 12.0)
+	sprite_frames.set_animation_loop("dodge", false)
+	
+	for i in range(1, 4):  # 3 frames
+		var dodge_texture = load("res://assets/characters/huntress/Sprites/huntress_dodge_%02d.svg" % i)
+		if dodge_texture:
+			sprite_frames.add_frame("dodge", dodge_texture)
+	print("Loaded Huntress dodge animation (3 frames)")
+	
+	# Setup death animation (8 FPS as per design guide) - single frame for now
+	var death_texture = load("res://assets/characters/huntress/Sprites/huntress_death.svg")
+	if death_texture:
+		sprite_frames.add_animation("death")
+		sprite_frames.set_animation_speed("death", 8.0)
+		sprite_frames.set_animation_loop("death", false)
+		sprite_frames.add_frame("death", death_texture)
+		print("Loaded Huntress death animation")
+	else:
+		print("Huntress death animation not found, skipping")
+	
+	# Keep legacy run animation as alias to move for compatibility
 	sprite_frames.add_animation("run")
-	sprite_frames.set_animation_speed("run", 10.0)
+	sprite_frames.set_animation_speed("run", 8.0)
 	sprite_frames.set_animation_loop("run", true)
 	
-	var run_sheet = load("res://assets/characters/huntress/Sprites/Run.png")
-	if run_sheet:
-		var frame_width = run_sheet.get_width() / 8
-		var frame_height = run_sheet.get_height()
-		for i in range(8):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = run_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("run", atlas_tex)
-		print("Split run animation for Huntress")
+	# Copy move frames to run animation
+	for i in range(1, 5):  # 4 frames
+		var move_texture = load("res://assets/characters/huntress/Sprites/huntress_move_%02d.svg" % i)
+		if move_texture:
+			sprite_frames.add_frame("run", move_texture)
+	print("Added Huntress run animation alias (4 frames)")
 
 func setup_wizard_animations(sprite_frames: SpriteFrames):
-	# Wizard uses custom sprite sheets
+	# Wizard uses new multi-frame SVG animations following Blue Witch design guide
 	
-	# Setup idle animation (8 frames)
+	# Setup idle animation (8 FPS to match other characters) - 4 frames
 	sprite_frames.add_animation("idle")
 	sprite_frames.set_animation_speed("idle", 8.0)
 	sprite_frames.set_animation_loop("idle", true)
 	
-	var idle_sheet = load("res://assets/characters/wizard/Sprites/Idle.png")
-	if idle_sheet:
-		var frame_width = idle_sheet.get_width() / 8
-		var frame_height = idle_sheet.get_height()
-		for i in range(8):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = idle_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("idle", atlas_tex)
-		print("Split idle animation for Wizard")
+	for i in range(1, 5):  # 4 frames
+		var idle_texture = load("res://assets/characters/wizard/sprites/wizard_idle_%02d.svg" % i)
+		if idle_texture:
+			sprite_frames.add_frame("idle", idle_texture)
+	print("Loaded Wizard idle animation (4 frames)")
 	
-	# Setup attack animation (6 frames)
+	# Setup move animation (8 FPS for robed walking)
+	sprite_frames.add_animation("move")
+	sprite_frames.set_animation_speed("move", 8.0)
+	sprite_frames.set_animation_loop("move", true)
+	
+	var move_texture = load("res://assets/characters/wizard/sprites/wizard_move.svg")
+	if move_texture:
+		sprite_frames.add_frame("move", move_texture)
+		print("Loaded Wizard move animation")
+	
+	# Setup attack animation (12 FPS for sharp spellcasting)
 	sprite_frames.add_animation("attack")
 	sprite_frames.set_animation_speed("attack", 12.0)
 	sprite_frames.set_animation_loop("attack", false)
 	
-	var attack_sheet = load("res://assets/characters/wizard/Sprites/Attack.png")
-	if attack_sheet:
-		var frame_width = attack_sheet.get_width() / 6
-		var frame_height = attack_sheet.get_height()
-		for i in range(6):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = attack_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("attack", atlas_tex)
-		print("Split attack animation for Wizard")
+	var attack_texture = load("res://assets/characters/wizard/sprites/wizard_attack.svg")
+	if attack_texture:
+		sprite_frames.add_frame("attack", attack_texture)
+		print("Loaded Wizard attack animation")
 	
-	# Setup run animation (8 frames)
+	# Setup special animation (6 FPS for magic missile with blue flash) - 3 frames
+	sprite_frames.add_animation("special")
+	sprite_frames.set_animation_speed("special", 6.0)
+	sprite_frames.set_animation_loop("special", false)
+	
+	for i in range(1, 4):  # 3 frames
+		var special_texture = load("res://assets/characters/wizard/sprites/wizard_special_%02d.svg" % i)
+		if special_texture:
+			sprite_frames.add_frame("special", special_texture)
+	print("Loaded Wizard special animation (3 frames with blue flash)")
+	
+	# Setup ultimate animation (6 FPS for arcane storm with big effects) - 5 frames
+	sprite_frames.add_animation("ultimate")
+	sprite_frames.set_animation_speed("ultimate", 6.0)
+	sprite_frames.set_animation_loop("ultimate", false)
+	
+	for i in range(1, 6):  # 5 frames
+		var ultimate_texture = load("res://assets/characters/wizard/sprites/wizard_ultimate_%02d.svg" % i)
+		if ultimate_texture:
+			sprite_frames.add_frame("ultimate", ultimate_texture)
+	print("Loaded Wizard ultimate animation (5 frames with big arcane storm effects)")
+	
+	# Setup dodge animation (12 FPS for quick blink-style evasion)
+	sprite_frames.add_animation("dodge")
+	sprite_frames.set_animation_speed("dodge", 12.0)
+	sprite_frames.set_animation_loop("dodge", false)
+	
+	var dodge_texture = load("res://assets/characters/wizard/sprites/wizard_dodge.svg")
+	if dodge_texture:
+		sprite_frames.add_frame("dodge", dodge_texture)
+		print("Loaded Wizard dodge animation")
+	
+	# Setup death animation (8 FPS for magical collapse)
+	var death_texture = load("res://assets/characters/wizard/sprites/wizard_death.svg")
+	if death_texture:
+		sprite_frames.add_animation("death")
+		sprite_frames.set_animation_speed("death", 8.0)
+		sprite_frames.set_animation_loop("death", false)
+		sprite_frames.add_frame("death", death_texture)
+		print("Loaded Wizard death animation")
+	else:
+		print("Wizard death animation not found, skipping")
+	
+	# Keep legacy run animation as alias to move for compatibility
 	sprite_frames.add_animation("run")
-	sprite_frames.set_animation_speed("run", 10.0)
+	sprite_frames.set_animation_speed("run", 8.0)
 	sprite_frames.set_animation_loop("run", true)
 	
-	var run_sheet = load("res://assets/characters/wizard/Sprites/Run.png")
-	if run_sheet:
-		var frame_width = run_sheet.get_width() / 8
-		var frame_height = run_sheet.get_height()
-		for i in range(8):
-			var atlas_tex = AtlasTexture.new()
-			atlas_tex.atlas = run_sheet
-			atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-			sprite_frames.add_frame("run", atlas_tex)
-		print("Split run animation for Wizard")
+	# Copy move texture to run animation for compatibility
+	var run_texture = load("res://assets/characters/wizard/sprites/wizard_move.svg")
+	if run_texture:
+		sprite_frames.add_frame("run", run_texture)
+		print("Added Wizard run animation alias")
 
 func create_health_bar():
 	# Health bar is created in the scene file, just update it
@@ -423,14 +586,16 @@ func update_animations():
 	if not animated_sprite:
 		return
 	
-	# Don't change animation if attacking
-	if animated_sprite.animation == "attack" and animated_sprite.is_playing():
+	# Don't change animation if playing special animations
+	var current_anim = animated_sprite.animation
+	if current_anim in ["attack", "special", "ultimate", "dodge", "death"] and animated_sprite.is_playing():
 		return
 	
-	# Set animation based on movement
+	# Set animation based on movement (use "move" for SVG characters, "run" for legacy sprite sheets)
 	if velocity.length() > 10:
-		if animated_sprite.animation != "run":
-			animated_sprite.play("run")
+		var move_animation = "move" if (character_data.name == "Knight" or character_data.name == "Berserker" or character_data.name == "Huntress" or character_data.name == "Wizard") else "run"
+		if animated_sprite.animation != move_animation:
+			animated_sprite.play(move_animation)
 	else:
 		if animated_sprite.animation != "idle":
 			animated_sprite.play("idle")
@@ -440,6 +605,94 @@ func update_animations():
 		animated_sprite.flip_h = true
 	elif facing_direction.x > 0:
 		animated_sprite.flip_h = false
+
+# Animation system functions for enhanced Knight
+func play_animation(animation_name: String, force: bool = false):
+	if not animated_sprite:
+		return
+	
+	# Check if animation exists
+	if not animated_sprite.sprite_frames.has_animation(animation_name):
+		print("Animation not found: ", animation_name)
+		return
+	
+	# Don't interrupt special animations unless forced
+	var current_anim = animated_sprite.animation
+	if not force and current_anim in ["attack", "special", "ultimate", "dodge", "death"] and animated_sprite.is_playing():
+		return
+	
+	# Play the animation
+	animated_sprite.play(animation_name)
+	print("Playing animation: ", animation_name)
+
+func play_attack_animation():
+	play_animation("attack", true)
+
+func play_special_animation():
+	if character_data.name == "Knight" or character_data.name == "Berserker" or character_data.name == "Huntress" or character_data.name == "Wizard":
+		play_animation("special", true)
+	else:
+		play_attack_animation()  # Fallback for other characters
+
+func play_ultimate_animation():
+	if character_data.name == "Knight" or character_data.name == "Berserker" or character_data.name == "Huntress" or character_data.name == "Wizard":
+		play_animation("ultimate", true)
+	else:
+		play_attack_animation()  # Fallback for other characters
+
+func play_dodge_animation():
+	if character_data.name == "Knight" or character_data.name == "Berserker" or character_data.name == "Huntress" or character_data.name == "Wizard":
+		play_animation("dodge", true)
+	else:
+		# For other characters, just keep existing dodge effect
+		pass
+
+func play_death_animation():
+	if character_data.name == "Knight" or character_data.name == "Berserker" or character_data.name == "Huntress" or character_data.name == "Wizard":
+		play_animation("death", true)
+	else:
+		# For other characters, handle death differently
+		pass
+
+func _on_animation_finished():
+	if not animated_sprite:
+		return
+	
+	var finished_animation = animated_sprite.animation
+	
+	# Handle animation completion logic
+	match finished_animation:
+		"attack", "special", "ultimate":
+			# Return to appropriate state after combat animations
+			if velocity.length() > 10:
+				var move_animation = "move" if (character_data.name == "Knight" or character_data.name == "Berserker" or character_data.name == "Huntress" or character_data.name == "Wizard") else "run"
+				animated_sprite.play(move_animation)
+			else:
+				animated_sprite.play("idle")
+		"dodge":
+			# Return to appropriate state after dodge
+			if velocity.length() > 10:
+				var move_animation = "move" if (character_data.name == "Knight" or character_data.name == "Berserker" or character_data.name == "Huntress" or character_data.name == "Wizard") else "run"
+				animated_sprite.play(move_animation)
+			else:
+				animated_sprite.play("idle")
+		"death":
+			# Stay in death state
+			pass
+
+# Hit animation implementation (flashing effect)
+func play_hit_animation():
+	if not animated_sprite:
+		return
+	
+	# Create a flashing effect by modulating the sprite color
+	var tween = create_tween()
+	tween.tween_property(animated_sprite, "modulate", Color.RED, 0.1)
+	tween.tween_property(animated_sprite, "modulate", Color.WHITE, 0.1)
+	tween.tween_property(animated_sprite, "modulate", Color.RED, 0.1)
+	tween.tween_property(animated_sprite, "modulate", Color.WHITE, 0.1)
+	
+	print("Playing hit flash effect")
 
 func handle_input():
 	# Primary attack
@@ -488,8 +741,7 @@ func primary_attack():
 	print("Primary attack: ", character_data.primary_attack_type)
 	
 	# Play attack animation
-	if animated_sprite:
-		animated_sprite.play("attack")
+	play_attack_animation()
 	
 	# Get cursor position for directional attack
 	var cursor_pos = get_global_mouse_position()
@@ -532,9 +784,8 @@ func special_ability():
 	
 	print("Special ability: ", character_data.special_ability_name)
 	
-	# Play attack animation
-	if animated_sprite:
-		animated_sprite.play("attack")
+	# Play special animation
+	play_special_animation()
 	
 	# Character-specific special abilities
 	match character_data.name:
@@ -563,9 +814,8 @@ func ultimate_ability():
 	
 	print("Ultimate ability: ", character_data.ultimate_ability_name)
 	
-	# Play attack animation
-	if animated_sprite:
-		animated_sprite.play("attack")
+	# Play ultimate animation
+	play_ultimate_animation()
 	
 	# Set cooldown
 	ultimate_ability_timer = 15.0  # 15 second cooldown
@@ -579,6 +829,9 @@ func dodge_roll():
 		return
 	
 	print("Dodge roll")
+	
+	# Play dodge animation
+	play_dodge_animation()
 	
 	# Set dodge roll state
 	is_dodge_rolling = true
@@ -661,6 +914,9 @@ func take_damage(damage: float):
 	var final_damage = damage * (1.0 - armor_reduction)
 	current_health -= final_damage
 	
+	# Play hit animation
+	play_hit_animation()
+	
 	# Update health bar
 	update_health_bar()
 	
@@ -676,9 +932,11 @@ func take_damage(damage: float):
 func die():
 	is_alive = false
 	print("Player died")
-	character_died.emit()
 	
-	# TODO: Add death animation/VFX
+	# Play death animation
+	play_death_animation()
+	
+	character_died.emit()
 
 func get_character_type() -> String:
 	if character_data:

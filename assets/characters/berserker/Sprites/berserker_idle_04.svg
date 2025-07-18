@@ -1,0 +1,67 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Berserker Idle 04 - Clean Design, Returning to Neutral -->
+  
+  <!-- Two-handed Battle Axe (held at right side, distinct from body) -->
+  <line x1="19" y1="10.5" x2="19" y2="22.5" stroke="#654321" stroke-width="1.5"/>
+  <!-- Axe Handle Grip -->
+  <ellipse cx="19" cy="18.5" rx="0.6" ry="1.2" fill="#4A4A4A"/>
+  <ellipse cx="19" cy="14.5" rx="0.6" ry="1.2" fill="#4A4A4A"/>
+  <!-- Detailed Axe Head (Much Bigger) -->
+  <ellipse cx="19" cy="8.5" rx="4" ry="2.5" fill="#696969"/>
+  <ellipse cx="19" cy="9" rx="3.5" ry="2" fill="#C0C0C0"/>
+  <!-- Axe Blade Edge (Larger and More Intimidating) -->
+  <ellipse cx="16.5" cy="8.5" rx="1.8" ry="1.2" fill="#E0E0E0"/>
+  <ellipse cx="21.5" cy="8.5" rx="1.8" ry="1.2" fill="#E0E0E0"/>
+  <!-- Blade Sharp Points -->
+  <ellipse cx="15.5" cy="8" rx="0.8" ry="0.5" fill="#F0F0F0"/>
+  <ellipse cx="22.5" cy="8" rx="0.8" ry="0.5" fill="#F0F0F0"/>
+  
+  <!-- Berserker Tunic (returning to neutral breathing) -->
+  <ellipse cx="12" cy="18.5" rx="3.5" ry="2.5" fill="#8B4513"/>
+  <ellipse cx="12" cy="17" rx="3" ry="2" fill="#CD853F"/>
+  
+  <!-- Muscular Arms (clearly positioned) -->
+  <!-- Right arm (axe holding) -->
+  <ellipse cx="16" cy="14.5" rx="1.2" ry="2.5" fill="#DEB887"/>
+  <ellipse cx="17" cy="16.5" rx="1" ry="2" fill="#8B4513"/>
+  
+  <!-- Left arm (free, at side) -->
+  <ellipse cx="8" cy="14.5" rx="1.2" ry="2.5" fill="#DEB887"/>
+  <ellipse cx="7" cy="16.5" rx="1" ry="2" fill="#8B4513"/>
+  
+  <!-- Hands (clearly gripping axe) -->
+  <circle cx="18" cy="12.5" r="0.8" fill="#DEB887"/>
+  <circle cx="18" cy="16.5" r="0.8" fill="#DEB887"/>
+  <circle cx="6" cy="18.5" r="0.8" fill="#DEB887"/>
+  
+  <!-- Head (neutral position) -->
+  <circle cx="12" cy="12.5" r="2.5" fill="#DEB887"/>
+  
+  <!-- Fierce Eyes -->
+  <circle cx="11" cy="12" r="0.3" fill="#000"/>
+  <circle cx="13" cy="12" r="0.3" fill="#000"/>
+  
+  <!-- Angry Mouth -->
+  <path d="M 10.5 13.5 Q 12 14 13.5 13.5" stroke="#000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Wild Hair (dark, distinct from clothing) -->
+  <ellipse cx="12" cy="10" rx="2.8" ry="1.3" fill="#2F1B14"/>
+  <ellipse cx="11" cy="9" rx="0.8" ry="0.8" fill="#2F1B14"/>
+  <ellipse cx="13" cy="9" rx="0.8" ry="0.8" fill="#2F1B14"/>
+  
+  <!-- Legs (brown pants, distinct from tunic) -->
+  <ellipse cx="10" cy="24.5" rx="1.5" ry="4" fill="#654321"/>
+  <ellipse cx="14" cy="24.5" rx="1.5" ry="4" fill="#654321"/>
+  
+  <!-- Feet (dark boots) -->
+  <ellipse cx="9" cy="28.5" rx="1.5" ry="1" fill="#2F1B14"/>
+  <ellipse cx="15" cy="28.5" rx="1.5" ry="1" fill="#2F1B14"/>
+  
+  <!-- Subtle Leather Armor Details -->
+  <line x1="12" y1="15.5" x2="12" y2="19.5" stroke="#654321" stroke-width="0.5"/>
+  <line x1="10" y1="17.5" x2="14" y2="17.5" stroke="#654321" stroke-width="0.5"/>
+  
+  <!-- Battle Scars (minimal) -->
+  <line x1="9" y1="13.5" x2="10" y2="14" stroke="#8B0000" stroke-width="0.2"/>
+  <line x1="14" y1="12.5" x2="15" y2="13" stroke="#8B0000" stroke-width="0.2"/>
+</svg> 

@@ -1,0 +1,66 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Knight Ultimate Animation Frame 5 - Recovery to Normal -->
+  
+  <!-- Sword (beginning to lower) -->
+  <line x1="11" y1="6" x2="11" y2="18" stroke="#C0C0C0" stroke-width="1.5"/>
+  <line x1="10" y1="6" x2="12" y2="6" stroke="#8B4513" stroke-width="1"/>
+  <circle cx="11" cy="19" r="1" fill="#8B4513"/>
+  
+  <!-- Shield (strapped to back) -->
+  <ellipse cx="8" cy="18" rx="1.5" ry="2.5" fill="#4169E1" transform="rotate(-45 8 18)"/>
+  <ellipse cx="8" cy="18" rx="1" ry="2" fill="#FFD700" transform="rotate(-45 8 18)"/>
+  
+  <!-- Body Armor (relaxing) -->
+  <ellipse cx="12" cy="22" rx="4" ry="3" fill="#708090"/>
+  <ellipse cx="12" cy="20" rx="3.5" ry="4" fill="#778899"/>
+  <ellipse cx="12" cy="18" rx="3" ry="3" fill="#708090"/>
+  
+  <!-- Arms (beginning to relax) -->
+  <!-- Right arm (starting to lower) -->
+  <ellipse cx="13" cy="14" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(-30 13 14)"/>
+  <ellipse cx="14" cy="16" rx="1" ry="2" fill="#708090" transform="rotate(-30 14 16)"/>
+  
+  <!-- Left arm (supporting) -->
+  <ellipse cx="11" cy="16" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(30 11 16)"/>
+  <ellipse cx="10" cy="18" rx="1" ry="2" fill="#708090" transform="rotate(30 10 18)"/>
+  
+  <!-- Hands (both on sword hilt) -->
+  <circle cx="12" cy="18" r="1" fill="#DEB887"/>
+  <circle cx="11" cy="18" r="1" fill="#DEB887"/>
+  
+  <!-- Head (looking forward) -->
+  <circle cx="12" cy="11" r="3" fill="#DEB887"/>
+  
+  <!-- Helmet -->
+  <path d="M9 9 Q12 7 15 9 Q15 11 12 11 Q9 11 9 9" fill="#708090"/>
+  <line x1="9" y1="10" x2="15" y2="10" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Face (relaxed) -->
+  <circle cx="11" cy="10" r="0.5" fill="#000000"/>
+  <circle cx="13" cy="10" r="0.5" fill="#000000"/>
+  <path d="M11 12 Q12 13 13 12" stroke="#000000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Hair (visible under helmet) -->
+  <path d="M10 9 Q12 8 14 9" stroke="#8B4513" stroke-width="0.5" fill="none"/>
+  
+  <!-- Legs (returning to normal stance) -->
+  <ellipse cx="10" cy="26" rx="1.5" ry="2.5" fill="#708090" transform="rotate(-5 10 26)"/>
+  <ellipse cx="14" cy="26" rx="1.5" ry="2.5" fill="#708090" transform="rotate(5 14 26)"/>
+  
+  <!-- Feet (closer together) -->
+  <ellipse cx="9" cy="29" rx="1" ry="1" fill="#2F4F4F"/>
+  <ellipse cx="15" cy="29" rx="1" ry="1" fill="#2F4F4F"/>
+  
+  <!-- Armor Details -->
+  <line x1="12" y1="16" x2="12" y2="20" stroke="#556B2F" stroke-width="0.5"/>
+  <line x1="10" y1="18" x2="14" y2="18" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Minimal divine energy (almost gone) -->
+  <ellipse cx="12" cy="14" rx="4" ry="6" fill="#FFD700" opacity="0.1"/>
+  <ellipse cx="12" cy="14" rx="3" ry="5" fill="#FFFF00" opacity="0.15"/>
+  
+  <!-- Last fading sparkles -->
+  <circle cx="10" cy="12" r="0.3" fill="#FFD700" opacity="0.3"/>
+  <circle cx="14" cy="11" r="0.3" fill="#FFFF00" opacity="0.3"/>
+  <circle cx="13" cy="15" r="0.3" fill="#FFF8DC" opacity="0.3"/>
+</svg> 

@@ -1,0 +1,57 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Knight Idle Animation Frame 2 - Neutral -->
+  
+  <!-- Sword (held at side, blade up) -->
+  <line x1="4" y1="10" x2="4" y2="22" stroke="#C0C0C0" stroke-width="1"/>
+  <line x1="3" y1="10" x2="5" y2="10" stroke="#8B4513" stroke-width="1"/>
+  <circle cx="4" cy="23" r="1" fill="#8B4513"/>
+  
+  <!-- Shield (left arm, slightly angled) -->
+  <ellipse cx="19" cy="16" rx="2" ry="3" fill="#4169E1"/>
+  <ellipse cx="19" cy="16" rx="1.5" ry="2.5" fill="#FFD700"/>
+  
+  <!-- Body Armor (normal chest - neutral) -->
+  <ellipse cx="12" cy="22" rx="4" ry="3" fill="#708090"/>
+  <ellipse cx="12" cy="20" rx="3.5" ry="4" fill="#778899"/>
+  <ellipse cx="12" cy="18" rx="3" ry="3" fill="#708090"/>
+  
+  <!-- Arms (positioned for sword/shield holding) -->
+  <!-- Right arm (sword arm) -->
+  <ellipse cx="8" cy="17" rx="1.5" ry="2.5" fill="#DEB887"/>
+  <ellipse cx="7" cy="19" rx="1" ry="2" fill="#708090"/>
+  
+  <!-- Left arm (shield arm) -->
+  <ellipse cx="16" cy="17" rx="1.5" ry="2.5" fill="#DEB887"/>
+  <ellipse cx="17" cy="19" rx="1" ry="2" fill="#708090"/>
+  
+  <!-- Hands -->
+  <circle cx="6" cy="21" r="1" fill="#DEB887"/>
+  <circle cx="18" cy="21" r="1" fill="#DEB887"/>
+  
+  <!-- Head (consistent with other frames) -->
+  <circle cx="12" cy="12" r="3" fill="#DEB887"/>
+  
+  <!-- Helmet -->
+  <path d="M9 10 Q12 8 15 10 Q15 12 12 12 Q9 12 9 10" fill="#708090"/>
+  <line x1="9" y1="11" x2="15" y2="11" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Face -->
+  <circle cx="11" cy="11" r="0.5" fill="#000000"/>
+  <circle cx="13" cy="11" r="0.5" fill="#000000"/>
+  <path d="M11 13 Q12 14 13 13" stroke="#000000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Hair (visible under helmet) -->
+  <path d="M10 10 Q12 9 14 10" stroke="#8B4513" stroke-width="0.5" fill="none"/>
+  
+  <!-- Legs (stable stance) -->
+  <ellipse cx="10" cy="26" rx="1.5" ry="2.5" fill="#708090"/>
+  <ellipse cx="14" cy="26" rx="1.5" ry="2.5" fill="#708090"/>
+  
+  <!-- Feet -->
+  <ellipse cx="10" cy="29" rx="1" ry="1" fill="#2F4F4F"/>
+  <ellipse cx="14" cy="29" rx="1" ry="1" fill="#2F4F4F"/>
+  
+  <!-- Armor Details -->
+  <line x1="12" y1="16" x2="12" y2="20" stroke="#556B2F" stroke-width="0.5"/>
+  <line x1="10" y1="18" x2="14" y2="18" stroke="#556B2F" stroke-width="0.5"/>
+</svg> 

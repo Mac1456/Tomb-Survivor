@@ -1,0 +1,59 @@
+<svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Huntress Dodge Frame 2 - Mid-dodge, leaning right -->
+  
+  <!-- Bow (angled during dodge) -->
+  <path d="M 12 14 Q 10 18 10 22 Q 10 26 12 30" stroke="#4A4A4A" stroke-width="1.5" fill="none"/>
+  <line x1="12" y1="14" x2="12" y2="30" stroke="#8B4513" stroke-width="1"/>
+  <circle cx="12" cy="22" r="1" fill="#228B22" opacity="0.6"/>
+  
+  <!-- Quiver on back (tilted) -->
+  <ellipse cx="24" cy="20" rx="1.5" ry="4" fill="#654321" transform="rotate(15 24 20)"/>
+  <rect x="23" y="17" width="2" height="1.5" fill="#8B4513"/>
+  <rect x="23" y="19" width="2" height="1.5" fill="#A0522D"/>
+  <rect x="23" y="21" width="2" height="1.5" fill="#8B4513"/>
+  
+  <!-- Body - leaning right during dodge -->
+  <ellipse cx="20" cy="32" rx="5" ry="3" fill="#8B4513" transform="rotate(25 20 32)"/>
+  <ellipse cx="19" cy="28" rx="3" ry="5" fill="#A0522D" transform="rotate(25 19 28)"/>
+  <ellipse cx="18" cy="26" rx="2.5" ry="3" fill="#CD853F" transform="rotate(25 18 26)"/>
+  
+  <!-- Nature emblem on chest -->
+  <circle cx="18" cy="26" r="1.5" fill="#228B22" opacity="0.7"/>
+  <polygon points="18,25 17.5,26.5 18.5,26.5" fill="#90EE90"/>
+  
+  <!-- Arms - extended for balance -->
+  <ellipse cx="14" cy="24" rx="1.5" ry="2" fill="#DEB887" transform="rotate(-15 14 24)"/>
+  <ellipse cx="22" cy="24" rx="1.5" ry="2" fill="#DEB887" transform="rotate(30 22 24)"/>
+  
+  <!-- Hands -->
+  <circle cx="13" cy="26" r="1" fill="#DEB887"/>
+  <circle cx="24" cy="26" r="1" fill="#DEB887"/>
+  
+  <!-- Head (looking in dodge direction) -->
+  <circle cx="18" cy="16" r="3" fill="#DEB887"/>
+  <circle cx="17" cy="15" r="0.5" fill="#000000"/>
+  <circle cx="19" cy="15" r="0.5" fill="#000000"/>
+  <path d="M 17.5 16.5 Q 18 17 18.5 16.5" stroke="#000000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Hair (flowing with movement) -->
+  <ellipse cx="15" cy="14" rx="2" ry="3" fill="#8B4513" transform="rotate(-20 15 14)"/>
+  <ellipse cx="21" cy="14" rx="2" ry="3" fill="#8B4513" transform="rotate(10 21 14)"/>
+  <ellipse cx="18" cy="12" rx="3" ry="2" fill="#8B4513"/>
+  
+  <!-- Hood/cap detail -->
+  <path d="M 14 13 Q 18 10 22 13" stroke="#654321" stroke-width="1.5" fill="none"/>
+  <circle cx="18" cy="12" r="1" fill="#228B22" opacity="0.5"/>
+  
+  <!-- Leg armor (shifted during dodge) -->
+  <ellipse cx="17" cy="35" rx="2" ry="2.5" fill="#A0522D" transform="rotate(20 17 35)"/>
+  <ellipse cx="22" cy="35" rx="2" ry="2.5" fill="#A0522D" transform="rotate(20 22 35)"/>
+  
+  <!-- Boots -->
+  <ellipse cx="17" cy="37" rx="2" ry="1.5" fill="#654321" transform="rotate(20 17 37)"/>
+  <ellipse cx="22" cy="37" rx="2" ry="1.5" fill="#654321" transform="rotate(20 22 37)"/>
+  
+  <!-- Dodge motion effects -->
+  <path d="M 8 28 Q 12 26 16 28 Q 20 30 24 28" stroke="#228B22" stroke-width="1" opacity="0.4" fill="none"/>
+  <path d="M 10 30 Q 14 28 18 30 Q 22 32 26 30" stroke="#90EE90" stroke-width="0.5" opacity="0.6" fill="none"/>
+  <circle cx="16" cy="28" r="10" fill="none" stroke="#228B22" stroke-width="0.3" opacity="0.2"/>
+</svg> 

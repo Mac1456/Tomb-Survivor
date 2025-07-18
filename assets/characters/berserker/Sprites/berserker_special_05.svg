@@ -1,0 +1,98 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Berserker Special 05 - Final Energy Dissipation and Recovery -->
+  
+  <!-- RESIDUAL ENERGY AURA - Final dissipation -->
+  <ellipse cx="12" cy="15" rx="5" ry="6" fill="#FFFFFF" opacity="0.2"/>
+  <ellipse cx="12" cy="15" rx="4" ry="5" fill="#FFFF00" opacity="0.3"/>
+  <ellipse cx="12" cy="15" rx="3" ry="4" fill="#FFD700" opacity="0.2"/>
+  <ellipse cx="12" cy="15" rx="2" ry="3" fill="#FF4500" opacity="0.1"/>
+  
+  <!-- FINAL ENERGY WISPS - Dissipating power -->
+  <line x1="12" y1="15" x2="6" y2="8" stroke="#FFFFFF" stroke-width="0.5" opacity="0.3"/>
+  <line x1="12" y1="15" x2="18" y2="8" stroke="#FFFFFF" stroke-width="0.5" opacity="0.3"/>
+  <line x1="12" y1="15" x2="6" y2="22" stroke="#FFFFFF" stroke-width="0.5" opacity="0.3"/>
+  <line x1="12" y1="15" x2="18" y2="22" stroke="#FFFFFF" stroke-width="0.5" opacity="0.3"/>
+  
+  <!-- SECONDARY WISPS -->
+  <line x1="12" y1="15" x2="6" y2="8" stroke="#FFFF00" stroke-width="0.3" opacity="0.2"/>
+  <line x1="12" y1="15" x2="18" y2="8" stroke="#FFFF00" stroke-width="0.3" opacity="0.2"/>
+  <line x1="12" y1="15" x2="6" y2="22" stroke="#FFFF00" stroke-width="0.3" opacity="0.2"/>
+  <line x1="12" y1="15" x2="18" y2="22" stroke="#FFFF00" stroke-width="0.3" opacity="0.2"/>
+  
+  <!-- FINAL ENERGY SPARKS -->
+  <circle cx="8" cy="12" r="0.2" fill="#FFFFFF" opacity="0.4"/>
+  <circle cx="16" cy="10" r="0.2" fill="#FFFF00" opacity="0.3"/>
+  <circle cx="10" cy="18" r="0.2" fill="#FFD700" opacity="0.4"/>
+  <circle cx="14" cy="20" r="0.2" fill="#FF4500" opacity="0.3"/>
+  <circle cx="6" cy="15" r="0.2" fill="#DC143C" opacity="0.4"/>
+  <circle cx="18" cy="16" r="0.2" fill="#FFFFFF" opacity="0.3"/>
+  
+  <!-- Two-handed Battle Axe (returning to position) -->
+  <line x1="17" y1="8" x2="17" y2="20" stroke="#654321" stroke-width="1.5"/>
+  <!-- Axe Handle Grip -->
+  <ellipse cx="17" cy="16" rx="0.6" ry="1.2" fill="#4A4A4A"/>
+  <ellipse cx="17" cy="12" rx="0.6" ry="1.2" fill="#4A4A4A"/>
+  <!-- Detailed Axe Head (Much Bigger) -->
+  <ellipse cx="17" cy="6" rx="4" ry="2.5" fill="#696969"/>
+  <ellipse cx="17" cy="6.5" rx="3.5" ry="2" fill="#C0C0C0"/>
+  <!-- Axe Blade Edge (Larger and More Intimidating) -->
+  <ellipse cx="14.5" cy="6" rx="1.8" ry="1.2" fill="#E0E0E0"/>
+  <ellipse cx="19.5" cy="6" rx="1.8" ry="1.2" fill="#E0E0E0"/>
+  <!-- Blade Sharp Points -->
+  <ellipse cx="13.5" cy="5.5" rx="0.8" ry="0.5" fill="#F0F0F0"/>
+  <ellipse cx="20.5" cy="5.5" rx="0.8" ry="0.5" fill="#F0F0F0"/>
+  
+  <!-- RESIDUAL ENERGY around axe -->
+  <ellipse cx="17" cy="6" rx="4.5" ry="2.8" fill="#DC143C" opacity="0.2"/>
+  <ellipse cx="17" cy="6" rx="4" ry="2.5" fill="#FF4500" opacity="0.3"/>
+  <ellipse cx="17" cy="6" rx="3.5" ry="2.2" fill="#FFD700" opacity="0.4"/>
+  <ellipse cx="17" cy="6" rx="3" ry="2" fill="#FFFFFF" opacity="0.2"/>
+  
+  <!-- Berserker Tunic (recovering after special) -->
+  <ellipse cx="12" cy="16" rx="3.8" ry="2.7" fill="#8B4513"/>
+  <ellipse cx="12" cy="14.5" rx="3.3" ry="2.2" fill="#CD853F"/>
+  
+  <!-- Muscular Arms (recovering) -->
+  <!-- Right arm (axe holding - recovering) -->
+  <ellipse cx="14" cy="10" rx="1.5" ry="3" fill="#DEB887"/>
+  <ellipse cx="15" cy="12" rx="1.2" ry="2.5" fill="#8B4513"/>
+  
+  <!-- Left arm (recovering) -->
+  <ellipse cx="10" cy="10" rx="1.2" ry="2.5" fill="#DEB887"/>
+  <ellipse cx="9" cy="12" rx="1" ry="2" fill="#8B4513"/>
+  
+  <!-- Hands (gripping axe, recovering) -->
+  <circle cx="16" cy="8" r="0.8" fill="#DEB887"/>
+  <circle cx="16" cy="12" r="0.8" fill="#DEB887"/>
+  <circle cx="8" cy="14" r="0.8" fill="#DEB887"/>
+  
+  <!-- Head (recovering from special) -->
+  <circle cx="12" cy="10" r="2.5" fill="#DEB887"/>
+  
+  <!-- Calming Eyes (residual glow) -->
+  <circle cx="11" cy="9.5" r="0.3" fill="#FF0000" opacity="0.4"/>
+  <circle cx="13" cy="9.5" r="0.3" fill="#FF0000" opacity="0.4"/>
+  <circle cx="11" cy="9.5" r="0.5" fill="#FFFF00" opacity="0.2"/>
+  <circle cx="13" cy="9.5" r="0.5" fill="#FFFF00" opacity="0.2"/>
+  <circle cx="11" cy="9.5" r="0.7" fill="#FFD700" opacity="0.1"/>
+  <circle cx="13" cy="9.5" r="0.7" fill="#FFD700" opacity="0.1"/>
+  
+  <!-- Relaxed Mouth -->
+  <path d="M 10.5 11 Q 12 11.5 13.5 11" stroke="#000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Wild Hair (settling) -->
+  <ellipse cx="12" cy="7.5" rx="2.8" ry="1.3" fill="#2F1B14"/>
+  <ellipse cx="11" cy="6.5" rx="0.8" ry="0.8" fill="#2F1B14"/>
+  <ellipse cx="13" cy="6.5" rx="0.8" ry="0.8" fill="#2F1B14"/>
+  
+  <!-- Berserker Pants (distinct from tunic) -->
+  <ellipse cx="12" cy="19" rx="3.2" ry="2.3" fill="#654321"/>
+  <ellipse cx="12" cy="17.5" rx="2.8" ry="1.8" fill="#654321"/>
+  
+  <!-- Strong Boots (dark brown) -->
+  <ellipse cx="10" cy="26" rx="1.5" ry="2" fill="#2F1B14"/>
+  <ellipse cx="14" cy="26" rx="1.5" ry="2" fill="#2F1B14"/>
+  
+  <!-- Breathing effect (subtle) -->
+  <ellipse cx="12" cy="14.5" rx="3.7" ry="2.6" fill="#CD853F" opacity="0.3"/>
+</svg> 

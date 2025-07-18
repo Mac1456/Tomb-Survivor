@@ -134,58 +134,38 @@ func create_character_sprite_frames(character_name: String) -> SpriteFrames:
 	
 	# Create idle animation
 	sprite_frames.add_animation("idle")
-	sprite_frames.set_animation_speed("idle", 6.0)  # Slower for character selection
+	sprite_frames.set_animation_speed("idle", 8.0)  # Match game speed for visibility
 	sprite_frames.set_animation_loop("idle", true)
 	
 	match character_name:
 		"Knight":
-			# Knight uses sprite sheet - split into 8 frames (32x32 each)
-			var idle_sheet = load("res://assets/characters/knight/Sprites/Idle.png")
-			if idle_sheet:
-				var frame_width = idle_sheet.get_width() / 8
-				var frame_height = idle_sheet.get_height()
-				for i in range(8):
-					var atlas_tex = AtlasTexture.new()
-					atlas_tex.atlas = idle_sheet
-					atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-					sprite_frames.add_frame("idle", atlas_tex)
-			print("Loaded and split animated sprite for Knight")
+			# Knight uses new multi-frame SVG sprites
+			for i in range(1, 5):  # 4 frames
+				var idle_texture = load("res://assets/characters/knight/sprites/knight_idle_%02d.svg" % i)
+				if idle_texture:
+					sprite_frames.add_frame("idle", idle_texture)
+			print("Loaded Knight multi-frame SVG sprite for character selection")
 		"Berserker":
-			# Berserker uses sprite sheet - split into 8 frames (32x32 each)
-			var idle_sheet = load("res://assets/characters/berserker/Sprites/Idle.png")
-			if idle_sheet:
-				var frame_width = idle_sheet.get_width() / 8
-				var frame_height = idle_sheet.get_height()
-				for i in range(8):
-					var atlas_tex = AtlasTexture.new()
-					atlas_tex.atlas = idle_sheet
-					atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-					sprite_frames.add_frame("idle", atlas_tex)
-			print("Loaded and split animated sprite for Berserker")
+			# Berserker uses new multi-frame SVG sprites
+			for i in range(1, 5):  # 4 frames
+				var idle_texture = load("res://assets/characters/berserker/Sprites/berserker_idle_%02d.svg" % i)
+				if idle_texture:
+					sprite_frames.add_frame("idle", idle_texture)
+			print("Loaded Berserker multi-frame SVG sprite for character selection")
 		"Huntress":
-			# Huntress uses sprite sheet - split into 8 frames (32x32 each)
-			var idle_sheet = load("res://assets/characters/huntress/Sprites/Idle.png")
-			if idle_sheet:
-				var frame_width = idle_sheet.get_width() / 8
-				var frame_height = idle_sheet.get_height()
-				for i in range(8):
-					var atlas_tex = AtlasTexture.new()
-					atlas_tex.atlas = idle_sheet
-					atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-					sprite_frames.add_frame("idle", atlas_tex)
-			print("Loaded and split animated sprite for Huntress")
+			# Huntress uses new multi-frame SVG sprites
+			for i in range(1, 5):  # 4 frames
+				var idle_texture = load("res://assets/characters/huntress/Sprites/huntress_idle_%02d.svg" % i)
+				if idle_texture:
+					sprite_frames.add_frame("idle", idle_texture)
+			print("Loaded Huntress multi-frame SVG sprite for character selection")
 		"Wizard":
-			# Wizard uses sprite sheet - split into 8 frames (32x32 each)
-			var idle_sheet = load("res://assets/characters/wizard/Sprites/Idle.png")
-			if idle_sheet:
-				var frame_width = idle_sheet.get_width() / 8
-				var frame_height = idle_sheet.get_height()
-				for i in range(8):
-					var atlas_tex = AtlasTexture.new()
-					atlas_tex.atlas = idle_sheet
-					atlas_tex.region = Rect2(i * frame_width, 0, frame_width, frame_height)
-					sprite_frames.add_frame("idle", atlas_tex)
-			print("Loaded and split animated sprite for Wizard")
+			# Wizard uses new multi-frame SVG sprites
+			for i in range(1, 5):  # 4 frames
+				var idle_texture = load("res://assets/characters/wizard/sprites/wizard_idle_%02d.svg" % i)
+				if idle_texture:
+					sprite_frames.add_frame("idle", idle_texture)
+			print("Loaded Wizard multi-frame SVG sprite for character selection")
 		_:
 			print("Unknown character: ", character_name)
 			return null

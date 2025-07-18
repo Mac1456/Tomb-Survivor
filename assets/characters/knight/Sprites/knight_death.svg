@@ -1,0 +1,67 @@
+<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Knight Death Animation - Honorable Fall -->
+  
+  <!-- Sword (planted in ground for support) -->
+  <line x1="8" y1="18" x2="8" y2="28" stroke="#C0C0C0" stroke-width="1"/>
+  <line x1="7" y1="18" x2="9" y2="18" stroke="#8B4513" stroke-width="1"/>
+  <circle cx="8" cy="29" r="1" fill="#8B4513"/>
+  
+  <!-- Shield (dropped beside) -->
+  <ellipse cx="16" cy="25" rx="2" ry="3" fill="#4169E1" transform="rotate(30 16 25)"/>
+  <ellipse cx="16" cy="25" rx="1.5" ry="2.5" fill="#FFD700" transform="rotate(30 16 25)"/>
+  
+  <!-- Body Armor (kneeling/collapsing) -->
+  <ellipse cx="12" cy="26" rx="4" ry="2" fill="#708090"/>
+  <ellipse cx="12" cy="24" rx="3.5" ry="3" fill="#778899"/>
+  <ellipse cx="12" cy="22" rx="3" ry="2" fill="#708090"/>
+  
+  <!-- Arms (positioned for final rest) -->
+  <!-- Right arm (on sword for support) -->
+  <ellipse cx="9" cy="20" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(20 9 20)"/>
+  <ellipse cx="8" cy="22" rx="1" ry="2" fill="#708090" transform="rotate(20 8 22)"/>
+  
+  <!-- Left arm (hanging down) -->
+  <ellipse cx="14" cy="22" rx="1.5" ry="2.5" fill="#DEB887" transform="rotate(-10 14 22)"/>
+  <ellipse cx="15" cy="24" rx="1" ry="2" fill="#708090" transform="rotate(-10 15 24)"/>
+  
+  <!-- Hands -->
+  <circle cx="7" cy="24" r="1" fill="#DEB887"/>
+  <circle cx="16" cy="26" r="1" fill="#DEB887"/>
+  
+  <!-- Head (bowed down) -->
+  <circle cx="12" cy="16" r="3" fill="#DEB887"/>
+  
+  <!-- Helmet (tilted) -->
+  <path d="M9 14 Q12 12 15 14 Q15 16 12 16 Q9 16 9 14" fill="#708090"/>
+  <line x1="9" y1="15" x2="15" y2="15" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Face (eyes closed, peaceful) -->
+  <line x1="10.5" y1="15" x2="11.5" y2="15" stroke="#000000" stroke-width="0.5"/>
+  <line x1="12.5" y1="15" x2="13.5" y2="15" stroke="#000000" stroke-width="0.5"/>
+  <path d="M11 17 Q12 16 13 17" stroke="#000000" stroke-width="0.5" fill="none"/>
+  
+  <!-- Hair (visible under helmet) -->
+  <path d="M10 14 Q12 13 14 14" stroke="#8B4513" stroke-width="0.5" fill="none"/>
+  
+  <!-- Legs (kneeling position) -->
+  <!-- Right leg (kneeling) -->
+  <ellipse cx="10" cy="28" rx="1.5" ry="2" fill="#708090" transform="rotate(-20 10 28)"/>
+  <!-- Left leg (collapsed) -->
+  <ellipse cx="14" cy="29" rx="1.5" ry="1.5" fill="#708090" transform="rotate(45 14 29)"/>
+  
+  <!-- Feet -->
+  <ellipse cx="9" cy="29" rx="1" ry="1" fill="#2F4F4F"/>
+  <ellipse cx="15" cy="29" rx="1" ry="1" fill="#2F4F4F"/>
+  
+  <!-- Armor Details -->
+  <line x1="12" y1="20" x2="12" y2="24" stroke="#556B2F" stroke-width="0.5"/>
+  <line x1="10" y1="22" x2="14" y2="22" stroke="#556B2F" stroke-width="0.5"/>
+  
+  <!-- Damage cracks in armor -->
+  <line x1="11" y1="21" x2="13" y2="23" stroke="#2F4F4F" stroke-width="0.5" opacity="0.6"/>
+  <line x1="10" y1="23" x2="12" y2="25" stroke="#2F4F4F" stroke-width="0.5" opacity="0.4"/>
+  
+  <!-- Final breath/spirit effect -->
+  <circle cx="12" cy="12" r="1" fill="#FFD700" opacity="0.3"/>
+  <circle cx="12" cy="10" r="0.5" fill="#FFD700" opacity="0.2"/>
+</svg> 
