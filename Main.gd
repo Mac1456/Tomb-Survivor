@@ -208,7 +208,7 @@ func setup_performance_optimized_game():
 	print("Selected character: ", selected_character.name)
 	print("Controls: WASD to move, Left Click to attack, Right Click for special ability")
 	print("Additional: Spacebar for dodge roll, R for ultimate ability")
-	print("Enemy Testing: 1 - Spawn Sword Skeleton, 2 - Spawn Archer Skeleton")
+	print("Enemy Testing: 1 - Spawn Sword Skeleton, 2 - Spawn Archer Skeleton, 4 - Spawn Stone Golem")
 	print("Boss Testing: 3 - Spawn Blue Witch Boss")
 	print("Performance: Entity limit =", MAX_ENTITIES)
 
@@ -469,6 +469,9 @@ func _input(event):
 			KEY_3:
 				spawn_blue_witch_boss()
 				return
+			KEY_4:
+				spawn_skeleton_enemy(Enemy.EnemyType.STONE_GOLEM)
+				return
 	
 	# Handle combat inputs through player
 	if event.is_action_pressed("primary_attack"):
@@ -506,41 +509,71 @@ func handle_directional_melee_attack(attack_center: Vector2, attack_range: float
 	# Create visual feedback for directional attack with character-specific effects
 	create_directional_attack_visual(attack_center, attack_direction, attack_range, character_name)
 	
+	# Use physics-based collision detection for the cone area
+	var space_state = get_world_2d().direct_space_state
+	var query = PhysicsShapeQueryParameters2D.new()
+	
+	# Create a circle shape for the attack area (we'll filter by angle later)
+	var attack_shape = CircleShape2D.new()
+	attack_shape.radius = attack_range
+	query.shape = attack_shape
+	query.transform = Transform2D(0, attack_center)
+	query.collision_mask = 4  # Enemy layer
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	
+	var results = space_state.intersect_shape(query)
+	
+	print("⚔️ Directional attack at ", attack_center, " with range ", attack_range, " found ", results.size(), " potential targets")
+	
 	# Attack cone parameters
 	var attack_angle = 60.0  # 60 degree cone for sword swing
 	var attack_cone_rad = deg_to_rad(attack_angle)
 	
-	# Check for enemies in attack cone
-	for enemy in enemies:
-		if is_instance_valid(enemy):
-			var to_enemy = enemy.position - attack_center
-			var distance = to_enemy.length()
+	# Check each physics result against the attack cone
+	for result in results:
+		var body = result.collider
+		if body and body.has_method("take_damage"):
+			var to_enemy = body.position - attack_center
+			var angle_to_enemy = to_enemy.normalized().angle_to(attack_direction)
 			
-			# Check if enemy is within range
-			if distance <= attack_range:
-				# Check if enemy is within attack cone
-				var angle_to_enemy = to_enemy.normalized().angle_to(attack_direction)
-				if abs(angle_to_enemy) <= attack_cone_rad / 2:
-					hit_enemy(enemy, damage)
-					match character_name:
-						"Berserker":
-							print("💥 Enemy hit with BERSERKER powerful strike!")
-						"Knight":
-							print("⚔️ Enemy hit with KNIGHT quick slash!")
-						_:
-							print("Enemy hit with directional melee attack!")
+			# Check if enemy is within attack cone
+			if abs(angle_to_enemy) <= attack_cone_rad / 2:
+				hit_enemy(body, damage)
+				match character_name:
+					"Berserker":
+						print("💥 BERSERKER powerful strike hit ", body.name, " at ", body.position)
+					"Knight":
+						print("⚔️ KNIGHT quick slash hit ", body.name, " at ", body.position)
+					_:
+						print("Directional melee attack hit ", body.name, " at ", body.position)
 
 func handle_melee_attack(attack_center: Vector2, attack_range: float, damage: float):
 	# Create visual feedback for attack
 	create_attack_visual(attack_center)
 	
-	# Check for enemies in attack range
-	for enemy in enemies:
-		if is_instance_valid(enemy):
-			var distance = enemy.position.distance_to(attack_center)
-			if distance <= attack_range:
-				hit_enemy(enemy, damage)
-				print("Enemy hit with melee attack!")
+	# Use physics-based collision detection for accurate hits
+	var space_state = get_world_2d().direct_space_state
+	var query = PhysicsShapeQueryParameters2D.new()
+	
+	# Create a circle shape for the attack area
+	var attack_shape = CircleShape2D.new()
+	attack_shape.radius = attack_range
+	query.shape = attack_shape
+	query.transform = Transform2D(0, attack_center)
+	query.collision_mask = 4  # Enemy layer
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	
+	var results = space_state.intersect_shape(query)
+	
+	print("🗡️ Melee attack at ", attack_center, " with range ", attack_range, " found ", results.size(), " targets")
+	
+	for result in results:
+		var body = result.collider
+		if body and body.has_method("take_damage"):
+			hit_enemy(body, damage)
+			print("💥 Physics-based hit on ", body.name, " at ", body.position)
 
 func handle_ranged_attack(start_pos: Vector2, damage: float, direction: Vector2):
 	# Determine projectile type based on player character
@@ -675,6 +708,8 @@ func _on_directional_attack_visual_timeout(visual: Node2D):
 	if is_instance_valid(visual):
 		visual.queue_free()
 
+# Helper function removed - now using physics-based collision detection
+
 func hit_enemy(enemy: CharacterBody2D, damage: float):
 	# This function is now mainly for compatibility with old placeholder enemies
 	# New skeleton enemies use their own take_damage method
@@ -779,6 +814,60 @@ func create_enemy_arrow(start_pos: Vector2, direction: Vector2, damage: float):
 	
 	print("🏹 Created enemy arrow with damage: ", damage)
 
+# Function for stone golem ground pound attack
+func handle_golem_ground_pound(golem_position: Vector2, damage_radius: float, damage: float):
+	print("🌊 GROUND POUND at position: ", golem_position, " with radius: ", damage_radius)
+	
+	# Check if player is within damage radius
+	if player and player.position.distance_to(golem_position) <= damage_radius:
+		if player.has_method("take_damage"):
+			player.take_damage(damage)
+			print("💥 GROUND POUND hit player for ", damage, " damage!")
+	
+	# Create visual shockwave effect
+	create_ground_pound_shockwave(golem_position, damage_radius)
+
+func create_ground_pound_shockwave(center: Vector2, radius: float):
+	# Create expanding shockwave visual effect
+	var shockwave_container = Node2D.new()
+	shockwave_container.position = center
+	add_child(shockwave_container)
+	
+	# Create multiple expanding circles for shockwave effect
+	var wave_count = 3
+	for i in range(wave_count):
+		var wave = Node2D.new()
+		shockwave_container.add_child(wave)
+		
+		# Create circle segments for the wave
+		var segments = 12
+		for j in range(segments):
+			var angle = (PI * 2 * j) / segments
+			var segment = ColorRect.new()
+			segment.size = Vector2(8, 4)
+			segment.position = Vector2(cos(angle), sin(angle)) * (radius * 0.3) - segment.size / 2
+			segment.rotation = angle
+			segment.color = Color(1.0, 0.6, 0.0, 0.8)  # Orange shockwave
+			wave.add_child(segment)
+		
+		# Animate the wave expansion
+		var tween = create_tween()
+		tween.parallel().tween_property(wave, "scale", Vector2(3.0, 3.0), 0.6)
+		tween.parallel().tween_property(wave, "modulate:a", 0.0, 0.6)
+		
+		# Delay each wave slightly
+		await get_tree().create_timer(0.15 * i).timeout
+	
+	# Remove the entire shockwave container after animation
+	var cleanup_timer = Timer.new()
+	cleanup_timer.wait_time = 1.0
+	cleanup_timer.one_shot = true
+	cleanup_timer.timeout.connect(func(): shockwave_container.queue_free())
+	add_child(cleanup_timer)
+	cleanup_timer.start()
+	
+	print("🌊 Ground pound shockwave visual effect created")
+
 # Function for Enemy class to call when removing enemies
 func remove_enemy(enemy: Enemy):
 	var index = enemies.find(enemy)
@@ -820,15 +909,23 @@ func update_projectiles(delta):
 				destroy_projectile(projectile, i)
 				continue
 		else:
-			# Player projectile - check collision with enemies
-			for enemy in enemies:
-				if is_instance_valid(enemy) and projectile.position.distance_to(enemy.position) < 15:
-					if enemy.has_method("take_damage"):
-						enemy.take_damage(damage)
-					else:
-						hit_enemy(enemy, damage)  # For old placeholder enemies
-					destroy_projectile(projectile, i)
-					break
+			# Player projectile - use physics-based collision detection
+			var space_state = get_world_2d().direct_space_state
+			var query = PhysicsPointQueryParameters2D.new()
+			query.position = projectile.position
+			query.collision_mask = 4  # Enemy layer
+			query.collide_with_areas = false
+			query.collide_with_bodies = true
+			
+			var results = space_state.intersect_point(query)
+			
+			if results.size() > 0:
+				var body = results[0].collider
+				if body and body.has_method("take_damage"):
+					body.take_damage(damage)
+					print("🏹 Projectile hit ", body.name, " for ", damage, " damage!")
+				destroy_projectile(projectile, i)
+				break
 
 
 

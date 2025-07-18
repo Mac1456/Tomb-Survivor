@@ -1,0 +1,122 @@
+<svg width="80" height="120" viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Stone Golem Attack Animation - Ground Pound -->
+  
+  <!-- Base/Feet (Stone blocks - planted firmly for attack) -->
+  <rect x="22" y="108" width="16" height="12" fill="#5D4E37" stroke="#4A3B28" stroke-width="1"/>
+  <rect x="42" y="108" width="16" height="12" fill="#5D4E37" stroke="#4A3B28" stroke-width="1"/>
+  
+  <!-- Leg Joints (Dark stone - stable stance) -->
+  <rect x="24" y="100" width="12" height="10" fill="#4A3B28" stroke="#3A2B18" stroke-width="1"/>
+  <rect x="44" y="100" width="12" height="10" fill="#4A3B28" stroke="#3A2B18" stroke-width="1"/>
+  
+  <!-- Lower Legs (Large stone blocks - wide stance) -->
+  <rect x="20" y="80" width="20" height="22" fill="#696969" stroke="#555555" stroke-width="1"/>
+  <rect x="40" y="80" width="20" height="22" fill="#696969" stroke="#555555" stroke-width="1"/>
+  
+  <!-- Knee Joints (flexed for power) -->
+  <circle cx="30" cy="78" r="4" fill="#4A3B28"/>
+  <circle cx="50" cy="78" r="4" fill="#4A3B28"/>
+  
+  <!-- Upper Legs/Hips (bent for attack stance) -->
+  <rect x="22" y="55" width="16" height="25" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  <rect x="42" y="55" width="16" height="25" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  
+  <!-- Core/Torso (Main body - leaning back for power) -->
+  <rect x="12" y="22" width="56" height="38" fill="#A9A9A9" stroke="#808080" stroke-width="2"/>
+  
+  <!-- Chest Detail (Central stone - expanded with power) -->
+  <rect x="22" y="29" width="36" height="24" fill="#D3D3D3" stroke="#A9A9A9" stroke-width="1"/>
+  
+  <!-- Ancient Runes on Chest (Glowing with power) -->
+  <path d="M33 35 L35 39 L33 43" stroke="#FF4500" stroke-width="2" fill="none"/>
+  <path d="M40 35 L42 37 L40 39 L42 41 L40 43" stroke="#FF4500" stroke-width="2" fill="none"/>
+  <circle cx="47" cy="39" r="2" stroke="#FF4500" stroke-width="2" fill="#FFD700" opacity="0.8"/>
+  
+  <!-- Rune glow effects -->
+  <path d="M33 35 L35 39 L33 43" stroke="#FFD700" stroke-width="4" fill="none" opacity="0.4"/>
+  <path d="M40 35 L42 37 L40 39 L42 41 L40 43" stroke="#FFD700" stroke-width="4" fill="none" opacity="0.4"/>
+  <circle cx="47" cy="39" r="4" fill="#FFFF00" opacity="0.3"/>
+  
+  <!-- Shoulder Joints (Raised high for attack) -->
+  <circle cx="8" cy="25" r="6" fill="#696969" stroke="#555555" stroke-width="1"/>
+  <circle cx="72" cy="25" r="6" fill="#696969" stroke="#555555" stroke-width="1"/>
+  
+  <!-- Arms (Raised high above head for ground pound) -->
+  <rect x="-2" y="10" width="12" height="20" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  <rect x="70" y="10" width="12" height="20" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  
+  <!-- Elbow Joints (High position) -->
+  <circle cx="4" cy="32" r="3" fill="#4A3B28"/>
+  <circle cx="76" cy="32" r="3" fill="#4A3B28"/>
+  
+  <!-- Forearms (Vertical for ground pound) -->
+  <rect x="2" y="35" width="8" height="18" fill="#696969" stroke="#555555" stroke-width="1"/>
+  <rect x="70" y="35" width="8" height="18" fill="#696969" stroke="#555555" stroke-width="1"/>
+  
+  <!-- Hands (Large stone fists - enhanced for attack) -->
+  <circle cx="6" cy="55" r="7" fill="#8B7355" stroke="#6B5535" stroke-width="2"/>
+  <circle cx="74" cy="55" r="7" fill="#8B7355" stroke="#6B5535" stroke-width="2"/>
+  
+  <!-- Fist details (knuckles) -->
+  <circle cx="4" cy="53" r="1" fill="#6B5535"/>
+  <circle cx="8" cy="53" r="1" fill="#6B5535"/>
+  <circle cx="72" cy="53" r="1" fill="#6B5535"/>
+  <circle cx="76" cy="53" r="1" fill="#6B5535"/>
+  
+  <!-- Head (Stone block with angry expression) -->
+  <rect x="25" y="8" width="30" height="25" fill="#C0C0C0" stroke="#A0A0A0" stroke-width="2"/>
+  
+  <!-- Face Features (Angry/focused) -->
+  <!-- Eyes (Intensely glowing) -->
+  <rect x="32" y="16" width="4" height="4" fill="#FF4500" opacity="1.0"/>
+  <rect x="44" y="16" width="4" height="4" fill="#FF4500" opacity="1.0"/>
+  
+  <!-- Eye glow effect (intense) -->
+  <rect x="30" y="14" width="8" height="8" fill="#FFFF00" opacity="0.6"/>
+  <rect x="42" y="14" width="8" height="8" fill="#FFFF00" opacity="0.6"/>
+  
+  <!-- Eye energy beams -->
+  <rect x="34" y="12" width="1" height="4" fill="#FFD700" opacity="0.8"/>
+  <rect x="46" y="12" width="1" height="4" fill="#FFD700" opacity="0.8"/>
+  
+  <!-- Nose (Stone ridge) -->
+  <rect x="38" y="22" width="4" height="6" fill="#A0A0A0" stroke="#808080" stroke-width="1"/>
+  
+  <!-- Mouth (Open roar/battle cry) -->
+  <rect x="35" y="28" width="10" height="4" fill="#1F1F1F"/>
+  <rect x="37" y="29" width="6" height="2" fill="#000000"/>
+  
+  <!-- Head Runes (Glowing) -->
+  <path d="M28 12 L30 14 L28 16" stroke="#FF4500" stroke-width="1.5" fill="none"/>
+  <path d="M50 12 L52 14 L50 16" stroke="#FF4500" stroke-width="1.5" fill="none"/>
+  
+  <!-- Attack Energy Effects -->
+  <!-- Energy building in fists -->
+  <circle cx="6" cy="55" r="10" fill="none" stroke="#FFD700" stroke-width="2" opacity="0.7"/>
+  <circle cx="74" cy="55" r="10" fill="none" stroke="#FFD700" stroke-width="2" opacity="0.7"/>
+  <circle cx="6" cy="55" r="12" fill="none" stroke="#FFFF00" stroke-width="1" opacity="0.5"/>
+  <circle cx="74" cy="55" r="12" fill="none" stroke="#FFFF00" stroke-width="1" opacity="0.5"/>
+  
+  <!-- Energy sparks around fists -->
+  <path d="M-2 50 L2 52 L-1 54" stroke="#FFD700" stroke-width="1.5" fill="none"/>
+  <path d="M12 50 L8 52 L11 54" stroke="#FFD700" stroke-width="1.5" fill="none"/>
+  <path d="M68 50 L72 52 L69 54" stroke="#FFD700" stroke-width="1.5" fill="none"/>
+  <path d="M80 50 L76 52 L79 54" stroke="#FFD700" stroke-width="1.5" fill="none"/>
+  
+  <!-- Power aura emanating from body -->
+  <circle cx="40" cy="45" r="45" fill="none" stroke="#FF4500" stroke-width="1" opacity="0.4"/>
+  <circle cx="40" cy="45" r="50" fill="none" stroke="#FFD700" stroke-width="0.8" opacity="0.3"/>
+  <circle cx="40" cy="45" r="55" fill="none" stroke="#FFFF00" stroke-width="0.5" opacity="0.2"/>
+  
+  <!-- Ground energy buildup (telegraph for ground pound) -->
+  <ellipse cx="40" cy="116" rx="25" ry="4" fill="#FFD700" opacity="0.4"/>
+  <ellipse cx="40" cy="117" rx="20" ry="3" fill="#FFFF00" opacity="0.6"/>
+  <ellipse cx="40" cy="118" rx="15" ry="2" fill="#FF4500" opacity="0.5"/>
+  
+  <!-- Stone Texture Details -->
+  <!-- Cracks and weathering (stressed from power) -->
+  <path d="M18 45 Q23 47 28 45" stroke="#FF4500" stroke-width="0.8" fill="none" opacity="0.8"/>
+  <path d="M52 48 Q57 50 62 48" stroke="#FF4500" stroke-width="0.8" fill="none" opacity="0.8"/>
+  <path d="M25 85 Q30 87 35 85" stroke="#4A3B28" stroke-width="0.5" fill="none" opacity="0.7"/>
+  <path d="M45 88 Q50 90 55 88" stroke="#4A3B28" stroke-width="0.5" fill="none" opacity="0.7"/>
+</svg> 

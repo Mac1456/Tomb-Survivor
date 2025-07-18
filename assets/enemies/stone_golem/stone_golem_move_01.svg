@@ -1,0 +1,90 @@
+<svg width="80" height="120" viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Stone Golem Move Animation Frame 1 - Left leg forward -->
+  
+  <!-- Base/Feet (Stone blocks - left foot forward) -->
+  <rect x="16" y="106" width="16" height="14" fill="#5D4E37" stroke="#4A3B28" stroke-width="1"/>
+  <rect x="48" y="110" width="16" height="10" fill="#5D4E37" stroke="#4A3B28" stroke-width="1"/>
+  
+  <!-- Leg Joints (Dark stone - adjusted for step) -->
+  <rect x="18" y="98" width="12" height="10" fill="#4A3B28" stroke="#3A2B18" stroke-width="1"/>
+  <rect x="50" y="102" width="12" height="10" fill="#4A3B28" stroke="#3A2B18" stroke-width="1"/>
+  
+  <!-- Lower Legs (Large stone blocks - walking position) -->
+  <rect x="14" y="78" width="20" height="22" fill="#696969" stroke="#555555" stroke-width="1"/>
+  <rect x="46" y="82" width="20" height="22" fill="#696969" stroke="#555555" stroke-width="1"/>
+  
+  <!-- Knee Joints (adjusted for walking) -->
+  <circle cx="24" cy="76" r="4" fill="#4A3B28"/>
+  <circle cx="56" cy="80" r="4" fill="#4A3B28"/>
+  
+  <!-- Upper Legs/Hips (walking stride) -->
+  <rect x="16" y="53" width="16" height="25" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  <rect x="48" y="57" width="16" height="25" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  
+  <!-- Core/Torso (Main body - slightly leaning into step) -->
+  <rect x="16" y="25" width="50" height="35" fill="#A9A9A9" stroke="#808080" stroke-width="2"/>
+  
+  <!-- Chest Detail (Central stone) -->
+  <rect x="26" y="32" width="30" height="20" fill="#D3D3D3" stroke="#A9A9A9" stroke-width="1"/>
+  
+  <!-- Ancient Runes on Chest -->
+  <path d="M36 38 L38 42 L36 46" stroke="#8B4513" stroke-width="1.5" fill="none"/>
+  <path d="M43 38 L45 40 L43 42 L45 44 L43 46" stroke="#8B4513" stroke-width="1.5" fill="none"/>
+  <circle cx="49" cy="42" r="2" stroke="#8B4513" stroke-width="1.5" fill="none"/>
+  
+  <!-- Shoulder Joints (walking motion) -->
+  <circle cx="13" cy="35" r="6" fill="#696969" stroke="#555555" stroke-width="1"/>
+  <circle cx="69" cy="35" r="6" fill="#696969" stroke="#555555" stroke-width="1"/>
+  
+  <!-- Arms (Walking motion - opposite to legs) -->
+  <rect x="3" y="38" width="12" height="25" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  <rect x="65" y="42" width="12" height="25" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  
+  <!-- Elbow Joints -->
+  <circle cx="9" cy="65" r="3" fill="#4A3B28"/>
+  <circle cx="71" cy="69" r="3" fill="#4A3B28"/>
+  
+  <!-- Forearms (swinging motion) -->
+  <rect x="5" y="68" width="8" height="20" fill="#696969" stroke="#555555" stroke-width="1"/>
+  <rect x="67" y="72" width="8" height="20" fill="#696969" stroke="#555555" stroke-width="1"/>
+  
+  <!-- Hands (Stone fists) -->
+  <circle cx="9" cy="90" r="5" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  <circle cx="71" cy="94" r="5" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  
+  <!-- Head (Stone block with face - slightly tilted with movement) -->
+  <rect x="26" y="8" width="30" height="25" fill="#C0C0C0" stroke="#A0A0A0" stroke-width="2"/>
+  
+  <!-- Face Features -->
+  <!-- Eyes (Glowing stone cavities) -->
+  <rect x="33" y="16" width="4" height="4" fill="#FFD700" opacity="0.8"/>
+  <rect x="45" y="16" width="4" height="4" fill="#FFD700" opacity="0.8"/>
+  
+  <!-- Eye glow effect -->
+  <rect x="32" y="15" width="6" height="6" fill="#FFFF00" opacity="0.3"/>
+  <rect x="44" y="15" width="6" height="6" fill="#FFFF00" opacity="0.3"/>
+  
+  <!-- Nose (Stone ridge) -->
+  <rect x="39" y="22" width="4" height="6" fill="#A0A0A0" stroke="#808080" stroke-width="1"/>
+  
+  <!-- Mouth (Dark cavity) -->
+  <rect x="36" y="28" width="10" height="3" fill="#2F2F2F"/>
+  
+  <!-- Head Runes -->
+  <path d="M29 12 L31 14 L29 16" stroke="#8B4513" stroke-width="1" fill="none"/>
+  <path d="M51 12 L53 14 L51 16" stroke="#8B4513" stroke-width="1" fill="none"/>
+  
+  <!-- Stone Texture Details -->
+  <!-- Cracks and weathering -->
+  <path d="M21 45 Q26 47 31 45" stroke="#555555" stroke-width="0.5" fill="none" opacity="0.7"/>
+  <path d="M51 48 Q56 50 61 48" stroke="#555555" stroke-width="0.5" fill="none" opacity="0.7"/>
+  <path d="M19 85 Q24 87 29 85" stroke="#4A3B28" stroke-width="0.5" fill="none" opacity="0.7"/>
+  <path d="M51 88 Q56 90 61 88" stroke="#4A3B28" stroke-width="0.5" fill="none" opacity="0.7"/>
+  
+  <!-- Movement dust clouds from heavy steps -->
+  <ellipse cx="24" cy="115" rx="8" ry="3" fill="#A0A0A0" opacity="0.4"/>
+  <ellipse cx="20" cy="118" rx="5" ry="2" fill="#D3D3D3" opacity="0.5"/>
+  
+  <!-- Subtle Energy Emanation (reduced during movement) -->
+  <circle cx="41" cy="60" r="30" fill="none" stroke="#FFD700" stroke-width="0.3" opacity="0.15"/>
+</svg> 

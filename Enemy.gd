@@ -5,6 +5,7 @@ class_name Enemy
 enum EnemyType {
 	SWORD_SKELETON,
 	ARCHER_SKELETON,
+	STONE_GOLEM,
 	BOSS
 }
 
@@ -76,6 +77,13 @@ const ARCHER_WINDUP_TIME: float = 1.2
 const ARCHER_COOLDOWN_TIME: float = 3.0
 const ARCHER_REPOSITION_SPEED: float = 100.0
 
+# Stone golem constants
+const GOLEM_GROUND_POUND_RANGE: float = 100.0
+const GOLEM_ATTACK_RANGE: float = 60.0
+const GOLEM_WINDUP_TIME: float = 2.0
+const GOLEM_COOLDOWN_TIME: float = 4.0
+const GOLEM_MOVE_SPEED: float = 30.0
+
 # Base enemy stats (before scaling)
 const BASE_ENEMY_STATS = {
 	EnemyType.SWORD_SKELETON: {
@@ -91,6 +99,13 @@ const BASE_ENEMY_STATS = {
 		"speed": 80.0,
 		"attack_cooldown": ARCHER_COOLDOWN_TIME,
 		"attack_range": 180.0
+	},
+	EnemyType.STONE_GOLEM: {
+		"health": 800.0,
+		"damage": 80.0,
+		"speed": GOLEM_MOVE_SPEED,
+		"attack_cooldown": GOLEM_COOLDOWN_TIME,
+		"attack_range": GOLEM_ATTACK_RANGE
 	}
 }
 
@@ -99,7 +114,7 @@ func _ready():
 	collision_shape = CollisionShape2D.new()
 	var shape = RectangleShape2D.new()
 	
-	# Set collision size based on skeleton type and sprite scaling
+	# Set collision size based on enemy type and sprite scaling
 	match enemy_type:
 		EnemyType.SWORD_SKELETON:
 			# Sword skeletons: 24x30 sprite * 1.5 scale = 36x45 visual
@@ -109,14 +124,38 @@ func _ready():
 			# Archer skeletons: 24x30 sprite * 1.5 scale = 36x45 visual
 			# Use slightly smaller collision for better gameplay
 			shape.size = Vector2(28, 38)
+		EnemyType.STONE_GOLEM:
+			# Stone golem: 80x120 sprite = large imposing collision
+			# Use full sprite size for accurate hitbox including legs
+			shape.size = Vector2(80, 120)
 		_:
 			# Default collision for other enemy types
 			shape.size = Vector2(20, 20)
 	
 	collision_shape.shape = shape
+	
+	# Set collision shape position based on enemy type
+	match enemy_type:
+		EnemyType.STONE_GOLEM:
+			# Position collision to match sprite exactly (both are centered)
+			# No offset needed - sprite and collision both center on node position
+			collision_shape.position = Vector2(0, 0)
+		_:
+			# Default positioning for other enemies
+			collision_shape.position = Vector2(0, 0)
+	
 	add_child(collision_shape)
 	
-	print("✨ Set collision size: ", shape.size, " for ", EnemyType.keys()[enemy_type])
+	print("✨ Set collision size: ", shape.size, " at position: ", collision_shape.position, " for ", EnemyType.keys()[enemy_type])
+	
+	# Debug collision bounds for golem
+	if enemy_type == EnemyType.STONE_GOLEM:
+		print("🗿 GOLEM COLLISION DEBUG:")
+		print("   Collision shape size: ", shape.size)
+		print("   Collision shape position: ", collision_shape.position)
+		print("   Collision layer: ", collision_layer)
+		print("   Collision mask: ", collision_mask)
+		print("   Expected collision bounds: Left:", -shape.size.x/2, " Right:", shape.size.x/2, " Top:", -shape.size.y/2, " Bottom:", shape.size.y/2)
 	
 	# Set collision layers
 	collision_layer = 4  # Enemy layer
@@ -134,6 +173,16 @@ func _ready():
 	patrol_direction = Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
 	
 	print("Enemy created: ", EnemyType.keys()[enemy_type])
+	
+	# Final verification for golem collision setup
+	if enemy_type == EnemyType.STONE_GOLEM:
+		await get_tree().process_frame  # Wait one frame for setup to complete
+		print("🗿 GOLEM FINAL VERIFICATION:")
+		print("   Node position: ", global_position)
+		print("   Collision shape exists: ", collision_shape != null)
+		if collision_shape and collision_shape.shape:
+			print("   Final collision size: ", collision_shape.shape.size)
+		print("   Is collision enabled: ", collision_shape.disabled if collision_shape else "N/A")
 
 func initialize_enemy(type: EnemyType, scaling: float = 1.0):
 	enemy_type = type
@@ -173,13 +222,31 @@ func create_sprite():
 	
 	animated_sprite.sprite_frames = sprite_frames
 	animated_sprite.play("idle")
-	animated_sprite.scale = Vector2(1.5, 1.5)  # Scale up for better visibility
+	
+	# Set sprite scale based on enemy type
+	match enemy_type:
+		EnemyType.STONE_GOLEM:
+			# Golem is already large (80x120), use 1.0 scale
+			animated_sprite.scale = Vector2(1.0, 1.0)
+		_:
+			# Skeletons and other small enemies scale up for visibility
+			animated_sprite.scale = Vector2(1.5, 1.5)
 	
 	# Store reference as sprite for backward compatibility
 	sprite = animated_sprite
 	add_child(animated_sprite)
 	
 	print("✨ Created enhanced skeleton animations for ", EnemyType.keys()[enemy_type])
+	
+	# Debug sprite positioning for golem
+	if enemy_type == EnemyType.STONE_GOLEM:
+		print("🗿 GOLEM SPRITE DEBUG:")
+		print("   Sprite scale: ", animated_sprite.scale)
+		print("   Sprite position: ", animated_sprite.position)
+		if animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation("idle"):
+			var frame = animated_sprite.sprite_frames.get_frame_texture("idle", 0)
+			if frame:
+				print("   Frame size: ", frame.get_size())
 
 func setup_skeleton_animations(sprite_frames: SpriteFrames):
 	match enemy_type:
@@ -187,6 +254,8 @@ func setup_skeleton_animations(sprite_frames: SpriteFrames):
 			setup_sword_skeleton_animations(sprite_frames)
 		EnemyType.ARCHER_SKELETON:
 			setup_archer_skeleton_animations(sprite_frames)
+		EnemyType.STONE_GOLEM:
+			setup_stone_golem_animations(sprite_frames)
 		_:
 			print("No enhanced animations for enemy type: ", EnemyType.keys()[enemy_type])
 
@@ -295,6 +364,59 @@ func setup_archer_skeleton_animations(sprite_frames: SpriteFrames):
 		sprite_frames.add_frame("death", death_texture)
 	print("Loaded Archer Skeleton death animation")
 
+func setup_stone_golem_animations(sprite_frames: SpriteFrames):
+	# Setup idle animation (6 FPS for imposing presence)
+	sprite_frames.add_animation("idle")
+	sprite_frames.set_animation_speed("idle", 6.0)
+	sprite_frames.set_animation_loop("idle", true)
+	
+	for i in range(1, 3):  # 2 frames for breathing cycle
+		var idle_texture = load("res://assets/enemies/stone_golem/stone_golem_idle_%02d.svg" % i)
+		if idle_texture:
+			sprite_frames.add_frame("idle", idle_texture)
+	print("Loaded Stone Golem idle animation (2 frames)")
+	
+	# Setup move animation (4 FPS for slow, heavy movement)
+	sprite_frames.add_animation("move")
+	sprite_frames.set_animation_speed("move", 4.0)
+	sprite_frames.set_animation_loop("move", true)
+	
+	for i in range(1, 3):  # 2 frames for walking cycle
+		var move_texture = load("res://assets/enemies/stone_golem/stone_golem_move_%02d.svg" % i)
+		if move_texture:
+			sprite_frames.add_frame("move", move_texture)
+	print("Loaded Stone Golem move animation (2 frames)")
+	
+	# Setup attack animation (8 FPS for powerful ground pound)
+	sprite_frames.add_animation("attack")
+	sprite_frames.set_animation_speed("attack", 8.0)
+	sprite_frames.set_animation_loop("attack", false)
+	
+	var attack_texture = load("res://assets/enemies/stone_golem/stone_golem_attack.svg")
+	if attack_texture:
+		sprite_frames.add_frame("attack", attack_texture)
+	print("Loaded Stone Golem attack animation")
+	
+	# Setup hit animation (6 FPS for heavy impact reaction)
+	sprite_frames.add_animation("hit")
+	sprite_frames.set_animation_speed("hit", 6.0)
+	sprite_frames.set_animation_loop("hit", false)
+	
+	var hit_texture = load("res://assets/enemies/stone_golem/stone_golem_hit.svg")
+	if hit_texture:
+		sprite_frames.add_frame("hit", hit_texture)
+	print("Loaded Stone Golem hit animation")
+	
+	# Setup death animation (6 FPS for dramatic collapse)
+	sprite_frames.add_animation("death")
+	sprite_frames.set_animation_speed("death", 6.0)
+	sprite_frames.set_animation_loop("death", false)
+	
+	var death_texture = load("res://assets/enemies/stone_golem/stone_golem_death.svg")
+	if death_texture:
+		sprite_frames.add_frame("death", death_texture)
+	print("Loaded Stone Golem death animation")
+
 func create_health_bar():
 	# Create health bar container
 	health_bar_container = Node2D.new()
@@ -305,6 +427,9 @@ func create_health_bar():
 		EnemyType.SWORD_SKELETON, EnemyType.ARCHER_SKELETON:
 			# Enhanced skeletons are taller (45 pixels scaled), position bar higher
 			health_bar_container.position = Vector2(0, -35)
+		EnemyType.STONE_GOLEM:
+			# Stone golem is very tall (120 pixels), position bar much higher
+			health_bar_container.position = Vector2(0, -70)
 		_:
 			# Default position for other enemy types
 			health_bar_container.position = Vector2(0, -25)
@@ -338,6 +463,8 @@ func _physics_process(delta):
 			update_sword_skeleton_hades_ai(delta)
 		EnemyType.ARCHER_SKELETON:
 			update_archer_skeleton_hades_ai(delta)
+		EnemyType.STONE_GOLEM:
+			update_stone_golem_ai(delta)
 	
 	# Move the enemy
 	move_and_slide()
@@ -654,6 +781,123 @@ func update_archer_skeleton_hades_ai(delta):
 				if not is_dead:
 					sprite.modulate = Color.WHITE
 				print("🔄 Archer skeleton ready after ", individual_cooldown_time, " seconds - returning to patrol")
+
+# Stone Golem AI: Similar to sword skeleton but slower and with ground pound attack
+func update_stone_golem_ai(delta):
+	var distance_to_player = global_position.distance_to(target_player.global_position)
+	
+	match ai_state:
+		AIState.IDLE:
+			velocity = Vector2.ZERO
+			# Longer idle time for imposing presence
+			if state_timer > randf_range(1.0, 2.0):
+				ai_state = AIState.PATROL
+				state_timer = 0.0
+		
+		AIState.PATROL:
+			# Slow, methodical patrol with heavy footsteps
+			patrol_timer -= delta
+			if patrol_timer <= 0:
+				# More predictable movement patterns than skeletons
+				var toward_player = (target_player.global_position - global_position).normalized()
+				var slight_variation = randf_range(-0.5, 0.5)  # Small randomness
+				patrol_direction = toward_player.rotated(slight_variation).normalized()
+				patrol_timer = PATROL_CHANGE_TIME * 1.5  # Slower direction changes
+			
+			velocity = patrol_direction * movement_speed
+			
+			# Detect player at shorter range than skeletons (less aware)
+			if distance_to_player <= DETECTION_RANGE * 0.8:  # 80 units instead of 100
+				ai_state = AIState.CHASE
+				state_timer = 0.0
+				print("🗿 Stone golem detected player - beginning slow pursuit!")
+		
+		AIState.CHASE:
+			# Slow but relentless pursuit
+			var direction = (target_player.global_position - global_position).normalized()
+			velocity = direction * movement_speed
+			
+			# When close enough, prepare for ground pound
+			if distance_to_player <= GOLEM_GROUND_POUND_RANGE:
+				ai_state = AIState.WINDUP
+				state_timer = 0.0
+				windup_timer = 0.0
+				print("⚡ Stone golem preparing GROUND POUND attack!")
+			# Lose interest at much closer range (persistent but slow)
+			elif distance_to_player > LOSE_INTEREST_RANGE * 0.7:  # 105 units instead of 150
+				ai_state = AIState.PATROL
+				state_timer = 0.0
+				print("🚶 Stone golem lost interest - returning to patrol")
+		
+		AIState.WINDUP:
+			# Long telegraph phase for powerful attack
+			velocity = Vector2.ZERO
+			windup_timer += delta
+			
+			# Dramatic buildup effect (only if not dead)
+			if not is_dead:
+				# Intense flashing during long windup
+				if int(windup_timer * 10) % 2 == 0:
+					sprite.modulate = Color.ORANGE  # Orange for ground pound energy
+				else:
+					sprite.modulate = Color.WHITE
+			
+			# Much longer windup than skeletons
+			if windup_timer >= GOLEM_WINDUP_TIME:
+				ai_state = AIState.ATTACK
+				state_timer = 0.0
+				if not is_dead:
+					sprite.modulate = Color.WHITE
+				print("💥 Stone golem executing GROUND POUND!")
+		
+		AIState.ATTACK:
+			# Ground pound attack with area damage
+			velocity = Vector2.ZERO  # Stationary during ground pound
+			
+			# Execute ground pound immediately when entering attack state
+			if state_timer < 0.1:
+				perform_ground_pound_attack()
+			
+			# Attack animation lasts longer than skeleton attacks
+			if state_timer >= 1.0:
+				ai_state = AIState.COOLDOWN
+				state_timer = 0.0
+				last_attack_time = Time.get_ticks_msec() / 1000.0
+				individual_cooldown_time = randf_range(3.0, 5.0)  # Longer cooldown
+				print("😴 Stone golem entering cooldown for ", individual_cooldown_time, " seconds")
+		
+		AIState.COOLDOWN:
+			# Recovery phase - completely stationary and vulnerable
+			velocity = Vector2.ZERO
+			
+			# Show vulnerability with blue tinting (only if not dead)
+			if not is_dead:
+				if int(state_timer * 2) % 2 == 0:
+					sprite.modulate = Color(0.6, 0.6, 1.0)  # Blue vulnerability
+				else:
+					sprite.modulate = Color.WHITE
+			
+			# Return to patrol after cooldown
+			if state_timer >= individual_cooldown_time:
+				ai_state = AIState.PATROL
+				state_timer = 0.0
+				if not is_dead:
+					sprite.modulate = Color.WHITE
+				print("🔄 Stone golem ready after ", individual_cooldown_time, " seconds - resuming patrol")
+
+func perform_ground_pound_attack():
+	# Create area damage around the golem
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node and main_node.has_method("handle_golem_ground_pound"):
+		main_node.handle_golem_ground_pound(global_position, GOLEM_GROUND_POUND_RANGE, attack_damage)
+	else:
+		# Fallback: Direct damage check
+		var distance_to_player = global_position.distance_to(target_player.global_position)
+		if distance_to_player <= GOLEM_GROUND_POUND_RANGE:
+			deal_damage_to_player()
+			print("💥 GROUND POUND hit player for ", attack_damage, " damage!")
+	
+	print("🌊 Stone golem GROUND POUND creates shockwave in ", GOLEM_GROUND_POUND_RANGE, " unit radius!")
 
 func find_reposition_target():
 	# Find a position that's at safe distance from player

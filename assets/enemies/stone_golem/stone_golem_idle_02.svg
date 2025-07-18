@@ -1,0 +1,87 @@
+<svg width="80" height="120" viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Stone Golem Idle Animation Frame 2 -->
+  
+  <!-- Base/Feet (Stone blocks) -->
+  <rect x="20" y="108" width="16" height="12" fill="#5D4E37" stroke="#4A3B28" stroke-width="1"/>
+  <rect x="44" y="108" width="16" height="12" fill="#5D4E37" stroke="#4A3B28" stroke-width="1"/>
+  
+  <!-- Leg Joints (Dark stone) -->
+  <rect x="22" y="100" width="12" height="10" fill="#4A3B28" stroke="#3A2B18" stroke-width="1"/>
+  <rect x="46" y="100" width="12" height="10" fill="#4A3B28" stroke="#3A2B18" stroke-width="1"/>
+  
+  <!-- Lower Legs (Large stone blocks) -->
+  <rect x="18" y="80" width="20" height="22" fill="#696969" stroke="#555555" stroke-width="1"/>
+  <rect x="42" y="80" width="20" height="22" fill="#696969" stroke="#555555" stroke-width="1"/>
+  
+  <!-- Knee Joints -->
+  <circle cx="28" cy="78" r="4" fill="#4A3B28"/>
+  <circle cx="52" cy="78" r="4" fill="#4A3B28"/>
+  
+  <!-- Upper Legs/Hips -->
+  <rect x="20" y="55" width="16" height="25" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  <rect x="44" y="55" width="16" height="25" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  
+  <!-- Core/Torso (Main body - slightly expanded for breathing) -->
+  <rect x="14" y="24" width="52" height="36" fill="#A9A9A9" stroke="#808080" stroke-width="2"/>
+  
+  <!-- Chest Detail (Central stone) -->
+  <rect x="24" y="31" width="32" height="22" fill="#D3D3D3" stroke="#A9A9A9" stroke-width="1"/>
+  
+  <!-- Ancient Runes on Chest (same position) -->
+  <path d="M35 38 L37 42 L35 46" stroke="#8B4513" stroke-width="1.5" fill="none"/>
+  <path d="M42 38 L44 40 L42 42 L44 44 L42 46" stroke="#8B4513" stroke-width="1.5" fill="none"/>
+  <circle cx="48" cy="42" r="2" stroke="#8B4513" stroke-width="1.5" fill="none"/>
+  
+  <!-- Shoulder Joints (slightly raised) -->
+  <circle cx="11" cy="34" r="6" fill="#696969" stroke="#555555" stroke-width="1"/>
+  <circle cx="69" cy="34" r="6" fill="#696969" stroke="#555555" stroke-width="1"/>
+  
+  <!-- Arms (Slightly different relaxed position) -->
+  <rect x="1" y="39" width="12" height="25" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  <rect x="67" y="39" width="12" height="25" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  
+  <!-- Elbow Joints -->
+  <circle cx="7" cy="66" r="3" fill="#4A3B28"/>
+  <circle cx="73" cy="66" r="3" fill="#4A3B28"/>
+  
+  <!-- Forearms -->
+  <rect x="3" y="69" width="8" height="20" fill="#696969" stroke="#555555" stroke-width="1"/>
+  <rect x="69" y="69" width="8" height="20" fill="#696969" stroke="#555555" stroke-width="1"/>
+  
+  <!-- Hands (Stone fists) -->
+  <circle cx="7" cy="91" r="5" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  <circle cx="73" cy="91" r="5" fill="#8B7355" stroke="#6B5535" stroke-width="1"/>
+  
+  <!-- Head (Stone block with face - slightly different position) -->
+  <rect x="25" y="7" width="30" height="25" fill="#C0C0C0" stroke="#A0A0A0" stroke-width="2"/>
+  
+  <!-- Face Features -->
+  <!-- Eyes (Glowing stone cavities - slightly brighter) -->
+  <rect x="32" y="15" width="4" height="4" fill="#FFD700" opacity="0.9"/>
+  <rect x="44" y="15" width="4" height="4" fill="#FFD700" opacity="0.9"/>
+  
+  <!-- Eye glow effect (stronger) -->
+  <rect x="31" y="14" width="6" height="6" fill="#FFFF00" opacity="0.4"/>
+  <rect x="43" y="14" width="6" height="6" fill="#FFFF00" opacity="0.4"/>
+  
+  <!-- Nose (Stone ridge) -->
+  <rect x="38" y="21" width="4" height="6" fill="#A0A0A0" stroke="#808080" stroke-width="1"/>
+  
+  <!-- Mouth (Dark cavity) -->
+  <rect x="35" y="27" width="10" height="3" fill="#2F2F2F"/>
+  
+  <!-- Head Runes -->
+  <path d="M28 11 L30 13 L28 15" stroke="#8B4513" stroke-width="1" fill="none"/>
+  <path d="M50 11 L52 13 L50 15" stroke="#8B4513" stroke-width="1" fill="none"/>
+  
+  <!-- Stone Texture Details -->
+  <!-- Cracks and weathering -->
+  <path d="M20 45 Q25 47 30 45" stroke="#555555" stroke-width="0.5" fill="none" opacity="0.7"/>
+  <path d="M50 48 Q55 50 60 48" stroke="#555555" stroke-width="0.5" fill="none" opacity="0.7"/>
+  <path d="M25 85 Q30 87 35 85" stroke="#4A3B28" stroke-width="0.5" fill="none" opacity="0.7"/>
+  <path d="M45 88 Q50 90 55 88" stroke="#4A3B28" stroke-width="0.5" fill="none" opacity="0.7"/>
+  
+  <!-- Subtle Energy Emanation (Slightly different aura) -->
+  <circle cx="40" cy="59" r="37" fill="none" stroke="#FFD700" stroke-width="0.5" opacity="0.25"/>
+  <circle cx="40" cy="59" r="42" fill="none" stroke="#FFFF00" stroke-width="0.3" opacity="0.15"/>
+</svg> 
