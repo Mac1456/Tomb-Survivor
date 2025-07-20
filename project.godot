@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Tomb Survivor"
 config/description="Top-down 2D multiplayer survival arena game"
-run/main_scene="res://GameManager.tscn"
+run/main_scene="uid://b8m3x4y1k4m7n"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 

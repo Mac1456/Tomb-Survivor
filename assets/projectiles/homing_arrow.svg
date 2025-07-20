@@ -1,0 +1,13 @@
+<svg width="28" height="10" viewBox="0 0 28 10" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="homingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff6600;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ffaa00;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff3300;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <polygon points="0,5 20,2 20,8" fill="url(#homingGradient)"/>
+  <polygon points="20,1 28,5 20,9" fill="#ff0000"/>
+  <circle cx="8" cy="5" r="1" fill="#ffffff" opacity="0.8"/>
+  <circle cx="14" cy="5" r="0.5" fill="#ffffff" opacity="0.6"/>
+</svg>

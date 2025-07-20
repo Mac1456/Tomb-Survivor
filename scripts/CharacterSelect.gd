@@ -4,6 +4,11 @@ extends Control
 var selected_character_index: int = 0
 var is_character_selected: bool = false
 
+# Multiplayer state
+var is_multiplayer_mode: bool = false
+var network_manager: NetworkManager = null
+var multiplayer_players: Dictionary = {}  # player_id -> {name, character_index, ready}
+
 # Node references
 @onready var character_grid: GridContainer = $VBoxContainer/MainContainer/LeftSide/CharacterGrid
 @onready var character_name_label: Label = $VBoxContainer/MainContainer/RightSide/CharacterInfo/NameLabel
@@ -258,17 +263,17 @@ func update_character_info():
 	
 	var character = CharacterData.get_character(selected_character_index)
 	
-	# Update character info labels
+	# Update character info labels with enhanced formatting
 	character_name_label.text = character.name
 	character_description_label.text = character.description
 	
-	# Stats display
-	stats_label.text = "STR:%d SPD:%d ARM:%d HP:%d" % [character.strength, character.speed, character.armor, character.health]
+	# Enhanced stats display with descriptions
+	stats_label.text = create_enhanced_stats_text(character)
 	
-	# Abilities
-	primary_attack_label.text = "Primary Attack: " + character.primary_attack_type.capitalize()
-	special_ability_label.text = "Special: " + character.special_ability_name + " - " + character.special_ability_description
-	ultimate_ability_label.text = "Ultimate: " + character.ultimate_ability_name + " - " + character.ultimate_ability_description
+	# Enhanced abilities display with key bindings
+	primary_attack_label.text = create_ability_text("Left Click", "Primary Attack", "Standard combat attack")
+	special_ability_label.text = create_ability_text("Right Click", character.special_ability_name, character.special_ability_description)
+	ultimate_ability_label.text = create_ability_text("R", character.ultimate_ability_name, character.ultimate_ability_description)
 
 func _on_ready_button_pressed():
 	if is_character_selected:
@@ -293,4 +298,46 @@ func _exit_tree():
 	for sprite in character_sprites:
 		if sprite:
 			sprite.queue_free()
-	character_sprites.clear() 
+	character_sprites.clear()
+
+# Enhanced character info display functions
+func create_enhanced_stats_text(character: CharacterData.Character) -> String:
+	var stats_text = ""
+	stats_text += "Strength: %d\n" % character.strength
+	stats_text += "Speed: %d\n" % character.speed
+	stats_text += "Armor: %d\n" % character.armor
+	stats_text += "Health: %d" % character.health
+	return stats_text
+
+func create_ability_text(key_binding: String, ability_name: String, description: String) -> String:
+	return "[%s] %s\n%s" % [key_binding, ability_name, description]
+
+# Multiplayer functionality
+func set_multiplayer_mode(is_mp: bool, net_manager):
+	is_multiplayer_mode = is_mp
+	if is_mp and net_manager:
+		network_manager = net_manager
+		setup_multiplayer_connections()
+		update_multiplayer_ui()
+
+func setup_multiplayer_connections():
+	if network_manager:
+		network_manager.character_selection_updated.connect(_on_multiplayer_character_updated)
+		network_manager.player_connected.connect(_on_multiplayer_player_connected)
+		network_manager.player_disconnected.connect(_on_multiplayer_player_disconnected)
+
+func update_multiplayer_ui():
+	if is_multiplayer_mode:
+		# Update ready button text for multiplayer
+		ready_button.text = "Ready!"
+		# Could add multiplayer player list here if needed
+
+func _on_multiplayer_character_updated(player_id: int, character_index: int):
+	print("Player ", player_id, " selected character ", character_index)
+	# Update visual indicators for other players' selections
+
+func _on_multiplayer_player_connected(player_id: int, player_name: String):
+	print("Player connected to character select: ", player_name)
+
+func _on_multiplayer_player_disconnected(player_id: int):
+	print("Player disconnected from character select: ", player_id) 

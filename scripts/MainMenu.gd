@@ -30,7 +30,7 @@ func setup_ui_connections():
 		quit_button.pressed.connect(_on_quit_button_pressed)
 
 func _on_start_button_pressed():
-	print("Start button pressed - proceeding to character selection")
+	print("Start button pressed - proceeding to game mode selection")
 	start_game.emit()
 
 func _on_options_button_pressed():

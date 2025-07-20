@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer glow effect -->
+  <defs>
+    <radialGradient id="healingGlow" cx="50%" cy="50%">
+      <stop offset="0%" style="stop-color:#88ff88;stop-opacity:0.3"/>
+      <stop offset="70%" style="stop-color:#44cc44;stop-opacity:0.1"/>
+      <stop offset="100%" style="stop-color:#228822;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="orbGradient" cx="30%" cy="30%">
+      <stop offset="0%" style="stop-color:#ccffcc"/>
+      <stop offset="40%" style="stop-color:#66dd66"/>
+      <stop offset="80%" style="stop-color:#44aa44"/>
+      <stop offset="100%" style="stop-color:#226622"/>
+    </radialGradient>
+    <radialGradient id="innerCore" cx="40%" cy="40%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8"/>
+      <stop offset="30%" style="stop-color:#aaffaa;stop-opacity:0.6"/>
+      <stop offset="70%" style="stop-color:#66dd66;stop-opacity:0.4"/>
+      <stop offset="100%" style="stop-color:#44aa44;stop-opacity:0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Outer glow -->
+  <circle cx="16" cy="16" r="15" fill="url(#healingGlow)"/>
+  
+  <!-- Main orb body -->
+  <circle cx="16" cy="16" r="10" fill="url(#orbGradient)" stroke="#336633" stroke-width="1"/>
+  
+  <!-- Inner healing core -->
+  <circle cx="16" cy="16" r="6" fill="url(#innerCore)"/>
+  
+  <!-- Healing cross symbol -->
+  <g transform="translate(16,16)">
+    <!-- Vertical line of cross -->
+    <rect x="-1" y="-4" width="2" height="8" fill="#ffffff" opacity="0.9"/>
+    <!-- Horizontal line of cross -->
+    <rect x="-4" y="-1" width="8" height="2" fill="#ffffff" opacity="0.9"/>
+  </g>
+  
+  <!-- Sparkle effects -->
+  <circle cx="12" cy="10" r="1" fill="#ffffff" opacity="0.8"/>
+  <circle cx="20" cy="12" r="0.5" fill="#ccffcc" opacity="0.9"/>
+  <circle cx="18" cy="22" r="0.8" fill="#aaffaa" opacity="0.7"/>
+  <circle cx="10" cy="20" r="0.6" fill="#ffffff" opacity="0.6"/>
+</svg> 

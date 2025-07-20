@@ -548,10 +548,44 @@ func _physics_process(delta):
 	# Move the player
 	move_and_slide()
 	
+	# MULTIPLAYER FIX: Sync position to other clients
+	sync_position_to_clients()
+	
 	# Update animations based on movement
 	update_animations()
 
+# NEW: Sync player position and velocity to other clients  
+func sync_position_to_clients():
+	# Safety check for multiplayer system
+	if not multiplayer or not multiplayer.has_multiplayer_peer():
+		return
+		
+	# Only sync if multiplayer and we are the authority for this player
+	if multiplayer.get_unique_id() == get_multiplayer_authority():
+		# Sync position periodically but only if we've moved significantly
+		if Engine.get_process_frames() % 5 == 0:  # Every 5th frame (~12 FPS)
+			# Only sync if position changed by a meaningful amount to reduce bandwidth
+			var pos_threshold = 5.0  # Only sync if moved more than 5 pixels
+			if not has_meta("last_sync_pos") or global_position.distance_to(get_meta("last_sync_pos")) > pos_threshold:
+				sync_player_position.rpc(global_position, velocity, facing_direction)
+				set_meta("last_sync_pos", global_position)
+
+# RPC to sync player position to all clients
+@rpc("any_peer", "call_remote", "unreliable") 
+func sync_player_position(pos: Vector2, vel: Vector2, direction: Vector2):
+	# Only apply to remote players (not local player)
+	if multiplayer.get_remote_sender_id() != multiplayer.get_unique_id():
+		# Smooth position update to avoid jitter - use interpolation
+		var lerp_speed = 10.0  # Adjust for smoothness vs responsiveness
+		global_position = global_position.lerp(pos, lerp_speed * get_physics_process_delta_time())
+		velocity = vel
+		facing_direction = direction
+
 func handle_movement(delta):
+	# CRITICAL FIX: Only handle movement for the local player
+	if not is_multiplayer_authority():
+		return  # This is a remote player, don't process movement
+	
 	# Get input direction
 	var input_direction = Vector2.ZERO
 	if Input.is_action_pressed("move_right"):
@@ -710,20 +744,28 @@ func play_hit_animation():
 	print("Playing hit flash effect")
 
 func handle_input():
+	# CRITICAL FIX: Only handle input for the local player
+	if not is_multiplayer_authority():
+		return  # This is a remote player, don't process input
+	
 	# Primary attack
 	if Input.is_action_just_pressed("primary_attack"):
+		print("🗡️ LOCAL PLAYER ", name, " performing primary attack")
 		primary_attack()
 	
 	# Special ability
 	if Input.is_action_just_pressed("special_ability"):
+		print("✨ LOCAL PLAYER ", name, " performing special ability")
 		special_ability()
 	
 	# Ultimate ability
 	if Input.is_action_just_pressed("ultimate_ability"):
+		print("💥 LOCAL PLAYER ", name, " performing ultimate ability")
 		ultimate_ability()
 	
 	# Dodge roll
 	if Input.is_action_just_pressed("dodge_roll"):
+		print("🏃 LOCAL PLAYER ", name, " performing dodge roll")
 		dodge_roll()
 
 # Functions called by Main.gd
@@ -740,108 +782,153 @@ func perform_dodge_roll():
 	dodge_roll()
 
 func primary_attack():
-	# Check for character-specific primary attack cooldowns
-	if primary_attack_timer > 0:
-		match character_data.name:
-			"Wizard":
-				print("🔥 Wizard primary attack on cooldown: ", primary_attack_timer)
-				return
-			"Berserker":
-				print("⚔️ Berserker primary attack on cooldown: ", primary_attack_timer)
-				return
+	# Check if on cooldown (character-specific)
+	var main_scene = get_tree().get_first_node_in_group("main")
+	var character_name = character_data.name if character_data else "Unknown"
+	var cooldown = main_scene.get_character_cooldown(character_name, "primary") if main_scene else 0.0
+	if cooldown > 0:
+		print("Primary attack on cooldown: ", cooldown)
+		return
+		
+	print("Primary attack: ", character_data.primary_attack_type if character_data else "unknown")
+	
+	# Play local animation and handle local effects immediately (ONLY for local player)
+	play_animation("attack")
+	
+	# TEMPORARILY DISABLED: No RPC sync to test mirroring fix
+	# var is_multiplayer = main_scene and main_scene.is_multiplayer_game
+	# if is_multiplayer:
+	#     sync_player_action.rpc("primary_attack", multiplayer.get_unique_id())
+	
+	# Handle attack based on character type (ONLY for local player)
+	if main_scene:
+		# Set cooldown in main node (character-specific)
+		# Use default cooldowns based on character type
+		var cooldown_time = 0.5  # Default
+		match character_name:
+			"Knight": cooldown_time = 0.3
+			"Berserker": cooldown_time = 0.8
+			"Huntress": cooldown_time = 0.2
+			"Wizard": cooldown_time = 0.4
+		
+		main_scene.set_character_cooldown(character_name, "primary", cooldown_time)
+		
+		# Handle directional attack with appropriate damage/range per character
+		var damage = 25.0  # Default
+		var range = 80.0   # Default
+		
+		match character_name:
 			"Knight":
-				print("🗡️ Knight primary attack on cooldown: ", primary_attack_timer)
-				return
+				damage = 25.0
+				range = 80.0
+			"Berserker":
+				damage = 35.0
+				range = 75.0
 			"Huntress":
-				print("🏹 Huntress primary attack on cooldown: ", primary_attack_timer)
-				return
-	
-	print("Primary attack: ", character_data.primary_attack_type)
-	
-	# Play attack animation
-	play_attack_animation()
-	
-	# Get cursor position for directional attack
-	var cursor_pos = get_global_mouse_position()
-	var attack_direction = (cursor_pos - global_position).normalized()
-	
-	# Update facing direction to cursor direction
-	facing_direction = attack_direction
-	
-	# Set character-specific primary attack cooldowns and damage
-	var attack_damage = 25.0 * damage_multiplier  # Base damage
-	
-	match character_data.name:
-		"Wizard":
-			primary_attack_timer = 0.6  # Reduced from 1.0 to 0.6 seconds - faster attack
-			attack_damage = 55.0 * damage_multiplier  # Increased from 45 to 55 damage - stronger
-			print("🔥 Wizard primary attack cooldown set: 0.6 seconds (faster & stronger)")
-		"Berserker":
-			primary_attack_timer = 0.8  # Reduced from 1.2 to 0.8 seconds - shorter cooldown
-			attack_damage = 40.0 * damage_multiplier  # Keep same high damage for berserker
-			print("⚔️ Berserker powerful strike cooldown set: 0.8 seconds (shorter cooldown)")
-		"Knight":
-			primary_attack_timer = 0.3  # Added 0.3 second cooldown - prevent spamming
-			attack_damage = 18.0 * damage_multiplier  # Keep same lower damage for knight
-			print("🗡️ Knight slash cooldown set: 0.3 seconds (added brief cooldown)")
-		"Huntress":
-			primary_attack_timer = 0.2  # Added 0.2 second cooldown - still fastest but not spammable
-			attack_damage = 22.0 * damage_multiplier  # Keep similar damage for huntress
-			print("🏹 Huntress quick shot cooldown set: 0.2 seconds (fastest attack)")
-	
-	# Play attack sound
-	ability_used.emit("primary_attack")
-	
-	# Call Main.gd attack handler with directional attack
-	var main_node = get_tree().get_first_node_in_group("main")
-	if main_node:
-		main_node.handle_player_directional_attack(character_data.primary_attack_type, global_position, 80.0, attack_damage, attack_direction)
+				damage = 20.0
+				range = 100.0
+			"Wizard":
+				damage = 30.0
+				range = 90.0
+		
+		var attack_type = character_data.primary_attack_type if character_data else "melee"
+		var cursor_pos = get_global_mouse_position()
+		var attack_direction = (cursor_pos - global_position).normalized()
+		main_scene.handle_player_directional_attack(attack_type, global_position, range, damage, attack_direction)
 
 func special_ability():
-	if special_ability_timer > 0:
-		print("Special ability on cooldown: ", special_ability_timer)
+	# Check if on cooldown (character-specific)
+	var main_scene = get_tree().get_first_node_in_group("main")
+	var character_name = character_data.name if character_data else "Unknown"
+	var cooldown = main_scene.get_character_cooldown(character_name, "special") if main_scene else 0.0
+	if cooldown > 0:
+		print("Special ability on cooldown: ", cooldown)
 		return
+		
+	print("Using special ability: ", character_data.special_ability_name if character_data else "unknown")
 	
-	print("Special ability: ", character_data.special_ability_name)
+	# Play local animation and handle local effects (ONLY for local player)
+	play_animation("special")
 	
-	# Play special animation
-	play_special_animation()
+	# TEMPORARILY DISABLED: No RPC sync to test mirroring fix
+	# var is_multiplayer = main_scene and main_scene.is_multiplayer_game
+	# if is_multiplayer:
+	#     sync_player_action.rpc("special_ability", multiplayer.get_unique_id())
 	
-	# Character-specific special abilities
-	match character_data.name:
-		"Wizard":
-			# Wizard: Powerful magical attack, slower firing rate
-			perform_wizard_special_attack()
-			special_ability_timer = 1.5  # 1.5 second cooldown for wizard (slower but powerful)
-			print("🔥 Wizard special attack cooldown: 1.5 seconds")
-		"Huntress":
-			# Huntress: Quick arrow attack, faster firing rate
-			perform_huntress_special_attack()
-			special_ability_timer = 0.8  # 0.8 second cooldown for huntress (faster but weaker)
-			print("🏹 Huntress special attack cooldown: 0.8 seconds")
-		_:
-			# Default behavior for melee characters
-			special_ability_timer = 2.0  # Default cooldown
-			print("⚔️ Default special attack cooldown: 2.0 seconds")
-	
-	# Play ability sound
-	ability_used.emit("special_ability")
+	# Handle special ability (ONLY for local player)
+	if main_scene:
+		# Use default cooldowns based on character type
+		var cooldown_time = 5.0  # Default special cooldown
+		var damage = 40.0  # Default
+		var range = 100.0  # Default
+		
+		match character_name:
+			"Knight":
+				cooldown_time = 5.0
+				damage = 40.0
+				range = 120.0
+			"Berserker":
+				cooldown_time = 6.0
+				damage = 45.0
+				range = 100.0
+			"Huntress":
+				cooldown_time = 4.0
+				damage = 35.0
+				range = 150.0
+			"Wizard":
+				cooldown_time = 5.0
+				damage = 50.0
+				range = 130.0
+		
+		main_scene.set_character_cooldown(character_name, "special", cooldown_time)
+		main_scene.create_projectile(global_position, damage, range, "special")
 
 func ultimate_ability():
-	if ultimate_ability_timer > 0:
-		print("Ultimate ability on cooldown: ", ultimate_ability_timer)
+	# Check if on cooldown (character-specific)
+	var main_scene = get_tree().get_first_node_in_group("main")
+	var character_name = character_data.name if character_data else "Unknown"
+	var cooldown = main_scene.get_character_cooldown(character_name, "ultimate") if main_scene else 0.0
+	if cooldown > 0:
+		print("Ultimate ability on cooldown: ", cooldown)
 		return
+		
+	print("Using ultimate ability: ", character_data.ultimate_ability_name if character_data else "unknown")
 	
-	print("Ultimate ability: ", character_data.ultimate_ability_name)
+	# Play local animation and handle local effects (ONLY for local player) 
+	play_animation("ultimate")
 	
-	# Play ultimate animation
-	play_ultimate_animation()
+	# TEMPORARILY DISABLED: No RPC sync to test mirroring fix
+	# var is_multiplayer = main_scene and main_scene.is_multiplayer_game
+	# if is_multiplayer:
+	#     sync_player_action.rpc("ultimate_ability", multiplayer.get_unique_id())
 	
-	# Set cooldown
-	ultimate_ability_timer = 15.0  # 15 second cooldown
-	
-	# Play ability sound
-	ability_used.emit("ultimate_ability")
+	# Handle ultimate ability (ONLY for local player)
+	if main_scene:
+		# Use default cooldowns based on character type
+		var cooldown_time = 15.0  # Default ultimate cooldown
+		var damage = 80.0  # Default
+		var range = 150.0  # Default
+		
+		match character_name:
+			"Knight":
+				cooldown_time = 15.0
+				damage = 80.0
+				range = 150.0
+			"Berserker":
+				cooldown_time = 18.0
+				damage = 100.0
+				range = 120.0
+			"Huntress":
+				cooldown_time = 12.0
+				damage = 60.0
+				range = 200.0
+			"Wizard":
+				cooldown_time = 15.0
+				damage = 75.0
+				range = 180.0
+		
+		main_scene.set_character_cooldown(character_name, "ultimate", cooldown_time)
+		main_scene.create_projectile(global_position, damage, range, "ultimate")
 
 func dodge_roll():
 	if dodge_roll_cooldown_timer > 0:
@@ -850,15 +937,15 @@ func dodge_roll():
 	
 	print("Dodge roll")
 	
-	# Play dodge animation
+	# Execute dodge locally (ONLY for local player)
 	play_dodge_animation()
 	
-	# Set dodge roll state
+	# Set dodge roll state (ONLY for local player)
 	is_dodge_rolling = true
 	dodge_roll_timer = 0.3  # 0.3 second duration
 	dodge_roll_cooldown_timer = 1.0  # 1 second cooldown
 	
-	# Enable invincibility frames during dodge
+	# Enable invincibility frames during dodge (ONLY for local player)
 	is_invincible = true
 	
 	# Set direction (use facing direction or movement direction)
@@ -872,8 +959,11 @@ func dodge_roll():
 	# Apply visual feedback for invincibility
 	start_invincibility_visual_feedback()
 	
-	# Play dodge sound
-	ability_used.emit("dodge_roll")
+	# TEMPORARILY DISABLED: No RPC sync to test mirroring fix
+	# var main_scene = get_tree().get_first_node_in_group("main")
+	# var is_multiplayer = main_scene and main_scene.is_multiplayer_game
+	# if is_multiplayer:
+	#     sync_player_action.rpc("dodge_roll", multiplayer.get_unique_id())
 
 func create_dodge_effect():
 	if dodge_effect_sprite:
@@ -906,7 +996,7 @@ func start_invincibility_visual_feedback():
 		
 		# Create new tween for invincibility effect
 		invincibility_tween = create_tween()
-		invincibility_tween.set_loops()  # Loop indefinitely
+		invincibility_tween.set_loops(-1)  # Loop indefinitely
 		invincibility_tween.tween_property(animated_sprite, "modulate:a", 0.5, 0.1)
 		invincibility_tween.tween_property(animated_sprite, "modulate:a", 1.0, 0.1)
 		print("💫 Invincibility visual feedback started")
@@ -923,38 +1013,231 @@ func stop_invincibility_visual_feedback():
 
 # Character-specific special attack functions
 func perform_wizard_special_attack():
-	# Wizard shoots powerful magical projectiles
+	# Wizard shoots unique Arcane Orb projectile
 	var cursor_pos = get_global_mouse_position()
 	var attack_direction = (cursor_pos - global_position).normalized()
 	
 	# Update facing direction
 	facing_direction = attack_direction
 	
-	# Call Main.gd attack handler for ranged attack
+	# Call Main.gd to create the special Arcane Orb projectile
 	var main_node = get_tree().get_first_node_in_group("main")
 	if main_node:
-		# Use higher damage for wizard's special attack
-		var special_damage = 45.0 * damage_multiplier
-		main_node.handle_ranged_attack(global_position, special_damage, attack_direction)
+		# Use high damage for wizard's special attack with explosion
+		var special_damage = 90.0 * damage_multiplier
+		main_node.create_projectile(global_position, attack_direction, special_damage, main_node.ProjectileType.ARCANE_ORB)
+		print("✨ Wizard Arcane Orb launched with explosive power!")
 	
-	print("Wizard special attack: Fireball launched!")
+	print("Wizard special attack: Arcane Orb launched!")
 
 func perform_huntress_special_attack():
-	# Huntress shoots rapid arrows
+	# Huntress shoots high-damage homing arrow
 	var cursor_pos = get_global_mouse_position()
 	var attack_direction = (cursor_pos - global_position).normalized()
 	
 	# Update facing direction
 	facing_direction = attack_direction
 	
-	# Call Main.gd attack handler for ranged attack
+	# Call Main.gd to create the special Homing Arrow projectile
 	var main_node = get_tree().get_first_node_in_group("main")
 	if main_node:
-		# Use moderate damage for huntress's special attack
-		var special_damage = 25.0 * damage_multiplier
-		main_node.handle_ranged_attack(global_position, special_damage, attack_direction)
+		# Use high damage for huntress's special homing attack with piercing
+		var special_damage = 85.0 * damage_multiplier
+		main_node.create_projectile(global_position, attack_direction, special_damage, main_node.ProjectileType.HOMING_ARROW)
+		print("🎯 Huntress Piercing Shot launched - seeking enemies!")
 	
-	print("Huntress special attack: Arrow fired!")
+	print("Huntress special attack: Homing Piercing Shot fired!")
+
+func perform_knight_special_attack():
+	# Knight creates Divine Shield - area healing and enemy damage
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node:
+		# Create divine energy area effect at player position
+		var special_damage = 35.0 * damage_multiplier
+		main_node.create_projectile(global_position, Vector2.ZERO, special_damage, main_node.ProjectileType.DIVINE_ENERGY)
+		print("🛡️ Knight Divine Shield activated - healing and protection!")
+
+func perform_berserker_special_attack():
+	# Berserker uses Blood Rage - sacrifices health for damage boost and area attack
+	# Sacrifice some health
+	var health_cost = base_health * 0.15  # 15% of max health
+	current_health = max(current_health - health_cost, 1.0)  # Don't kill self
+	update_health_bar()
+	print("🩸 Berserker sacrificed ", health_cost, " health for power!")
+	
+	# Create blood wave area effect
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node:
+		var special_damage = 60.0 * damage_multiplier * 1.5  # 50% bonus damage from rage
+		main_node.create_projectile(global_position, Vector2.ZERO, special_damage, main_node.ProjectileType.BLOOD_WAVE)
+		print("💥 Blood Wave erupts with berserker's rage!")
+	
+	# Temporary damage boost
+	var original_multiplier = damage_multiplier
+	damage_multiplier *= 1.3  # 30% damage boost
+	
+	# Remove boost after duration
+	var timer = Timer.new()
+	timer.wait_time = 5.0  # 5 second boost
+	timer.one_shot = true
+	timer.timeout.connect(func():
+		damage_multiplier = original_multiplier
+		print("🩸 Berserker rage subsides - damage returns to normal")
+		timer.queue_free()
+	)
+	add_child(timer)
+	timer.start()
+
+func perform_wizard_ultimate_attack():
+	# Wizard: Meteor Storm - summon multiple meteors over large area
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node:
+		# Create 8 meteors in a wide spread pattern
+		for i in range(8):
+			# Random positions around the player in a large area
+			var angle = (i * PI * 2 / 8) + randf_range(-0.3, 0.3)  # Spread around circle with some randomness
+			var distance = randf_range(100.0, 200.0)  # Distance from player
+			var target_pos = global_position + Vector2(cos(angle), sin(angle)) * distance
+			
+			# Create meteor with downward trajectory
+			var meteor_direction = Vector2(0, 1)  # Falling down
+			var ultimate_damage = 150.0 * damage_multiplier
+			
+			# Delay meteors for dramatic effect
+			var delay_timer = Timer.new()
+			delay_timer.wait_time = (i + 1) * 0.2  # 0.2, 0.4, 0.6, 0.8, 1.0 second intervals
+			delay_timer.one_shot = true
+			delay_timer.timeout.connect(func():
+				main_node.create_projectile(target_pos, meteor_direction, ultimate_damage, main_node.ProjectileType.METEOR)
+				delay_timer.queue_free()
+			)
+			add_child(delay_timer)
+			delay_timer.start()
+		
+		print("☄️ Wizard Meteor Storm summoned - 8 meteors incoming!")
+
+func perform_huntress_ultimate_attack():
+	# Huntress: Rain of Arrows - massive barrage targeting enemies with explosive arrows
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node:
+		# Get list of all living enemies for targeting
+		var target_enemies = []
+		if main_node.has_method("get_living_enemies"):
+			target_enemies = main_node.get_living_enemies()
+		else:
+			# Fallback: try to get enemies from main node
+			if main_node.has_member("enemies"):
+				for enemy in main_node.enemies:
+					if is_instance_valid(enemy) and enemy.has_method("is_dead") and not enemy.is_dead:
+						target_enemies.append(enemy)
+		
+		print("🎯 Huntress ultimate found ", target_enemies.size(), " enemies to target")
+		
+		# Create 20 explosive arrows in waves targeting enemies
+		for wave in range(4):  # 4 waves
+			for i in range(5):  # 5 arrows per wave
+				var arrow_target: Vector2
+				var arrow_start: Vector2
+				
+				if target_enemies.size() > 0:
+					# Target a random enemy
+					var target_enemy = target_enemies[randi() % target_enemies.size()]
+					arrow_target = target_enemy.global_position
+					# Add small random offset so multiple arrows don't hit exact same spot
+					var small_offset = Vector2(randf_range(-20.0, 20.0), randf_range(-20.0, 20.0))
+					arrow_target += small_offset
+				else:
+					# Fallback: use cursor position if no enemies found
+					var cursor_pos = get_global_mouse_position()
+					var spread_radius = 150.0
+					var random_offset = Vector2(randf_range(-spread_radius, spread_radius), randf_range(-spread_radius, spread_radius))
+					arrow_target = cursor_pos + random_offset
+					print("⚠️ No enemies found, falling back to cursor targeting")
+				
+				# Arrows come from above the target
+				arrow_start = arrow_target + Vector2(0, -300)  # Start 300 pixels above target
+				var arrow_direction = (arrow_target - arrow_start).normalized()
+				var ultimate_damage = 55.0 * damage_multiplier  # Increased from 45.0 to 55.0 for more damage
+				
+				# Delay waves for sustained barrage effect
+				var delay_timer = Timer.new()
+				delay_timer.wait_time = wave * 0.4 + i * 0.1  # Waves every 0.4s, arrows every 0.1s within wave
+				delay_timer.one_shot = true
+				delay_timer.timeout.connect(func():
+					var projectile = main_node.create_projectile(arrow_start, arrow_direction, ultimate_damage, main_node.ProjectileType.ARROW)
+					# Add area of effect to ultimate arrows for less precision required
+					if projectile:
+						projectile.set_meta("explosion_radius", 40.0)  # 40 unit explosion radius
+						projectile.set_meta("explosion_damage", 30.0 * damage_multiplier)  # Additional explosion damage
+						print("💥 Explosive ultimate arrow targeting enemy with AOE!")
+					delay_timer.queue_free()
+				)
+				add_child(delay_timer)
+				delay_timer.start()
+		
+		if target_enemies.size() > 0:
+			print("🏹 Huntress Rain of Explosive Arrows - 20 explosive arrows targeting ", target_enemies.size(), " enemies over 4 waves!")
+		else:
+			print("🏹 Huntress Rain of Explosive Arrows - 20 explosive arrows at cursor position over 4 waves!")
+
+func perform_knight_ultimate_attack():
+	# Knight: Divine Storm - massive healing and damage area
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node:
+		# Create 3 expanding divine energy waves
+		for i in range(3):
+			var delay_timer = Timer.new()
+			delay_timer.wait_time = (i + 1) * 0.4  # Waves at 0.4, 0.8, 1.2 seconds
+			delay_timer.one_shot = true
+			delay_timer.timeout.connect(func():
+				# Create large divine energy effect
+				var ultimate_damage = 70.0 * damage_multiplier
+				main_node.create_projectile(global_position, Vector2.ZERO, ultimate_damage, main_node.ProjectileType.DIVINE_ENERGY)
+				
+				# Massive heal for player
+				heal(60.0)
+				delay_timer.queue_free()
+			)
+			add_child(delay_timer)
+			delay_timer.start()
+		
+		print("⚡ Knight Divine Storm - 3 waves of divine energy and healing!")
+
+func perform_berserker_ultimate_attack():
+	# Berserker: Berserker's Wrath - massive damage shockwave with huge area
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node:
+		# Create 3 expanding blood waves for massive damage
+		for i in range(3):
+			var delay_timer = Timer.new()
+			delay_timer.wait_time = (i + 1) * 0.25  # Quick succession at 0.25s, 0.5s, 0.75s
+			delay_timer.one_shot = true
+			delay_timer.timeout.connect(func():
+				# Create massive blood wave
+				var ultimate_damage = 100.0 * damage_multiplier * (1.0 + i * 0.3)  # Increasing damage
+				main_node.create_projectile(global_position, Vector2.ZERO, ultimate_damage, main_node.ProjectileType.BLOOD_WAVE)
+				delay_timer.queue_free()
+			)
+			add_child(delay_timer)
+			delay_timer.start()
+		
+		# Huge temporary damage boost
+		var original_multiplier = damage_multiplier
+		damage_multiplier *= 2.0  # 100% damage boost
+		
+		# Remove boost after duration
+		var boost_timer = Timer.new()
+		boost_timer.wait_time = 8.0  # 8 second boost
+		boost_timer.one_shot = true
+		boost_timer.timeout.connect(func():
+			damage_multiplier = original_multiplier
+			print("💥 Berserker's ultimate wrath subsides")
+			boost_timer.queue_free()
+		)
+		add_child(boost_timer)
+		boost_timer.start()
+		
+		print("💥 Berserker's Wrath unleashed - massive shockwaves and damage boost!")
 
 func take_damage(damage: float):
 	if not is_alive:
@@ -978,9 +1261,18 @@ func take_damage(damage: float):
 	# Emit signal
 	health_changed.emit(current_health, base_health)
 	
-	# Check if dead
+	# Check if dead, but not in debug mode
 	if current_health <= 0:
-		die()
+		# Check if we're in debug mode
+		var main_node = get_tree().get_first_node_in_group("main")
+		if main_node and main_node.has_method("is_debug_mode") and main_node.is_debug_mode():
+			# In debug mode: clamp health to 1 and continue playing
+			current_health = 1.0
+			update_health_bar()
+			print("🔧 DEBUG MODE: Player would have died, but health clamped to 1")
+		else:
+			# In playable mode: player dies normally
+			die()
 	
 	print("Player took ", final_damage, " damage. Health: ", current_health)
 
@@ -993,7 +1285,87 @@ func die():
 	
 	character_died.emit()
 
+func heal(amount: float):
+	if not is_alive:
+		return
+	
+	# Heal the player, clamped to max health
+	current_health = min(current_health + amount, base_health)
+	
+	# Update health bar
+	update_health_bar()
+	
+	# Emit signal
+	health_changed.emit(current_health, base_health)
+	
+	# Visual feedback for healing
+	if animated_sprite:
+		var tween = create_tween()
+		tween.tween_property(animated_sprite, "modulate", Color.GREEN, 0.1)
+		tween.tween_property(animated_sprite, "modulate", Color.WHITE, 0.2)
+	
+	print("💚 Player healed for ", amount, " - Health: ", current_health, "/", base_health)
+
 func get_character_type() -> String:
 	if character_data:
 		return character_data.name
 	return "Unknown" 
+
+# FIXED: RPC to sync player actions across all clients
+@rpc("any_peer", "call_remote", "reliable")  
+func sync_player_action(action: String, player_id: int):
+	# CRITICAL FIX: Only sync visual effects, not actual gameplay
+	print("🎭 PEER: Syncing VISUAL effect for action: ", action, " from player ", player_id)
+	
+	match action:
+		"primary_attack":
+			# Only play visual animation, no damage or game logic
+			if has_method("play_attack_animation_only"):
+				play_attack_animation_only()
+			else:
+				animated_sprite.play("attack")  # Visual only
+			print("🎭 Visual: Playing attack animation for remote player")
+			
+		"dodge_roll":
+			# Only play visual animation, no invincibility or movement
+			if has_method("play_dodge_animation_only"):
+				play_dodge_animation_only()
+			else:
+				animated_sprite.play("dodge")  # Visual only
+			print("🎭 Visual: Playing dodge animation for remote player")
+			
+		"special_ability":
+			# Only play visual animation, no projectiles or effects
+			if has_method("play_special_animation_only"):
+				play_special_animation_only()
+			else:
+				animated_sprite.play("special")  # Visual only
+			print("🎭 Visual: Playing special animation for remote player")
+			
+		"ultimate_ability":
+			# Only play visual animation, no projectiles or effects
+			if has_method("play_ultimate_animation_only"):
+				play_ultimate_animation_only()
+			else:
+				animated_sprite.play("ultimate")  # Visual only
+			print("🎭 Visual: Playing ultimate animation for remote player")
+		
+		_:
+			print("🎭 Visual: Unknown action for sync: ", action)
+
+# Visual-only animation methods (no gameplay effects)
+func play_attack_animation_only():
+	animated_sprite.play("attack")
+	# No damage, no cooldowns, just animation
+
+func play_dodge_animation_only():
+	animated_sprite.play("dodge") 
+	# No invincibility, no movement, just animation
+
+func play_special_animation_only():
+	animated_sprite.play("special")
+	# No projectiles, no effects, just animation
+
+func play_ultimate_animation_only():
+	animated_sprite.play("ultimate")
+	# No projectiles, no effects, just animation 

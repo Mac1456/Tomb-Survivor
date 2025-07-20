@@ -1,0 +1,14 @@
+<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="divineGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ffff66;stop-opacity:0.9" />
+      <stop offset="50%" style="stop-color:#ffdd33;stop-opacity:0.7" />
+      <stop offset="100%" style="stop-color:#ffaa00;stop-opacity:0.4" />
+    </radialGradient>
+  </defs>
+  <circle cx="25" cy="25" r="23" fill="url(#divineGradient)" stroke="#ffffff" stroke-width="1"/>
+  <polygon points="25,5 27,20 25,25 23,20" fill="#ffffff" opacity="0.8"/>
+  <polygon points="45,25 30,27 25,25 30,23" fill="#ffffff" opacity="0.8"/>
+  <polygon points="25,45 23,30 25,25 27,30" fill="#ffffff" opacity="0.8"/>
+  <polygon points="5,25 20,23 25,25 20,27" fill="#ffffff" opacity="0.8"/>
+</svg>

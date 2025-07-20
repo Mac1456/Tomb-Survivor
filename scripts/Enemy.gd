@@ -1,6 +1,8 @@
 extends CharacterBody2D
 class_name Enemy
 
+# Note: HealingOrb is available as a global class, no need to import
+
 # Enemy type definitions
 enum EnemyType {
 	SWORD_SKELETON,
@@ -95,7 +97,7 @@ const BASE_ENEMY_STATS = {
 	},
 	EnemyType.ARCHER_SKELETON: {
 		"health": 25.0,
-		"damage": 24.0,
+		"damage": 20.0,
 		"speed": 80.0,
 		"attack_cooldown": ARCHER_COOLDOWN_TIME,
 		"attack_range": 180.0
@@ -113,7 +115,7 @@ func _ready():
 	# Set up collision
 	collision_shape = CollisionShape2D.new()
 	var shape = RectangleShape2D.new()
-	
+
 	# Set collision size based on enemy type and sprite scaling
 	match enemy_type:
 		EnemyType.SWORD_SKELETON:
@@ -133,56 +135,53 @@ func _ready():
 			shape.size = Vector2(20, 20)
 	
 	collision_shape.shape = shape
-	
-	# Set collision shape position based on enemy type
-	match enemy_type:
-		EnemyType.STONE_GOLEM:
-			# Position collision to match sprite exactly (both are centered)
-			# No offset needed - sprite and collision both center on node position
-			collision_shape.position = Vector2(0, 0)
-		_:
-			# Default positioning for other enemies
-			collision_shape.position = Vector2(0, 0)
-	
+	collision_shape.position = Vector2(0, 0)
 	add_child(collision_shape)
-	
-	print("✨ Set collision size: ", shape.size, " at position: ", collision_shape.position, " for ", EnemyType.keys()[enemy_type])
-	
-	# Debug collision bounds for golem
-	if enemy_type == EnemyType.STONE_GOLEM:
-		print("🗿 GOLEM COLLISION DEBUG:")
-		print("   Collision shape size: ", shape.size)
-		print("   Collision shape position: ", collision_shape.position)
-		print("   Collision layer: ", collision_layer)
-		print("   Collision mask: ", collision_mask)
-		print("   Expected collision bounds: Left:", -shape.size.x/2, " Right:", shape.size.x/2, " Top:", -shape.size.y/2, " Bottom:", shape.size.y/2)
 	
 	# Set collision layers
 	collision_layer = 4  # Enemy layer
 	collision_mask = 1 | 2  # Collides with player and walls
 	
-	# Find player
-	target_player = get_tree().get_first_node_in_group("main").player
+	# Find player target (works for both single-player and multiplayer)
+	find_nearest_player_target()
 	
 	# Initialize AI state
 	ai_state = AIState.IDLE
 	state_timer = 0.0
 	patrol_timer = 0.0
 	
-	# Set initial patrol direction
-	patrol_direction = Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
+	# PEER-TO-PEER: Use deterministic patrol direction based on enemy ID
+	var enemy_id = get_meta("enemy_id", 0)
+	if enemy_id > 0:
+		var shared_rng = get_shared_rng()
+		if shared_rng:
+			# Create deterministic but varied behavior per enemy
+			var temp_seed = shared_rng.seed + enemy_id
+			shared_rng.seed = temp_seed
+			patrol_direction = get_new_patrol_direction()
+			shared_rng.seed = temp_seed  # Reset seed for consistent behavior
+			print("🤝 PEER: Enemy ", enemy_id, " using deterministic patrol direction")
+	else:
+		# Fallback for enemies without ID
+		patrol_direction = Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
 	
+	add_to_group("enemies")
 	print("Enemy created: ", EnemyType.keys()[enemy_type])
-	
-	# Final verification for golem collision setup
-	if enemy_type == EnemyType.STONE_GOLEM:
-		await get_tree().process_frame  # Wait one frame for setup to complete
-		print("🗿 GOLEM FINAL VERIFICATION:")
-		print("   Node position: ", global_position)
-		print("   Collision shape exists: ", collision_shape != null)
-		if collision_shape and collision_shape.shape:
-			print("   Final collision size: ", collision_shape.shape.size)
-		print("   Is collision enabled: ", collision_shape.disabled if collision_shape else "N/A")
+
+
+
+# Deterministic patrol direction changes
+func get_new_patrol_direction() -> Vector2:
+	var shared_rng = get_shared_rng()
+	var angle = shared_rng.randf_range(0, 2 * PI) if shared_rng else randf_range(0, 2 * PI)
+	return Vector2(cos(angle), sin(angle)).normalized()
+
+# Deterministic cooldown durations
+func get_attack_cooldown() -> float:
+	var shared_rng = get_shared_rng()
+	var base_cooldown = 2.0
+	var variation = shared_rng.randf_range(-0.5, 0.5) if shared_rng else randf_range(-0.5, 0.5)
+	return max(1.0, base_cooldown + variation)  # 1.5-2.5 seconds
 
 func initialize_enemy(type: EnemyType, scaling: float = 1.0):
 	enemy_type = type
@@ -452,10 +451,33 @@ func create_health_bar():
 	add_child(health_bar_container)
 
 func _physics_process(delta):
-	if not target_player or not is_instance_valid(target_player) or is_dead:
+	if is_dead:
 		return
 	
+	# PEER-TO-PEER FIX: Only host runs enemy AI, clients receive position updates
+	var main_node = get_tree().get_first_node_in_group("main")
+	var is_multiplayer = main_node and main_node.is_multiplayer_game
+	var is_host = main_node and main_node.network_manager and main_node.network_manager.is_host
+	
+	if is_multiplayer and not is_host:
+		# CLIENT: Don't run AI, just wait for position updates from host
+		return
+	
+	# HOST or SINGLE PLAYER: Run full AI and physics
+	
+	if not target_player or not is_instance_valid(target_player):
+		# Try to find a new target if we lost the current one
+		find_nearest_player_target()
+		if not target_player or not is_instance_valid(target_player):
+			return
+	
+	# Update timers
 	state_timer += delta
+	patrol_timer += delta
+	
+	# Periodically update target to find closer players
+	if fmod(state_timer, 3.0) < delta:  # Every 3 seconds
+		update_player_target()
 	
 	# Update AI behavior based on enemy type
 	match enemy_type:
@@ -466,8 +488,12 @@ func _physics_process(delta):
 		EnemyType.STONE_GOLEM:
 			update_stone_golem_ai(delta)
 	
-	# Move the enemy
+	# Move the enemy (host only)
 	move_and_slide()
+	
+	# Sync position and state to clients if multiplayer
+	if is_multiplayer and is_host:
+		sync_enemy_state_to_clients()
 	
 	# Update sprite facing direction and animations
 	if velocity.x < 0:
@@ -477,6 +503,22 @@ func _physics_process(delta):
 	
 	# Update animations based on state and movement
 	update_skeleton_animations()
+
+# NEW: Sync enemy position and state from host to clients
+func sync_enemy_state_to_clients():
+	# Only sync every few frames to avoid spam
+	if Engine.get_process_frames() % 5 != 0:  # Sync every 5th frame (~12 FPS)
+		return
+	
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node and main_node.has_method("sync_enemy_state_rpc"):
+		main_node.sync_enemy_state_rpc.rpc(
+			name,  # Enemy identifier
+			global_position,
+			velocity,
+			ai_state,
+			current_health
+		)
 
 func update_skeleton_animations():
 	if not sprite or not sprite.has_method("play") or is_dead:
@@ -524,6 +566,28 @@ func play_death_animation():
 
 # Hades-style AI for sword skeletons: Idle → Patrol → Chase → Windup → Attack → Cooldown
 func update_sword_skeleton_hades_ai(delta):
+	# In multiplayer, check if there's a closer player to target
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node and "is_multiplayer_game" in main_node and main_node.is_multiplayer_game:
+		if "multiplayer_players" in main_node and main_node.multiplayer_players.size() > 1:
+			# Find closest player for dynamic targeting
+			var closest_player = null
+			var closest_distance = INF
+			
+			for player in main_node.multiplayer_players:
+				if is_instance_valid(player):
+					var distance = global_position.distance_to(player.global_position)
+					if distance < closest_distance:
+						closest_distance = distance
+						closest_player = player
+			
+			# Switch target if we found a significantly closer player (at least 50 units closer)
+			if closest_player and target_player and closest_player != target_player:
+				var current_distance = global_position.distance_to(target_player.global_position)
+				if closest_distance < current_distance - 50.0:
+					target_player = closest_player
+					print("🎯 Sword skeleton switching to closer player at distance: ", closest_distance)
+	
 	var distance_to_player = global_position.distance_to(target_player.global_position)
 	
 	# Check if player is ranged character for more aggressive behavior
@@ -635,39 +699,27 @@ func update_sword_skeleton_hades_ai(delta):
 				print("💥 Sword skeleton executing dash attack!")
 		
 		AIState.ATTACK:
-			# Committed dash attack - cannot be cancelled
-			var dash_direction = (dash_target - global_position).normalized()
-			velocity = dash_direction * SWORD_DASH_SPEED
+			# Dash towards the recorded target position
+			var direction = (dash_target - global_position).normalized()
+			velocity = direction * SWORD_DASH_SPEED
 			
 			# Check if we hit the player during dash
 			if distance_to_player <= SWORD_ATTACK_RANGE:
 				deal_damage_to_player()
 			
-			# Attack lasts for a short time
-			if state_timer >= 0.4:
+			# End attack after dash duration
+			if state_timer > 0.8:  # Dash duration
 				ai_state = AIState.COOLDOWN
 				state_timer = 0.0
-				last_attack_time = Time.get_ticks_msec() / 1000.0
-				individual_cooldown_time = randf_range(1.5, 3.0)  # Set individual cooldown time
+				individual_cooldown_time = SWORD_COOLDOWN_TIME + randf_range(-0.5, 0.5)  # Randomized cooldown
 				print("😴 Sword skeleton entering cooldown for ", individual_cooldown_time, " seconds")
 		
 		AIState.COOLDOWN:
-			# Recovery phase - vulnerable and slow
+			# Brief pause before returning to patrol
 			velocity = Vector2.ZERO
-			
-			# Flash sprite to show vulnerability (only if not dead)
-			if not is_dead:
-				if int(state_timer * 4) % 2 == 0:
-					sprite.modulate = Color(0.7, 0.7, 1.0)  # Slightly blue
-				else:
-					sprite.modulate = get_restore_color()
-			
-			# Return to patrol after individual cooldown time
-			if state_timer >= individual_cooldown_time:
+			if state_timer > individual_cooldown_time:
 				ai_state = AIState.PATROL
 				state_timer = 0.0
-				if not is_dead:
-					sprite.modulate = get_restore_color()
 				print("🔄 Sword skeleton ready after ", individual_cooldown_time, " seconds - returning to patrol")
 
 # Hades-style AI for archer skeletons: Idle → Patrol → Reposition → Windup → Attack → Cooldown
@@ -925,18 +977,41 @@ func fire_arrow():
 	if main_node:
 		main_node.create_enemy_arrow(global_position, arrow_direction, attack_damage)
 
+# Handle taking damage with event-based multiplayer sync
 func take_damage(amount: float):
 	if is_dead:
 		return  # Don't take damage if already dead
 	
+	var main_node = get_tree().get_first_node_in_group("main")
+	var is_multiplayer = main_node and main_node.is_multiplayer_game
+	
+	# MULTIPLAYER FIX: Both host and client can damage enemies
 	current_health -= amount
 	print("💔 Enemy took ", amount, " damage! Health: ", current_health, "/", max_health)
 	
-	# Update health bar
+	# Update health bar immediately for local feedback
 	update_health_bar()
 	
-	# Check if dead
+	# In multiplayer, broadcast damage event to synchronize across peers
+	if is_multiplayer:
+		var enemy_id = get_meta("enemy_id", 0)
+		if main_node.has_method("sync_damage_event"):
+			# Only send RPC if we're not already processing a remote damage event
+			if not get_meta("processing_remote_damage", false):
+				# Send damage event to all other players
+				main_node.sync_damage_event.rpc(enemy_id, amount)
+				print("🤝 PEER: Broadcasting damage event for enemy ", enemy_id, " - damage: ", amount)
+	
+	# Check if dead and handle death
 	if current_health <= 0:
+		# Broadcast death event before dying
+		if is_multiplayer:
+			var enemy_id = get_meta("enemy_id", 0)
+			if main_node.has_method("sync_enemy_death_event"):
+				# Only send death RPC if not already processing remote death
+				if not get_meta("processing_remote_death", false):
+					main_node.sync_enemy_death_event.rpc(enemy_id)
+					print("💀 PEER: Broadcasting death event for enemy ", enemy_id)
 		die()
 		return  # Exit immediately after death
 	
@@ -947,6 +1022,16 @@ func take_damage(amount: float):
 	if not is_dead:
 		sprite.modulate = Color.RED
 		create_tween().tween_property(sprite, "modulate", get_restore_color(), 0.2)
+
+# Function to sync health from host to clients
+func sync_health(new_health: float, new_max_health: float):
+	current_health = new_health
+	max_health = new_max_health
+	update_health_bar()
+	
+	# Check if should die based on synced health
+	if current_health <= 0 and not is_dead:
+		die()
 
 func update_health_bar():
 	if health_bar:
@@ -975,6 +1060,9 @@ func die():
 	# Update health bar to show empty
 	update_health_bar()
 	
+	# Try to drop healing orb
+	try_drop_healing_orb()
+	
 	# Notify main scene for cleanup
 	if get_tree().get_first_node_in_group("main").has_method("remove_enemy"):
 		get_tree().get_first_node_in_group("main").remove_enemy(self)
@@ -986,6 +1074,32 @@ func die():
 	timer.timeout.connect(queue_free)
 	add_child(timer)
 	timer.start()
+
+func try_drop_healing_orb():
+	# Check if we should drop a healing orb based on enemy type
+	var drop_chance = HealingOrb.get_drop_chance(enemy_type)
+	
+	if randf() <= drop_chance:
+		# Get main scene to spawn orb
+		var main_scene = get_tree().get_first_node_in_group("main")
+		if main_scene and main_scene.has_method("spawn_healing_orb"):
+			# Get player count for scaling
+			var player_count = get_player_count()
+			var orb_count = HealingOrb.get_orb_count(enemy_type, player_count)
+			
+			print("💚 ", EnemyType.keys()[enemy_type], " dropping ", orb_count, " healing orb(s) (", int(drop_chance * 100), "% chance)")
+			
+			# Spawn multiple orbs if needed (for high-value enemies)
+			for i in range(orb_count):
+				var spawn_offset = Vector2(randf_range(-20, 20), randf_range(-20, 20))
+				main_scene.spawn_healing_orb(global_position + spawn_offset, enemy_type, player_count)
+		else:
+			print("⚠️ Could not spawn healing orb - main scene not found or missing spawn_healing_orb method")
+
+func get_player_count() -> int:
+	# Get current player count for scaling
+	var players = get_tree().get_nodes_in_group("player")
+	return max(1, players.size())
 
 func get_enemy_type_name() -> String:
 	return EnemyType.keys()[enemy_type]
@@ -1003,3 +1117,132 @@ func get_restore_color() -> Color:
 	if sprite and sprite.has_meta("elite_color"):
 		return sprite.get_meta("elite_color")
 	return Color.WHITE 
+
+# Find the nearest player target (works for both single-player and multiplayer)
+func find_nearest_player_target():
+	var main_node = get_tree().get_first_node_in_group("main")
+	if not main_node:
+		print("⚠️ Enemy can't find main node - no player target")
+		return
+	
+	# Check if this is multiplayer mode
+	var is_multiplayer = false
+	if "is_multiplayer_game" in main_node:
+		is_multiplayer = main_node.is_multiplayer_game
+	
+	if is_multiplayer and "multiplayer_players" in main_node:
+		# Multiplayer: Find nearest player from multiplayer_players array
+		var players = main_node.multiplayer_players
+		if players.size() > 0:
+			var nearest_player = null
+			var nearest_distance = INF
+			
+			for player in players:
+				if is_instance_valid(player):
+					var distance = global_position.distance_to(player.global_position)
+					if distance < nearest_distance:
+						nearest_distance = distance
+						nearest_player = player
+			
+			target_player = nearest_player
+			if target_player:
+				print("🎯 Enemy targeting multiplayer player at distance: ", nearest_distance)
+			else:
+				print("⚠️ No valid multiplayer players found for enemy targeting")
+		else:
+			print("⚠️ No multiplayer players in array for enemy targeting")
+	else:
+		# Single-player: Use the main player
+		if "player" in main_node and main_node.player:
+			target_player = main_node.player
+			print("🎯 Enemy targeting single-player")
+		else:
+			print("⚠️ No single player found for enemy targeting")
+	
+	if not target_player:
+		print("❌ Enemy failed to find any player target!")
+
+# Update target periodically in case players move or new players join
+func update_player_target():
+	# Re-find nearest player every few seconds
+	find_nearest_player_target() 
+
+# NEW: Handle damage received from other players (no additional sync)
+func apply_remote_damage(amount: float):
+	if is_dead:
+		return  # Don't take damage if already dead
+	
+	# Set flag to prevent sync loops
+	set_meta("processing_remote_damage", true)
+	
+	# Apply damage locally without triggering more sync events
+	current_health -= amount
+	print("🤝 PEER: Applied remote damage ", amount, " - Health: ", current_health, "/", max_health)
+	
+	# Update health bar
+	update_health_bar()
+	
+	# Check if dead and handle death (without additional sync)
+	if current_health <= 0:
+		set_meta("processing_remote_death", true)
+		die()
+		return
+	
+	# Play hit animation
+	play_hit_animation()
+	
+	# Flash red when hit
+	if not is_dead:
+		sprite.modulate = Color.RED
+		create_tween().tween_property(sprite, "modulate", get_restore_color(), 0.2)
+	
+	# Clear flag after processing
+	set_meta("processing_remote_damage", false) 
+
+func get_shared_rng() -> RandomNumberGenerator:
+	# Get shared RNG from Main scene for deterministic behavior
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node and main_node.has_method("get_shared_rng"):
+		return main_node.shared_rng
+	else:
+		# Fallback to global RNG if not available
+		return RandomNumberGenerator.new() 
+
+# Helper methods for multiplayer position synchronization
+func get_enemy_velocity() -> Vector2:
+	return velocity
+
+func set_enemy_velocity(new_velocity: Vector2):
+	velocity = new_velocity
+
+func get_current_state() -> String:
+	if ai_state == AIState.IDLE:
+		return "idle"
+	elif ai_state == AIState.PATROL:
+		return "patrol"  
+	elif ai_state == AIState.CHASE:
+		return "chase"
+	elif ai_state == AIState.ATTACK:
+		return "attack"
+	else:
+		return "unknown"
+
+func set_current_state(state_name: String):
+	match state_name:
+		"idle":
+			ai_state = AIState.IDLE
+		"patrol":
+			ai_state = AIState.PATROL
+		"chase":
+			ai_state = AIState.CHASE
+		"attack":
+			ai_state = AIState.ATTACK
+
+func get_current_animation() -> String:
+	if sprite and sprite.animation:
+		return sprite.animation
+	return ""
+
+func play_sync_animation(animation_name: String):
+	if sprite and sprite.sprite_frames and sprite.sprite_frames.has_animation(animation_name):
+		sprite.play(animation_name) 

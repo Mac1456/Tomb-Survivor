@@ -4,7 +4,7 @@ class_name BlueBoss
 
 # Boss-specific properties
 @export var boss_name: String = "Blue Witch"
-@export var base_health: float = 500.0
+@export var base_health: float = 650.0
 @export var phase_threshold_1: float = 0.66  # 66% health for phase 2
 @export var phase_threshold_2: float = 0.33  # 33% health for phase 3
 
@@ -397,7 +397,7 @@ func handle_movement(delta: float):
 	if not player:
 		return
 	
-	var previous_velocity = velocity
+	var _previous_velocity = velocity  # Store for potential future use
 	
 	if is_stationary:
 		stationary_timer -= delta
@@ -518,7 +518,7 @@ func _execute_fireball_barrage():
 	var player = get_tree().get_first_node_in_group("player")
 	if player and main_scene:
 		var num_fireballs = 6  # Number of fireballs in barrage
-		var damage = 30.0  # Damage per fireball
+		var _damage = 30.0  # Damage per fireball (handled in cast_single_fireball)
 		
 		for i in range(num_fireballs):
 			var delay = max(0.1, i * 0.2)  # Ensure minimum 0.1s delay, prevent zero or negative
@@ -1222,7 +1222,7 @@ func create_spawn_flash(spawn_position: Vector2):
 
 func create_elite_skeleton():
 	# Use existing enemy scene but enhance it
-	var enemy_scene = preload("res://Enemy.tscn")
+	var enemy_scene = preload("res://scenes/Enemy.tscn")
 	var elite_skeleton = enemy_scene.instantiate()
 	
 	# Initialize the skeleton properly first
@@ -1291,7 +1291,7 @@ func take_damage(damage: float, source: Node2D = null):
 	if current_health <= 0:
 		die()
 
-func check_phase_transition(old_health: float):
+func check_phase_transition(_old_health: float):
 	var health_percentage = current_health / max_health
 	
 	# Update attack chaining based on health
@@ -1458,6 +1458,9 @@ func die():
 	# Remove shield effect if active
 	remove_shield_visual_effect()
 	
+	# Boss always drops multiple healing orbs based on player count
+	drop_boss_healing_orbs()
+	
 	# Wait for death animation to complete before cleanup
 	var sprite_node = get_sprite_node()
 	if sprite_node:
@@ -1477,7 +1480,29 @@ func die():
 		main_scene.hide_boss_health_bar()
 	
 	# Remove boss from scene
-	queue_free() 
+	queue_free()
+
+func drop_boss_healing_orbs():
+	# Boss always drops healing orbs (100% chance)
+	var player_count = get_player_count()
+	var orb_count = HealingOrb.get_orb_count(enemy_type, player_count)
+	
+	print("👑 Boss dropping ", orb_count, " healing orbs for ", player_count, " player(s)!")
+	
+	if main_scene and main_scene.has_method("spawn_healing_orb"):
+		# Spawn orbs in a circle around the boss for visual appeal
+		var angle_step = TAU / orb_count
+		var spawn_radius = 40.0
+		
+		for i in range(orb_count):
+			var angle = i * angle_step
+			var spawn_offset = Vector2(cos(angle), sin(angle)) * spawn_radius
+			# Add some randomness to avoid perfect circle
+			spawn_offset += Vector2(randf_range(-10, 10), randf_range(-10, 10))
+			
+			main_scene.spawn_healing_orb(global_position + spawn_offset, enemy_type, player_count)
+	else:
+		print("⚠️ Could not spawn boss healing orbs - main scene not found") 
 
 func create_spell_warning(warning_text: String):
 	# Create a visual and text warning for incoming spells
