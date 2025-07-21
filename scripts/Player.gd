@@ -58,16 +58,33 @@ func _ready():
 	# Add player to the "player" group so enemies can find it
 	add_to_group("player")
 	
+	# Configure character first
 	configure_character()
-	create_health_bar()
+	
+	# Create health bar after configuration
+	if not health_bar_container:
+		create_health_bar()
+	
+	# Setup dodge effect
 	setup_dodge_effect()
 	
 	# Connect animation finished signal for Knight
 	if animated_sprite:
 		animated_sprite.animation_finished.connect(_on_animation_finished)
 	
+	# Initial health bar update
+	update_health_bar()
+	
+	# SINGLE PLAYER FIX: Set authority for single player mode
+	var main_scene = get_tree().get_first_node_in_group("main")
+	if main_scene and not main_scene.is_multiplayer_game:
+		# In single player, set authority to 1 (local player)
+		set_multiplayer_authority(1)
+		print("Single player mode: Setting multiplayer authority to 1")
+	
 	print("Player created: ", character_data.name)
 	print("Player added to 'player' group")
+	print("Player health: ", current_health, "/", base_health)
 
 func setup_dodge_effect():
 	# Create dodge effect sprite
@@ -503,7 +520,34 @@ func setup_wizard_animations(sprite_frames: SpriteFrames):
 		print("Added Wizard run animation alias")
 
 func create_health_bar():
-	# Health bar is created in the scene file, just update it
+	# Create health bar UI
+	health_bar_container = Node2D.new()
+	health_bar_container.name = "HealthBarContainer"
+	health_bar_container.position = Vector2(0, -30)
+	add_child(health_bar_container)
+	
+	# Background (dark red)
+	var bg = ColorRect.new()
+	bg.color = Color(0.3, 0, 0, 1)
+	bg.size = Vector2(60, 6)
+	bg.position = Vector2(-30, -3)
+	health_bar_container.add_child(bg)
+	
+	# Health bar (green)
+	health_bar = ColorRect.new()
+	health_bar.name = "HealthBar"
+	health_bar.color = Color.GREEN
+	health_bar.size = Vector2(60, 6)
+	health_bar.position = Vector2(-30, -3)
+	health_bar_container.add_child(health_bar)
+	
+	# Ensure health bar is visible
+	health_bar_container.visible = true
+	health_bar_container.z_index = 10  # Ensure it renders on top
+	
+	print("Health bar created for player")
+	
+	# Initialize health bar to full
 	update_health_bar()
 
 func update_health_bar():
@@ -556,6 +600,14 @@ func _physics_process(delta):
 
 # NEW: Sync player position and velocity to other clients  
 func sync_position_to_clients():
+	# Check if single player mode first
+	var main_scene = get_tree().get_first_node_in_group("main")
+	var is_single_player = main_scene and not main_scene.is_multiplayer_game
+	
+	# Don't sync in single player mode
+	if is_single_player:
+		return
+	
 	# Safety check for multiplayer system
 	if not multiplayer or not multiplayer.has_multiplayer_peer():
 		return
@@ -582,9 +634,13 @@ func sync_player_position(pos: Vector2, vel: Vector2, direction: Vector2):
 		facing_direction = direction
 
 func handle_movement(delta):
-	# CRITICAL FIX: Only handle movement for the local player
-	if not is_multiplayer_authority():
-		return  # This is a remote player, don't process movement
+	# CRITICAL FIX: Check if single player mode first
+	var main_scene = get_tree().get_first_node_in_group("main")
+	var is_single_player = main_scene and not main_scene.is_multiplayer_game
+	
+	# Only check authority in multiplayer mode
+	if not is_single_player and not is_multiplayer_authority():
+		return  # This is a remote player in multiplayer, don't process movement
 	
 	# Get input direction
 	var input_direction = Vector2.ZERO
@@ -744,9 +800,13 @@ func play_hit_animation():
 	print("Playing hit flash effect")
 
 func handle_input():
-	# CRITICAL FIX: Only handle input for the local player
-	if not is_multiplayer_authority():
-		return  # This is a remote player, don't process input
+	# CRITICAL FIX: Check if single player mode first
+	var main_scene = get_tree().get_first_node_in_group("main")
+	var is_single_player = main_scene and not main_scene.is_multiplayer_game
+	
+	# Only check authority in multiplayer mode
+	if not is_single_player and not is_multiplayer_authority():
+		return  # This is a remote player in multiplayer, don't process input
 	
 	# Primary attack
 	if Input.is_action_just_pressed("primary_attack"):
@@ -1261,10 +1321,17 @@ func take_damage(damage: float):
 	# Emit signal
 	health_changed.emit(current_health, base_health)
 	
+	# Get main node reference
+	var main_node = get_tree().get_first_node_in_group("main")
+	
+	# NEW: Sync damage to other players in multiplayer
+	if main_node and main_node.is_multiplayer_game and multiplayer.has_multiplayer_peer() and is_multiplayer_authority():
+		if main_node.has_method("sync_player_damage"):
+			main_node.sync_player_damage.rpc(get_multiplayer_authority(), final_damage)
+	
 	# Check if dead, but not in debug mode
 	if current_health <= 0:
 		# Check if we're in debug mode
-		var main_node = get_tree().get_first_node_in_group("main")
 		if main_node and main_node.has_method("is_debug_mode") and main_node.is_debug_mode():
 			# In debug mode: clamp health to 1 and continue playing
 			current_health = 1.0
@@ -1304,7 +1371,113 @@ func heal(amount: float):
 		tween.tween_property(animated_sprite, "modulate", Color.GREEN, 0.1)
 		tween.tween_property(animated_sprite, "modulate", Color.WHITE, 0.2)
 	
+	# NEW: Sync healing to other players in multiplayer
+	if multiplayer.has_multiplayer_peer() and is_multiplayer_authority():
+		var main_node = get_tree().get_first_node_in_group("main")
+		if main_node and main_node.has_method("sync_player_healing"):
+			main_node.sync_player_healing.rpc(get_multiplayer_authority(), amount)
+	
 	print("💚 Player healed for ", amount, " - Health: ", current_health, "/", base_health)
+
+# NEW: Get health data for synchronization
+func get_health_data() -> Dictionary:
+	return {
+		"current_health": current_health,
+		"max_health": base_health,
+		"is_alive": is_alive
+	}
+
+# NEW: Sync health from remote (for display only, not actual health changes)
+func sync_health_from_remote(remote_current_health: float, remote_max_health: float):
+	# This is for other players to see our health status
+	# Update the visual health bar to match remote health
+	if health_bar:
+		var health_percentage = remote_current_health / remote_max_health
+		health_bar.size.x = 60 * health_percentage
+		
+		# Change color based on health
+		if health_percentage > 0.6:
+			health_bar.color = Color.GREEN
+		elif health_percentage > 0.3:
+			health_bar.color = Color.YELLOW
+		else:
+			health_bar.color = Color.RED
+	
+	print("🤝 PEER: Received health sync - ", remote_current_health, "/", remote_max_health)
+
+# NEW: Show damage feedback for multiplayer
+func show_damage_feedback(damage_amount: float):
+	# Visual feedback when other players see us take damage
+	if animated_sprite:
+		# Flash red briefly
+		var tween = create_tween()
+		tween.tween_property(animated_sprite, "modulate", Color.RED, 0.1)
+		tween.tween_property(animated_sprite, "modulate", Color.WHITE, 0.2)
+	
+	# Create floating damage text
+	create_floating_damage_text(damage_amount)
+
+# NEW: Show healing feedback for multiplayer  
+func show_healing_feedback(heal_amount: float):
+	# Visual feedback when other players see us heal
+	if animated_sprite:
+		# Flash green briefly
+		var tween = create_tween()
+		tween.tween_property(animated_sprite, "modulate", Color.GREEN, 0.1)
+		tween.tween_property(animated_sprite, "modulate", Color.WHITE, 0.2)
+	
+	# Create floating heal text
+	create_floating_heal_text(heal_amount)
+
+# NEW: Create floating damage text for visual feedback
+func create_floating_damage_text(damage: float):
+	var damage_label = Label.new()
+	damage_label.text = "-" + str(int(damage))
+	damage_label.position = global_position + Vector2(-10, -40)
+	damage_label.add_theme_font_size_override("font_size", 16)
+	damage_label.add_theme_color_override("font_color", Color.RED)
+	damage_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	damage_label.add_theme_constant_override("shadow_offset_x", 2)
+	damage_label.add_theme_constant_override("shadow_offset_y", 2)
+	
+	# Add to scene
+	var scene = get_tree().current_scene
+	if scene:
+		scene.add_child(damage_label)
+		
+		# Animate floating upward and fade out
+		var text_tween = scene.create_tween()
+		text_tween.parallel().tween_property(damage_label, "position:y", damage_label.position.y - 30, 1.0)
+		text_tween.parallel().tween_property(damage_label, "modulate:a", 0.0, 1.0)
+		text_tween.tween_callback(func():
+			if is_instance_valid(damage_label):
+				damage_label.queue_free()
+		)
+
+# NEW: Create floating heal text for visual feedback
+func create_floating_heal_text(heal: float):
+	var heal_label = Label.new()
+	heal_label.text = "+" + str(int(heal))
+	heal_label.position = global_position + Vector2(-10, -40)
+	heal_label.add_theme_font_size_override("font_size", 16)
+	heal_label.add_theme_color_override("font_color", Color.GREEN)
+	heal_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	heal_label.add_theme_constant_override("shadow_offset_x", 2)
+	heal_label.add_theme_constant_override("shadow_offset_y", 2)
+	
+	# Add to scene
+	var scene = get_tree().current_scene
+	if scene:
+		scene.add_child(heal_label)
+		
+		# Animate floating upward and fade out
+		var text_tween = scene.create_tween()
+		text_tween.parallel().tween_property(heal_label, "position:y", heal_label.position.y - 30, 1.0)
+		text_tween.parallel().tween_property(heal_label, "modulate:a", 0.0, 1.0)
+		text_tween.tween_callback(func():
+			if is_instance_valid(heal_label):
+				heal_label.queue_free()
+		)
 
 func get_character_type() -> String:
 	if character_data:

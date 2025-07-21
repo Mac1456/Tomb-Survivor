@@ -222,6 +222,10 @@ var frame_time_accumulator: float = 0.0
 # Player scene reference
 var player_scene: PackedScene = preload("res://scenes/Player.tscn")
 
+# NEW: Health synchronization system for multiplayer
+var health_sync_timer: float = 0.0
+var health_sync_interval: float = 0.5  # Sync health every 0.5 seconds
+
 func _ready():
 	print("🎮 Main.gd ready - Node path: ", get_path())
 	print("🎮 Parent node: ", get_parent().name if get_parent() else "No parent")
@@ -427,6 +431,11 @@ func setup_multiplayer_game():
 	# Tell clients to set up their rendering, then spawn all players directly
 	if network_manager and network_manager.is_host:
 		print("🤝 PEER: Notifying other players to set up...")
+		
+		# Wait for node tree to be ready
+		await get_tree().process_frame
+		
+		# Use network manager RPC to avoid path issues
 		network_manager.join_multiplayer_game.rpc()
 		
 		# Give clients time to set up, then spawn everyone
@@ -548,8 +557,19 @@ func create_multiplayer_player(player_id: int, character_index: int, spawn_pos: 
 	# Setup camera for local player only
 	if player_id == multiplayer.get_unique_id():
 		setup_multiplayer_camera(player_instance)
+		# Set as the main player for single reference
+		player = player_instance
+	
+	# Connect health change signal for all players
+	if player_instance.has_signal("health_changed"):
+		player_instance.health_changed.connect(_on_multiplayer_player_health_changed.bind(player_id))
 	
 	print("✅ Player ", player_id, " created successfully at ", spawn_pos)
+
+# NEW: Handle health changes for multiplayer players
+func _on_multiplayer_player_health_changed(new_health: float, max_health: float, player_id: int):
+	print("💚 Player ", player_id, " health changed: ", new_health, "/", max_health)
+	# Additional handling if needed
 
 func setup_multiplayer_camera(player_node: Node2D):
 	print("📷 Setting up camera for local player")
@@ -581,6 +601,10 @@ func setup_performance_optimized_game():
 	create_combat_containers()
 	create_boss_ui()
 	create_hud_cooldown_system()
+	
+	# Initialize round system and game mode for single player
+	setup_round_system()
+	setup_game_mode()
 	
 	print("Step 3 systems initialized successfully!")
 	print("Selected character: ", selected_character.name)
@@ -881,6 +905,13 @@ func _physics_process(delta):
 	# Use round-based scaling instead of time-based (very subtle progression)
 	enemy_scale_factor = 1.0 + floor((current_round - 1) / 3) * 0.1  # Increase by 10% every 3 rounds
 	
+	# NEW: Health synchronization for multiplayer
+	if is_multiplayer_game:
+		health_sync_timer += delta
+		if health_sync_timer >= health_sync_interval:
+			sync_all_player_health()
+			health_sync_timer = 0.0
+	
 	# CRITICAL MULTIPLAYER FIX: Only HOST runs game logic, clients receive updates
 	if current_game_mode == GameMode.PLAYABLE:
 		if is_multiplayer_game:
@@ -904,6 +935,9 @@ func _physics_process(delta):
 			# Single player - handle normally
 			if fmod(game_time, 5.0) < delta:
 				print("⚙️ Single Player: Processing game logic - Game Time: ", int(game_time), "s")
+				print("  Round: ", current_round, " | Game Mode: ", GameMode.keys()[current_game_mode])
+				print("  Round UI visible: ", round_ui_canvas.visible if round_ui_canvas else "NO CANVAS")
+				print("  Round Label visible: ", round_label.visible if round_label else "NO LABEL")
 			handle_round_progression(delta)
 	else:
 		# Debug mode
@@ -989,8 +1023,12 @@ func initialize_shared_session():
 	shared_rng.seed = multiplayer_session_seed
 	
 	if is_multiplayer_game:
+		# Wait a frame to ensure proper node setup
+		await get_tree().process_frame
+		
 		# Share the seed with all players
-		sync_session_seed.rpc(multiplayer_session_seed)
+		if is_inside_tree() and multiplayer.has_multiplayer_peer():
+			sync_session_seed.rpc(multiplayer_session_seed)
 	
 	print("🎲 Shared session initialized with seed: ", multiplayer_session_seed)
 
@@ -2134,11 +2172,11 @@ func start_new_round():
 	if is_multiplayer_game and network_manager and network_manager.is_host:
 		# Wait a frame to ensure we're in the tree
 		await get_tree().process_frame
-		if is_inside_tree():
+		if is_inside_tree() and multiplayer.has_multiplayer_peer():
 			sync_round_start.rpc(current_round, enemies_to_spawn_this_round)
 			print("🏠 HOST: Synced round ", current_round, " start to clients")
 		else:
-			print("⚠️ HOST: Cannot sync round - not in tree yet")
+			print("⚠️ HOST: Cannot sync round - not ready for RPC")
 	
 	print("Round ", current_round, " - Enemies to spawn: ", enemies_to_spawn_this_round)
 	print("🔧 Round state reset - between_rounds: ", between_rounds, " round_completed: ", round_completed)
@@ -2360,6 +2398,7 @@ func create_round_ui():
 	round_ui_canvas = CanvasLayer.new()
 	round_ui_canvas.name = "RoundUICanvas"
 	round_ui_canvas.layer = 15  # Above boss UI
+	round_ui_canvas.visible = true  # Explicitly set visible
 	add_child(round_ui_canvas)
 	
 	# Create round label
@@ -2368,6 +2407,7 @@ func create_round_ui():
 	round_label.text = "Round: 1"
 	round_label.position = Vector2(50, 50)
 	round_label.size = Vector2(200, 40)
+	round_label.visible = true  # Explicitly set visible
 	round_label.add_theme_font_size_override("font_size", 24)
 	round_label.add_theme_color_override("font_color", Color.WHITE)
 	round_label.add_theme_color_override("font_shadow_color", Color.BLACK)
@@ -2375,7 +2415,7 @@ func create_round_ui():
 	round_label.add_theme_constant_override("shadow_offset_y", 2)
 	round_ui_canvas.add_child(round_label)
 	
-	print("Round UI system created")
+	print("Round UI system created - Canvas visible: ", round_ui_canvas.visible, " Label visible: ", round_label.visible)
 
 func create_game_over_ui():
 	print("Creating simple game over UI system...")
@@ -2952,3 +2992,51 @@ func sync_enemy_death_event(enemy_id: int):
 # NEW: Getter for shared RNG (used by enemies for deterministic behavior)
 func get_shared_rng() -> RandomNumberGenerator:
 	return shared_rng
+
+# NEW: Health synchronization system for multiplayer
+func sync_all_player_health():
+	if not is_multiplayer_game:
+		return
+	
+	# Sync health for all multiplayer players
+	for mp_player in multiplayer_players:
+		if is_instance_valid(mp_player) and mp_player.has_method("get_health_data"):
+			var player_id = mp_player.get_multiplayer_authority()
+			var health_data = mp_player.get_health_data()
+			
+			# Only sync if this is the local player's authoritative instance
+			if player_id == multiplayer.get_unique_id():
+				sync_player_health.rpc(player_id, health_data.current_health, health_data.max_health)
+
+# RPC to sync player health to all clients
+@rpc("any_peer", "call_remote", "reliable")
+func sync_player_health(player_id: int, current_health: float, max_health: float):
+	# Find the player by ID and update their health display
+	for mp_player in multiplayer_players:
+		if is_instance_valid(mp_player) and mp_player.get_multiplayer_authority() == player_id:
+			if mp_player.has_method("sync_health_from_remote"):
+				mp_player.sync_health_from_remote(current_health, max_health)
+			print("🤝 PEER: Synced health for player ", player_id, " - ", current_health, "/", max_health)
+			break
+
+# RPC to sync player damage events
+@rpc("any_peer", "call_remote", "reliable")
+func sync_player_damage(player_id: int, damage_amount: float):
+	# Find the player and apply damage visually (not actual damage, just visual feedback)
+	for mp_player in multiplayer_players:
+		if is_instance_valid(mp_player) and mp_player.get_multiplayer_authority() == player_id:
+			if mp_player.has_method("show_damage_feedback"):
+				mp_player.show_damage_feedback(damage_amount)
+			print("🤝 PEER: Player ", player_id, " took ", damage_amount, " damage")
+			break
+
+# RPC to sync player healing events
+@rpc("any_peer", "call_remote", "reliable")
+func sync_player_healing(player_id: int, heal_amount: float):
+	# Find the player and show healing effect
+	for mp_player in multiplayer_players:
+		if is_instance_valid(mp_player) and mp_player.get_multiplayer_authority() == player_id:
+			if mp_player.has_method("show_healing_feedback"):
+				mp_player.show_healing_feedback(heal_amount)
+			print("💚 PEER: Player ", player_id, " healed for ", heal_amount)
+			break

@@ -60,9 +60,9 @@ func change_to_main_menu():
 	if current_scene:
 		current_scene.queue_free()
 	
-	# Load main menu
+	# Load main menu - FIX: Add to GameManager instead of current_scene
 	current_scene = main_menu_scene.instantiate()
-	get_tree().current_scene.add_child(current_scene)
+	add_child(current_scene)
 	
 	# Connect signals
 	current_scene.start_game.connect(_on_main_menu_start_game)
@@ -77,9 +77,9 @@ func change_to_game_mode_select():
 	if current_scene:
 		current_scene.queue_free()
 	
-	# Load game mode select
+	# Load game mode select - FIX: Add to GameManager instead of current_scene
 	current_scene = game_mode_select_scene.instantiate()
-	get_tree().current_scene.add_child(current_scene)
+	add_child(current_scene)
 	
 	# Connect signals
 	current_scene.single_player_selected.connect(_on_single_player_selected)
@@ -95,9 +95,9 @@ func change_to_lobby_manager():
 	if current_scene:
 		current_scene.queue_free()
 	
-	# Load lobby manager
+	# Load lobby manager - FIX: Add to GameManager instead of current_scene
 	current_scene = lobby_scene.instantiate()
-	get_tree().current_scene.add_child(current_scene)
+	add_child(current_scene)
 	
 	# Connect signals
 	current_scene.back_pressed.connect(_on_lobby_back)
@@ -110,9 +110,9 @@ func change_to_character_select():
 	if current_scene:
 		current_scene.queue_free()
 	
-	# Load character select
+	# Load character select - FIX: Add to GameManager instead of current_scene
 	current_scene = character_select_scene.instantiate()
-	get_tree().current_scene.add_child(current_scene)
+	add_child(current_scene)
 	
 	# Set multiplayer mode if needed
 	if is_multiplayer_game and current_scene.has_method("set_multiplayer_mode"):
@@ -131,9 +131,10 @@ func change_to_game():
 	if current_scene:
 		current_scene.queue_free()
 	
-	# Load game scene
+	# Load game scene - FIX: Add to GameManager instead of current_scene
 	current_scene = game_scene.instantiate()
-	get_tree().current_scene.add_child(current_scene)
+	current_scene.name = "Main"  # Set explicit name for RPC targeting
+	add_child(current_scene)
 	
 	# Pass selected character and multiplayer settings to game AFTER it's been added to the scene
 	await get_tree().process_frame
