@@ -49,6 +49,12 @@ var patrol_timer: float = 0.0
 var dash_target: Vector2 = Vector2.ZERO
 var reposition_target: Vector2 = Vector2.ZERO
 
+# Natural movement randomization
+var movement_randomness_timer: float = 0.0
+var current_movement_offset: Vector2 = Vector2.ZERO
+var wander_angle: float = 0.0
+var movement_personality: float = randf()  # Each enemy has unique movement personality
+
 # Attack telegraph system
 var windup_timer: float = 0.0
 var individual_cooldown_time: float = 0.0
@@ -59,29 +65,37 @@ var health_bar_container: Node2D
 var health_bar: ColorRect
 var collision_shape: CollisionShape2D
 
-# Constants for Hades-style AI
-const PATROL_CHANGE_TIME: float = 3.0
-const DETECTION_RANGE: float = 100.0
-const CHASE_RANGE: float = 120.0
-const LOSE_INTEREST_RANGE: float = 150.0
+# Navigation components
+var navigation_agent: NavigationAgent2D
+var is_using_navigation: bool = false
 
-# Sword skeleton constants
-const SWORD_DASH_RANGE: float = 80.0
-const SWORD_ATTACK_RANGE: float = 40.0
-const SWORD_WINDUP_TIME: float = 0.8
-const SWORD_DASH_SPEED: float = 200.0
-const SWORD_COOLDOWN_TIME: float = 2.0
+# Constants for Hades-style AI - Simplified and focused
+const PATROL_CHANGE_TIME: float = 1.5      # Very fast patrol changes for responsiveness
+const IDLE_TO_PATROL_TIME: float = 0.3     # Almost immediate transition from idle to patrol
+const LOSE_INTEREST_MULTIPLIER: float = 1.3 # Stay interested longer
+
+# General constants for archer/golem compatibility
+const DETECTION_RANGE: float = 250.0       # Default detection range for other enemy types
+const LOSE_INTEREST_RANGE: float = 350.0   # Default lose interest range for other enemy types
+
+# Sword skeleton constants - CROSS-MAP HUNTERS
+const SWORD_DETECTION_RANGE: float = 2000.0 # MASSIVE detection - they see you from anywhere on map
+const SWORD_ATTACK_RANGE: float = 80.0      # Attack initiation range
+const SWORD_DAMAGE_RANGE: float = 50.0      # Actual damage radius
+const SWORD_WINDUP_TIME: float = 0.5        # Telegraph time as requested
+const SWORD_ATTACK_SPEED: float = 300.0     # Speed during attack lunge
+const SWORD_COOLDOWN_TIME: float = 1.0      # Cooldown as requested
 
 # Archer skeleton constants
-const ARCHER_OPTIMAL_RANGE: float = 120.0
-const ARCHER_MIN_RANGE: float = 60.0
+const ARCHER_OPTIMAL_RANGE: float = 200.0  # Increased from 120
+const ARCHER_MIN_RANGE: float = 80.0  # Increased from 60
 const ARCHER_WINDUP_TIME: float = 1.2
 const ARCHER_COOLDOWN_TIME: float = 3.0
 const ARCHER_REPOSITION_SPEED: float = 100.0
 
 # Stone golem constants
-const GOLEM_GROUND_POUND_RANGE: float = 100.0
-const GOLEM_ATTACK_RANGE: float = 60.0
+const GOLEM_GROUND_POUND_RANGE: float = 150.0  # Increased from 100 for better engagement
+const GOLEM_ATTACK_RANGE: float = 80.0  # Increased from 60 for better hit detection
 const GOLEM_WINDUP_TIME: float = 2.0
 const GOLEM_COOLDOWN_TIME: float = 4.0
 const GOLEM_MOVE_SPEED: float = 30.0
@@ -90,7 +104,7 @@ const GOLEM_MOVE_SPEED: float = 30.0
 const BASE_ENEMY_STATS = {
 	EnemyType.SWORD_SKELETON: {
 		"health": 60.0,
-		"damage": 15.0,
+		"damage": 30.0,
 		"speed": 70.0,
 		"attack_cooldown": SWORD_COOLDOWN_TIME,
 		"attack_range": SWORD_ATTACK_RANGE
@@ -146,7 +160,7 @@ func _ready():
 	find_nearest_player_target()
 	
 	# Initialize AI state
-	ai_state = AIState.IDLE
+	ai_state = AIState.PATROL  # Start in patrol immediately, not idle
 	state_timer = 0.0
 	patrol_timer = 0.0
 	
@@ -165,16 +179,190 @@ func _ready():
 		# Fallback for enemies without ID
 		patrol_direction = Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
 	
+	# Ensure initial patrol direction avoids walls
+	patrol_direction = apply_boundary_avoidance(patrol_direction)
+	
 	add_to_group("enemies")
-	print("Enemy created: ", EnemyType.keys()[enemy_type])
+	print("Enemy created: ", EnemyType.keys()[enemy_type], " at ", global_position, " facing ", patrol_direction)
+
+	# DISABLED: Navigation system causing issues - using direct movement instead
+	navigation_agent = get_node_or_null("NavigationAgent2D")
+	is_using_navigation = false  # Force disable navigation
+	
+	if navigation_agent:
+		print("📍 NavigationAgent2D found but disabled - using direct movement for reliability")
+	else:
+		print("📍 No NavigationAgent2D found - using direct movement")
 
 
 
-# Deterministic patrol direction changes
+# Get random patrol direction with boundary checking
 func get_new_patrol_direction() -> Vector2:
+	# Pure random direction - biasing is handled in patrol state logic
+	var new_direction: Vector2
 	var shared_rng = get_shared_rng()
 	var angle = shared_rng.randf_range(0, 2 * PI) if shared_rng else randf_range(0, 2 * PI)
-	return Vector2(cos(angle), sin(angle)).normalized()
+	new_direction = Vector2(cos(angle), sin(angle)).normalized()
+	
+	return apply_boundary_avoidance(new_direction)
+
+# IMPROVED: Predictive boundary avoidance with look-ahead
+func apply_boundary_avoidance(direction: Vector2) -> Vector2:
+	var new_direction = direction
+	
+	# Arena boundaries (from Main.gd)
+	var arena_width = 1600
+	var arena_height = 1000
+	var safety_margin = 150  # Larger margin for predictive avoidance
+	var look_ahead_distance = 100  # How far ahead to check
+	
+	# Current position
+	var current_pos = global_position
+	
+	# Predicted future position
+	var future_pos = current_pos + direction * look_ahead_distance
+	
+	# Check if future position would be near/outside boundaries
+	var will_hit_left = future_pos.x < safety_margin
+	var will_hit_right = future_pos.x > arena_width - safety_margin
+	var will_hit_top = future_pos.y < safety_margin
+	var will_hit_bottom = future_pos.y > arena_height - safety_margin
+	
+	# Calculate avoidance force based on predicted collision
+	var avoidance_force = Vector2.ZERO
+	var avoidance_strength = 1.5  # Stronger avoidance
+	
+	if will_hit_left:
+		# Turn right to avoid left wall
+		var distance_factor = max(0.1, future_pos.x / safety_margin)
+		avoidance_force.x = avoidance_strength * (1.0 - distance_factor)
+	elif will_hit_right:
+		# Turn left to avoid right wall
+		var distance_factor = max(0.1, (arena_width - future_pos.x) / safety_margin)
+		avoidance_force.x = -avoidance_strength * (1.0 - distance_factor)
+	
+	if will_hit_top:
+		# Turn down to avoid top wall
+		var distance_factor = max(0.1, future_pos.y / safety_margin)
+		avoidance_force.y = avoidance_strength * (1.0 - distance_factor)
+	elif will_hit_bottom:
+		# Turn up to avoid bottom wall
+		var distance_factor = max(0.1, (arena_height - future_pos.y) / safety_margin)
+		avoidance_force.y = -avoidance_strength * (1.0 - distance_factor)
+	
+	# Apply avoidance force to direction
+	if avoidance_force != Vector2.ZERO:
+		new_direction = (direction + avoidance_force).normalized()
+	
+	# Special handling for corners - turn away strongly
+	var near_corner = false
+	if (will_hit_left or will_hit_right) and (will_hit_top or will_hit_bottom):
+		near_corner = true
+		var center = Vector2(arena_width / 2, arena_height / 2)
+		var to_center = (center - current_pos).normalized()
+		
+		# Strong turn toward center when approaching corner
+		new_direction = new_direction.lerp(to_center, 0.8)
+		
+		# Add perpendicular movement to avoid getting stuck
+		var perpendicular = Vector2(-to_center.y, to_center.x)
+		if randf() > 0.5:  # Random left/right choice
+			perpendicular = -perpendicular
+		new_direction = (new_direction + perpendicular * 0.3).normalized()
+	
+	# Emergency correction if already too close to walls (fallback)
+	var emergency_margin = 50
+	var emergency_correction = Vector2.ZERO
+	
+	if current_pos.x < emergency_margin:
+		emergency_correction.x = 1.0  # Push right
+	elif current_pos.x > arena_width - emergency_margin:
+		emergency_correction.x = -1.0  # Push left
+	
+	if current_pos.y < emergency_margin:
+		emergency_correction.y = 1.0  # Push down
+	elif current_pos.y > arena_height - emergency_margin:
+		emergency_correction.y = -1.0  # Push up
+	
+	if emergency_correction != Vector2.ZERO:
+		new_direction = (new_direction + emergency_correction * 2.0).normalized()
+		if fmod(Time.get_ticks_msec() / 1000.0, 1.0) < 0.1:  # Log every second
+			print("🚨 Emergency wall avoidance for ", name, " at ", current_pos)
+	
+	return new_direction.normalized()
+
+# SMART OBSTACLE AVOIDANCE: Use raycasting to detect obstacles ahead
+func get_safe_direction(intended_direction: Vector2) -> Vector2:
+	var space_state = get_world_2d().direct_space_state
+	var safe_direction = intended_direction
+	
+	# Cast rays in multiple directions to find safe path
+	var ray_length = 80.0  # How far ahead to check
+	var ray_directions = [
+		intended_direction,  # Straight ahead
+		intended_direction.rotated(-PI/6),  # 30 degrees left
+		intended_direction.rotated(PI/6),   # 30 degrees right
+		intended_direction.rotated(-PI/3),  # 60 degrees left
+		intended_direction.rotated(PI/3),   # 60 degrees right
+		intended_direction.rotated(-PI/2),  # 90 degrees left
+		intended_direction.rotated(PI/2),   # 90 degrees right
+	]
+	
+	var best_direction = intended_direction
+	var best_score = -1.0
+	
+	for i in range(ray_directions.size()):
+		var test_direction = ray_directions[i]
+		var ray_end = global_position + test_direction * ray_length
+		
+		# Create ray query
+		var query = PhysicsRayQueryParameters2D.create(global_position, ray_end)
+		query.collision_mask = 2  # Only check walls (layer 2)
+		query.exclude = [self]  # Don't hit ourselves
+		
+		var result = space_state.intersect_ray(query)
+		
+		# Calculate score based on clearance and direction preference
+		var score = 0.0
+		if result.is_empty():
+			# No collision - full clearance
+			score = 1.0
+		else:
+			# Collision detected - partial clearance based on distance
+			var hit_distance = global_position.distance_to(result.position)
+			score = hit_distance / ray_length
+		
+		# Prefer directions closer to intended direction
+		var direction_alignment = intended_direction.dot(test_direction)
+		score *= (direction_alignment + 1.0) / 2.0  # Normalize to 0-1
+		
+		# First direction (straight ahead) gets bonus
+		if i == 0:
+			score *= 1.2
+		
+		if score > best_score:
+			best_score = score
+			best_direction = test_direction
+	
+	# If no good direction found, try perpendicular movement
+	if best_score < 0.1:
+		var perpendicular_options = [
+			Vector2(-intended_direction.y, intended_direction.x),  # 90 degrees
+			Vector2(intended_direction.y, -intended_direction.x),  # -90 degrees
+		]
+		
+		for perp_dir in perpendicular_options:
+			var ray_end = global_position + perp_dir * ray_length
+			var query = PhysicsRayQueryParameters2D.create(global_position, ray_end)
+			query.collision_mask = 2
+			query.exclude = [self]
+			
+			var result = space_state.intersect_ray(query)
+			if result.is_empty():
+				best_direction = perp_dir
+				break
+	
+	return best_direction.normalized()
 
 # Deterministic cooldown durations
 func get_attack_cooldown() -> float:
@@ -463,23 +651,24 @@ func _physics_process(delta):
 		# CLIENT: Don't run AI, just wait for position updates from host
 		return
 	
-	# HOST or SINGLE PLAYER: Run full AI and physics
+	# HOST or SINGLE PLAYER: Run full AI and physics [[memory:3835173]]
 	
-	if not target_player or not is_instance_valid(target_player):
-		# Try to find a new target if we lost the current one
-		find_nearest_player_target()
-		if not target_player or not is_instance_valid(target_player):
-			return
-	
-	# Update timers
+	# Update timers first
 	state_timer += delta
 	patrol_timer += delta
+	
+	# Periodically try to find a player if we don't have one
+	if not target_player or not is_instance_valid(target_player):
+		# Try to find a player every 0.5 seconds when we don't have a target
+		if not has_meta("last_player_search") or Time.get_ticks_msec() / 1000.0 - get_meta("last_player_search") > 0.5:
+			find_nearest_player_target()
+			set_meta("last_player_search", Time.get_ticks_msec() / 1000.0)
 	
 	# Periodically update target to find closer players
 	if fmod(state_timer, 3.0) < delta:  # Every 3 seconds
 		update_player_target()
 	
-	# Update AI behavior based on enemy type
+	# Update AI behavior based on enemy type - ALWAYS run this [[memory:3835173]]
 	match enemy_type:
 		EnemyType.SWORD_SKELETON:
 			update_sword_skeleton_hades_ai(delta)
@@ -564,13 +753,136 @@ func play_death_animation():
 		if animated_sprite:
 			animated_sprite.play("death")
 
-# Hades-style AI for sword skeletons: Idle → Patrol → Chase → Windup → Attack → Cooldown
+# OVERHAULED: Clean, Hades-style AI for sword skeletons
 func update_sword_skeleton_hades_ai(delta):
-	# In multiplayer, check if there's a closer player to target
+	# Get distance to player if we have a valid target
+	var distance_to_player = INF
+	var player_position = Vector2.ZERO
+	
+	if target_player and is_instance_valid(target_player):
+		distance_to_player = global_position.distance_to(target_player.global_position)
+		player_position = target_player.global_position
+	
+	# Update target to nearest player in multiplayer
+	update_nearest_target()
+	
+	# CROSS-MAP HUNTING: Always chase if player exists (massive detection range)
+	var should_chase = false
+	if target_player and is_instance_valid(target_player):
+		# With 2000 unit detection, they can see across entire map (1600x1000)
+		var current_distance = global_position.distance_to(target_player.global_position)
+		if current_distance <= SWORD_DETECTION_RANGE:  # Will always be true with 2000 range
+			# STAGGERED DETECTION: Add small random delay to prevent clustering
+			if not has_meta("detection_delay"):
+				var detection_delay = randf_range(0.0, 1.0)  # 0-1 second delay
+				set_meta("detection_delay", detection_delay)
+				set_meta("detection_start_time", Time.get_ticks_msec() / 1000.0)
+			
+			var elapsed_time = Time.get_ticks_msec() / 1000.0 - get_meta("detection_start_time")
+			if elapsed_time >= get_meta("detection_delay"):
+				should_chase = true
+				# Store player position for search patterns
+				dash_target = target_player.global_position
+	
+	match ai_state:
+		AIState.IDLE:
+			# Stand still and look menacing
+			velocity = Vector2.ZERO
+			
+			# IMMEDIATE CHASE if player detected
+			if should_chase:
+				ai_state = AIState.CHASE
+				state_timer = 0.0
+				print("🏃 Skeleton SPOTTED PLAYER - immediate chase from idle!")
+			# RANDOMIZED transition to patrol - like old logic
+			elif state_timer > randf_range(0.5, 1.5):  # Random timing prevents clustering
+				ai_state = AIState.PATROL
+				state_timer = 0.0
+				print("🚶 Skeleton entering patrol")
+		
+		AIState.PATROL:
+			# AGGRESSIVE patrol movement - always looking for player
+			handle_patrol_movement()
+			
+			# IMMEDIATE CHASE if player detected (already checked above)
+			if should_chase:
+				ai_state = AIState.CHASE
+				state_timer = 0.0
+				var current_distance = global_position.distance_to(target_player.global_position)
+				print("🏃 Skeleton detected player at ", current_distance, " units - CHASING!")
+		
+		AIState.CHASE:
+			# SIMPLE DIRECT CHASE - like the old logic
+			if not target_player or not is_instance_valid(target_player):
+				return_to_patrol()
+				return
+			
+			# Direct movement toward player with basic obstacle avoidance
+			var direction = (target_player.global_position - global_position).normalized()
+			var smart_direction = get_safe_direction(direction)
+			var safe_direction = apply_boundary_avoidance(smart_direction)
+			
+			# NATURAL SPEED VARIATION: Prevent perfect clustering during chase
+			var base_chase_speed = movement_speed
+			var speed_variation = lerp(0.85, 1.15, movement_personality)  # ±15% speed variation
+			var natural_chase_speed = base_chase_speed * speed_variation
+			
+			velocity = safe_direction * natural_chase_speed
+			
+			var current_distance = global_position.distance_to(target_player.global_position)
+			
+			# Close enough to attack?
+			if current_distance <= SWORD_ATTACK_RANGE:
+				start_attack_windup()
+			# Lost the player?
+			elif current_distance > SWORD_DETECTION_RANGE * LOSE_INTEREST_MULTIPLIER:
+				return_to_patrol()
+				print("🚶 Skeleton lost interest - too far away")
+		
+		AIState.WINDUP:
+			# Telegraph attack - CANNOT be cancelled once started
+			velocity = Vector2.ZERO
+			windup_timer += delta
+			
+			# Visual telegraph with red flashing
+			if not is_dead:
+				var flash_speed = 10.0  # Fast flashing for urgency
+				if int(windup_timer * flash_speed) % 2 == 0:
+					sprite.modulate = Color.RED
+				else:
+					sprite.modulate = get_restore_color()
+			
+			# Commit to attack after windup time
+			if windup_timer >= SWORD_WINDUP_TIME:
+				execute_attack()
+		
+		AIState.ATTACK:
+			# Committed attack - lunge forward
+			perform_attack_lunge(delta)
+			
+			# End attack after brief duration
+			if state_timer > 0.3:  # Quick attack execution
+				start_cooldown()
+		
+		AIState.COOLDOWN:
+			# Recovery period - can reposition but not attack
+			handle_cooldown_movement()
+			
+			# Ready to fight again? Use INDIVIDUAL cooldown time like old logic
+			if state_timer >= individual_cooldown_time:
+				ai_state = AIState.CHASE if has_nearby_target() else AIState.PATROL
+				state_timer = 0.0
+				if not is_dead:
+					sprite.modulate = get_restore_color()
+				print("✅ Skeleton ready to fight again after ", individual_cooldown_time, " seconds!")
+
+# HADES-STYLE AI HELPER FUNCTIONS - Clean and focused
+
+func update_nearest_target():
+	# Find nearest player in multiplayer scenarios
 	var main_node = get_tree().get_first_node_in_group("main")
 	if main_node and "is_multiplayer_game" in main_node and main_node.is_multiplayer_game:
 		if "multiplayer_players" in main_node and main_node.multiplayer_players.size() > 1:
-			# Find closest player for dynamic targeting
 			var closest_player = null
 			var closest_distance = INF
 			
@@ -581,150 +893,139 @@ func update_sword_skeleton_hades_ai(delta):
 						closest_distance = distance
 						closest_player = player
 			
-			# Switch target if we found a significantly closer player (at least 50 units closer)
+			# Switch target if significantly closer
 			if closest_player and target_player and closest_player != target_player:
 				var current_distance = global_position.distance_to(target_player.global_position)
-				if closest_distance < current_distance - 50.0:
+				if closest_distance < current_distance - 30.0:  # 30 unit threshold
 					target_player = closest_player
-					print("🎯 Sword skeleton switching to closer player at distance: ", closest_distance)
-	
-	var distance_to_player = global_position.distance_to(target_player.global_position)
-	
-	# Check if player is ranged character for more aggressive behavior
-	var is_ranged_player = false
-	var player_character_type = ""
-	if target_player.has_method("get_character_type"):
-		player_character_type = target_player.get_character_type()
-		is_ranged_player = (player_character_type == "Huntress" or player_character_type == "Evil Wizard")
-	
-	# Adjust detection and chase ranges based on player type
-	var detection_range = DETECTION_RANGE
-	var lose_interest_range = LOSE_INTEREST_RANGE
-	
-	if is_ranged_player:
-		detection_range = DETECTION_RANGE * 1.4  # 140 units instead of 100
-		lose_interest_range = LOSE_INTEREST_RANGE * 1.3  # 195 units instead of 150
-		# print("🎯 Sword skeleton targeting ranged player: ", player_character_type)
-	
-	match ai_state:
-		AIState.IDLE:
-			velocity = Vector2.ZERO
-			# Brief idle before starting patrol
-			if state_timer > randf_range(0.5, 1.5):
-				ai_state = AIState.PATROL
-				state_timer = 0.0
+
+func handle_patrol_movement():
+	# NATURAL hunting patrol with organic movement
+	patrol_timer -= get_physics_process_delta_time()
+	if patrol_timer <= 0:
+		# Get natural patrol direction with personality-based variation
+		patrol_direction = get_natural_patrol_direction()
 		
-		AIState.PATROL:
-			# Patrol around looking for player with subtle bias toward player direction
-			patrol_timer -= delta
-			if patrol_timer <= 0:
-				if distance_to_player > detection_range:
-					# When out of detection range, patrol with bias toward player
-					var toward_player = (target_player.global_position - global_position).normalized()
-					var random_angle = randf_range(-1.2, 1.2)  # About 70 degrees of randomness
-					# More aggressive bias for ranged players
-					if is_ranged_player:
-						random_angle = randf_range(-0.8, 0.8)  # Tighter cone (±45 degrees)
-					var biased_direction = toward_player.rotated(random_angle)
-					patrol_direction = biased_direction.normalized()
-				else:
-					# Within detection range, use pure random patrol
-					patrol_direction = Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
-				patrol_timer = PATROL_CHANGE_TIME
-			
-			# Move faster when targeting ranged players
-			var patrol_speed = movement_speed * 0.5
-			if is_ranged_player and distance_to_player > detection_range:
-				patrol_speed = movement_speed * 0.65  # 30% faster when hunting ranged players
-			
-			velocity = patrol_direction * patrol_speed
-			
-			# Detect player and start chase
-			if distance_to_player <= detection_range:
-				ai_state = AIState.CHASE
-				state_timer = 0.0
-				if is_ranged_player:
-					print("🗡️ Sword skeleton detected ranged player (", player_character_type, ") - entering aggressive chase!")
-				else:
-					print("🗡️ Sword skeleton detected player - entering chase!")
+		# Apply smart obstacle avoidance to patrol direction
+		patrol_direction = get_safe_direction(patrol_direction)
+		patrol_direction = apply_boundary_avoidance(patrol_direction)
 		
-		AIState.CHASE:
-			# Chase player until in dash range
-			var direction = (target_player.global_position - global_position).normalized()
-			# Move faster when chasing ranged players
-			var chase_speed = movement_speed
-			if is_ranged_player:
-				chase_speed = movement_speed * 1.15  # 15% faster when chasing ranged players
-			
-			velocity = direction * chase_speed
-			
-			# When close enough, prepare to dash attack
-			if distance_to_player <= SWORD_DASH_RANGE:
-				ai_state = AIState.WINDUP
-				state_timer = 0.0
-				windup_timer = 0.0
-				dash_target = target_player.global_position
-				print("⚡ Sword skeleton winding up for dash attack!")
-			# Lose interest if player gets too far (more persistent with ranged players)
-			elif distance_to_player > lose_interest_range:
-				ai_state = AIState.PATROL
-				state_timer = 0.0
-				if is_ranged_player:
-					print("🚶 Sword skeleton lost interest in ranged player - returning to patrol")
-				else:
-					print("🚶 Sword skeleton lost interest - returning to patrol")
-		
-		AIState.WINDUP:
-			# Telegraph phase - show attack intent
-			velocity = Vector2.ZERO
-			windup_timer += delta
-			
-			# Flash sprite to show windup (only if not dead)
-			if not is_dead:
-				if int(windup_timer * 8) % 2 == 0:
-					sprite.modulate = Color.RED
-				else:
-					# Restore to elite color if it exists, otherwise use white
-					var restore_color = Color.WHITE
-					if sprite.has_meta("elite_color"):
-						restore_color = sprite.get_meta("elite_color")
-					sprite.modulate = restore_color
-			
-			# After windup, commit to attack
-			if windup_timer >= SWORD_WINDUP_TIME:
-				ai_state = AIState.ATTACK
-				state_timer = 0.0
-				if not is_dead:
-					sprite.modulate = get_restore_color()
-				print("💥 Sword skeleton executing dash attack!")
-		
-		AIState.ATTACK:
-			# Dash towards the recorded target position
-			var direction = (dash_target - global_position).normalized()
-			velocity = direction * SWORD_DASH_SPEED
-			
-			# Check if we hit the player during dash
-			if distance_to_player <= SWORD_ATTACK_RANGE:
+		# Vary patrol change timing based on personality
+		var base_patrol_time = PATROL_CHANGE_TIME
+		var time_variation = lerp(0.5, 2.0, movement_personality)  # 0.5x to 2x variation
+		patrol_timer = base_patrol_time * time_variation
+	
+	# AGGRESSIVE patrol speed - they're always hunting
+	var base_speed_multiplier = 0.9  # INCREASED from 0.8 - faster hunting
+	var speed_variation = lerp(0.7, 1.1, movement_personality)  # INCREASED variation range
+	var patrol_speed_multiplier = base_speed_multiplier * speed_variation
+	
+	# Add natural speed fluctuation for organic movement
+	var speed_fluctuation = sin(Time.get_ticks_msec() / 1000.0 * movement_personality * 2.0) * 0.15  # INCREASED fluctuation
+	patrol_speed_multiplier += speed_fluctuation
+	
+	velocity = patrol_direction * movement_speed * patrol_speed_multiplier
+
+# ENHANCED: Smart movement with obstacle detection, boundary avoidance, and natural variation
+func move_toward_target(target_pos: Vector2, speed_multiplier: float = 1.0) -> Vector2:
+	# Add tactical positioning to avoid clustering and create natural spread
+	var tactical_target = add_tactical_positioning_offset(target_pos)
+	
+	# Get raw direction to tactical target
+	var raw_direction = (tactical_target - global_position).normalized()
+	
+	# Apply smart obstacle avoidance using raycasting
+	var smart_direction = get_safe_direction(raw_direction)
+	
+	# Apply boundary avoidance as secondary layer
+	var final_direction = apply_boundary_avoidance(smart_direction)
+	
+	# Add natural speed variation based on personality
+	var natural_speed_multiplier = speed_multiplier * lerp(0.8, 1.2, movement_personality)
+	
+	return final_direction * movement_speed * natural_speed_multiplier
+
+func return_to_patrol():
+	ai_state = AIState.PATROL
+	state_timer = 0.0
+	patrol_timer = 0.0  # Reset to immediately pick new direction
+
+func start_attack_windup():
+	ai_state = AIState.WINDUP
+	state_timer = 0.0
+	windup_timer = 0.0
+	
+	# Record target position for attack
+	if target_player and is_instance_valid(target_player):
+		dash_target = target_player.global_position
+	else:
+		dash_target = global_position + patrol_direction * 50  # Fallback
+	
+	print("⚡ Skeleton winding up attack - COMMITTED!")
+
+func execute_attack():
+	ai_state = AIState.ATTACK
+	state_timer = 0.0
+	if not is_dead:
+		sprite.modulate = get_restore_color()
+	
+	print("💥 Skeleton executing attack lunge!")
+
+func perform_attack_lunge(delta):
+	# Fast lunge toward recorded position
+	var direction_to_target = (dash_target - global_position).normalized()
+	velocity = direction_to_target * SWORD_ATTACK_SPEED
+	
+	# Check for damage during lunge
+	if target_player and is_instance_valid(target_player):
+		var distance_to_player = global_position.distance_to(target_player.global_position)
+		if distance_to_player <= SWORD_DAMAGE_RANGE:
+			# Only damage once per attack
+			if not get_meta("attack_damage_dealt", false):
 				deal_damage_to_player()
-			
-			# End attack after dash duration
-			if state_timer > 0.8:  # Dash duration
-				ai_state = AIState.COOLDOWN
-				state_timer = 0.0
-				individual_cooldown_time = SWORD_COOLDOWN_TIME + randf_range(-0.5, 0.5)  # Randomized cooldown
-				print("😴 Sword skeleton entering cooldown for ", individual_cooldown_time, " seconds")
-		
-		AIState.COOLDOWN:
-			# Brief pause before returning to patrol
-			velocity = Vector2.ZERO
-			if state_timer > individual_cooldown_time:
-				ai_state = AIState.PATROL
-				state_timer = 0.0
-				print("🔄 Sword skeleton ready after ", individual_cooldown_time, " seconds - returning to patrol")
+				set_meta("attack_damage_dealt", true)
+				print("🗡️ Skeleton attack hit for ", attack_damage, " damage!")
+
+func start_cooldown():
+	ai_state = AIState.COOLDOWN
+	state_timer = 0.0
+	set_meta("attack_damage_dealt", false)  # Reset damage flag
+	
+	# INDIVIDUAL cooldown times like old logic to prevent clustering
+	individual_cooldown_time = randf_range(1.5, 3.0)  # Each skeleton different timing
+	print("😴 Skeleton entering cooldown for ", individual_cooldown_time, " seconds")
+	
+	# Slight knockback for dramatic effect
+	if target_player and is_instance_valid(target_player):
+		var away_from_player = (global_position - target_player.global_position).normalized()
+		velocity = away_from_player * 100  # Brief knockback
+	else:
+		velocity = Vector2.ZERO
+	
+	print("😴 Skeleton entering cooldown")
+
+func handle_cooldown_movement():
+	# SIMPLE COOLDOWN - mostly stationary like old logic
+	velocity = Vector2.ZERO
+	
+	# Add minimal movement to avoid being completely static
+	if state_timer > 0.5:  # After half second of cooldown
+		var slight_movement = Vector2(randf_range(-8, 8), randf_range(-8, 8))
+		velocity = slight_movement
+
+func has_nearby_target() -> bool:
+	if target_player and is_instance_valid(target_player):
+		var distance = global_position.distance_to(target_player.global_position)
+		return distance <= SWORD_DETECTION_RANGE
+	return false
 
 # Hades-style AI for archer skeletons: Idle → Patrol → Reposition → Windup → Attack → Cooldown
 func update_archer_skeleton_hades_ai(delta):
-	var distance_to_player = global_position.distance_to(target_player.global_position)
+	# Calculate distance to player only if we have a valid target
+	var distance_to_player = INF  # Default to infinite distance if no target
+	
+	if target_player and is_instance_valid(target_player):
+		distance_to_player = global_position.distance_to(target_player.global_position)
 	
 	match ai_state:
 		AIState.IDLE:
@@ -733,50 +1034,88 @@ func update_archer_skeleton_hades_ai(delta):
 			if state_timer > randf_range(0.5, 1.0):
 				ai_state = AIState.PATROL
 				state_timer = 0.0
+				patrol_timer = 0.0  # Reset patrol timer when entering patrol
 		
 		AIState.PATROL:
-			# Patrol around looking for player
+			# Smart patrol - always tracking from anywhere on map
 			patrol_timer -= delta
 			if patrol_timer <= 0:
-				patrol_direction = Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
+				if target_player and is_instance_valid(target_player):
+					var current_distance = global_position.distance_to(target_player.global_position)
+					
+					# Only act "unaware" when within optimal shooting range (pretend we haven't noticed yet)
+					if current_distance <= ARCHER_OPTIMAL_RANGE * 1.5:  # 300 units - act unaware when in good range
+						patrol_direction = get_new_patrol_direction()  # Random patrol
+					else:
+						# Always creep toward player from anywhere on map
+						var toward_player = (target_player.global_position - global_position).normalized()
+						var random_angle = randf_range(-1.0, 1.0)  # Moderate randomness for archers
+						var original_direction = toward_player.rotated(random_angle).normalized()
+						patrol_direction = apply_boundary_avoidance(original_direction)
+				else:
+					patrol_direction = get_new_patrol_direction()
+				
 				patrol_timer = PATROL_CHANGE_TIME
 			
 			velocity = patrol_direction * movement_speed * 0.4
 			
-			# Detect player from anywhere on the map - shoot unless too close
-			if distance_to_player < ARCHER_MIN_RANGE:
-				# Too close - need to reposition
-				ai_state = AIState.REPOSITION
-				state_timer = 0.0
-				find_reposition_target()
-				print("🏃 Archer skeleton needs to reposition - player too close!")
-			else:
-				# Good range - prepare to shoot from any distance
-				ai_state = AIState.WINDUP
-				state_timer = 0.0
-				windup_timer = 0.0
-				print("🏹 Archer skeleton detected player - preparing to shoot from distance: ", distance_to_player)
+			# Check if we should shoot
+			if target_player and is_instance_valid(target_player):
+				var current_distance = global_position.distance_to(target_player.global_position)
+				
+				# Archers have longer detection range and shoot from afar
+				var archer_detection_range = DETECTION_RANGE * 1.5  # 450 units
+				
+				if current_distance <= archer_detection_range:
+					if current_distance < ARCHER_MIN_RANGE:
+						# Too close - need to reposition
+						ai_state = AIState.REPOSITION
+						state_timer = 0.0
+						find_reposition_target()
+						print("🏃 Archer skeleton needs to reposition - player too close!")
+					else:
+						# Good range - prepare to shoot
+						ai_state = AIState.WINDUP
+						state_timer = 0.0
+						windup_timer = 0.0
+						print("🏹 Archer skeleton detected player - preparing to shoot from distance: ", current_distance)
 		
 		AIState.REPOSITION:
-			# Move to optimal shooting position
-			var direction = (reposition_target - global_position).normalized()
+			# Dynamically adjust reposition target as player moves
+			if target_player and is_instance_valid(target_player):
+				# Recalculate reposition target to maintain distance from moving player
+				if Engine.get_process_frames() % 30 == 0:  # Update every 0.5 seconds
+					find_reposition_target()
+			
+			# Move to optimal shooting position with boundary avoidance
+			var raw_direction = (reposition_target - global_position).normalized()
+			var direction = apply_boundary_avoidance(raw_direction)
 			velocity = direction * ARCHER_REPOSITION_SPEED
 			
-			# Check if we've reached good position or are far enough from player
-			if distance_to_player >= ARCHER_MIN_RANGE:
-				# Far enough from player - can shoot now
-				ai_state = AIState.WINDUP
-				state_timer = 0.0
-				windup_timer = 0.0
-				print("🎯 Archer skeleton repositioned - preparing to shoot!")
-			elif global_position.distance_to(reposition_target) <= 20.0:
-				# Reached target position but player still too close - find new position
-				find_reposition_target()
-				print("🔄 Archer skeleton reached position but player still close - finding new spot")
-			elif distance_to_player > LOSE_INTEREST_RANGE:
+			# Check current distance to player
+			if target_player and is_instance_valid(target_player):
+				var current_distance = global_position.distance_to(target_player.global_position)
+				
+				# Check if we've reached good position or are far enough from player
+				if current_distance >= ARCHER_MIN_RANGE:
+					# Far enough from player - can shoot now
+					ai_state = AIState.WINDUP
+					state_timer = 0.0
+					windup_timer = 0.0
+					print("🎯 Archer skeleton repositioned - preparing to shoot!")
+				elif global_position.distance_to(reposition_target) <= 20.0:
+					# Reached target position but player still too close - find new position
+					find_reposition_target()
+					print("🔄 Archer skeleton reached position but player still close - finding new spot")
+				elif current_distance > LOSE_INTEREST_RANGE:
+					ai_state = AIState.PATROL
+					state_timer = 0.0
+					print("🚶 Archer skeleton lost interest - returning to patrol")
+			else:
+				# Lost target - return to patrol
 				ai_state = AIState.PATROL
 				state_timer = 0.0
-				print("🚶 Archer skeleton lost interest - returning to patrol")
+				print("❓ Archer skeleton lost target during reposition - returning to patrol")
 		
 		AIState.WINDUP:
 			# Telegraph phase - show attack intent
@@ -815,32 +1154,59 @@ func update_archer_skeleton_hades_ai(delta):
 				print("😴 Archer skeleton entering cooldown for ", individual_cooldown_time, " seconds")
 		
 		AIState.COOLDOWN:
-			# Recovery phase - patrol around during cooldown
-			patrol_timer -= delta
-			if patrol_timer <= 0:
-				patrol_direction = Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
-				patrol_timer = PATROL_CHANGE_TIME
-			
-			velocity = patrol_direction * movement_speed * 0.3  # Slow patrol during cooldown
-			
-			# Flash sprite to show cooldown (only if not dead)
-			if not is_dead:
-				if int(state_timer * 3) % 2 == 0:
-					sprite.modulate = Color(0.7, 1.0, 0.7)  # Slightly green
+			# Recovery phase - slow tactical movement during cooldown
+			if target_player and is_instance_valid(target_player):
+				var current_distance = global_position.distance_to(target_player.global_position)
+				
+				# Move to maintain optimal distance during cooldown
+				if current_distance < ARCHER_OPTIMAL_RANGE:
+					# Too close - back away slowly
+					var away_direction = (global_position - target_player.global_position).normalized()
+					var retreat_direction = apply_boundary_avoidance(away_direction)
+					velocity = retreat_direction * movement_speed * 0.3
 				else:
-					sprite.modulate = get_restore_color()
+					# Good distance - slow patrol
+					patrol_timer -= delta
+					if patrol_timer <= 0:
+						patrol_direction = get_new_patrol_direction()
+						patrol_timer = PATROL_CHANGE_TIME
+					velocity = patrol_direction * movement_speed * 0.3
+			else:
+				velocity = Vector2.ZERO
+			
+			# Check if player is nearby even during cooldown
+			if target_player and is_instance_valid(target_player):
+				var current_distance = global_position.distance_to(target_player.global_position)
+				if current_distance <= DETECTION_RANGE and state_timer > individual_cooldown_time * 0.5:
+					# Flash to show we're aware of player but still on cooldown
+					if int(state_timer * 4) % 2 == 0:
+						sprite.modulate = Color(1.0, 1.0, 0.7)  # Light yellow
+					else:
+						sprite.modulate = get_restore_color()
+				else:
+					# Normal cooldown visual
+					if not is_dead:
+						if int(state_timer * 3) % 2 == 0:
+							sprite.modulate = Color(0.7, 1.0, 0.7)  # Slightly green
+						else:
+							sprite.modulate = get_restore_color()
 			
 			# Return to patrol after individual cooldown time
 			if state_timer >= individual_cooldown_time:
 				ai_state = AIState.PATROL
 				state_timer = 0.0
+				patrol_timer = 0.0  # Reset patrol timer to immediately check for players
 				if not is_dead:
 					sprite.modulate = get_restore_color()
 				print("🔄 Archer skeleton ready after ", individual_cooldown_time, " seconds - returning to patrol")
 
 # Stone Golem AI: Similar to sword skeleton but slower and with ground pound attack
 func update_stone_golem_ai(delta):
-	var distance_to_player = global_position.distance_to(target_player.global_position)
+	# Calculate distance to player only if we have a valid target
+	var distance_to_player = INF  # Default to infinite distance if no target
+	
+	if target_player and is_instance_valid(target_player):
+		distance_to_player = global_position.distance_to(target_player.global_position)
 	
 	match ai_state:
 		AIState.IDLE:
@@ -849,38 +1215,68 @@ func update_stone_golem_ai(delta):
 			if state_timer > randf_range(1.0, 2.0):
 				ai_state = AIState.PATROL
 				state_timer = 0.0
+				patrol_timer = 0.0  # Reset patrol timer when entering patrol
 		
 		AIState.PATROL:
-			# Slow, methodical patrol with heavy footsteps
+			# Slow, methodical patrol - always tracking from anywhere
 			patrol_timer -= delta
 			if patrol_timer <= 0:
-				# More predictable movement patterns than skeletons
-				var toward_player = (target_player.global_position - global_position).normalized()
-				var slight_variation = randf_range(-0.5, 0.5)  # Small randomness
-				patrol_direction = toward_player.rotated(slight_variation).normalized()
+				if target_player and is_instance_valid(target_player):
+					var current_distance = global_position.distance_to(target_player.global_position)
+					
+					# Only act "unaware" when VERY close
+					if current_distance <= GOLEM_GROUND_POUND_RANGE * 1.5:  # 225 units - pretend unaware when close
+						# Random patrol when very close
+						patrol_direction = get_new_patrol_direction()
+					else:
+						# Always slowly move toward player from anywhere on map
+						var toward_player = (target_player.global_position - global_position).normalized()
+						var slight_variation = randf_range(-0.5, 0.5)  # Small randomness
+						var original_direction = toward_player.rotated(slight_variation).normalized()
+						patrol_direction = apply_boundary_avoidance(original_direction)
+				else:
+					patrol_direction = get_new_patrol_direction()
+				
 				patrol_timer = PATROL_CHANGE_TIME * 1.5  # Slower direction changes
 			
+			# Golems move at their full slow speed during patrol
 			velocity = patrol_direction * movement_speed
 			
-			# Detect player at shorter range than skeletons (less aware)
-			if distance_to_player <= DETECTION_RANGE * 0.8:  # 80 units instead of 100
-				ai_state = AIState.CHASE
-				state_timer = 0.0
-				print("🗿 Stone golem detected player - beginning slow pursuit!")
+			# Detect player at shorter range than skeletons
+			if target_player and is_instance_valid(target_player):
+				var current_distance = global_position.distance_to(target_player.global_position)
+				var golem_detection = DETECTION_RANGE * 0.8  # 240 units
+				
+				if current_distance <= golem_detection:
+					ai_state = AIState.CHASE
+					state_timer = 0.0
+					print("🗿 Stone golem detected player - beginning slow pursuit!")
 		
 		AIState.CHASE:
 			# Slow but relentless pursuit
-			var direction = (target_player.global_position - global_position).normalized()
+			if not target_player or not is_instance_valid(target_player):
+				# Lost target - return to patrol
+				ai_state = AIState.PATROL
+				state_timer = 0.0
+				print("❓ Stone golem lost target during chase - returning to patrol")
+				return
+			
+			# Chase with boundary avoidance
+			var raw_direction = (target_player.global_position - global_position).normalized()
+			var direction = apply_boundary_avoidance(raw_direction)
 			velocity = direction * movement_speed
 			
+			# Recalculate distance for state transitions
+			var current_distance = global_position.distance_to(target_player.global_position)
+			
 			# When close enough, prepare for ground pound
-			if distance_to_player <= GOLEM_GROUND_POUND_RANGE:
+			if current_distance <= GOLEM_GROUND_POUND_RANGE:
 				ai_state = AIState.WINDUP
 				state_timer = 0.0
 				windup_timer = 0.0
 				print("⚡ Stone golem preparing GROUND POUND attack!")
 			# Lose interest at much closer range (persistent but slow)
-			elif distance_to_player > LOSE_INTEREST_RANGE * 0.7:  # 105 units instead of 150
+			elif current_distance > LOSE_INTEREST_RANGE * 0.7:  # 280 units instead of 400
 				ai_state = AIState.PATROL
 				state_timer = 0.0
 				print("🚶 Stone golem lost interest - returning to patrol")
@@ -923,20 +1319,38 @@ func update_stone_golem_ai(delta):
 				print("😴 Stone golem entering cooldown for ", individual_cooldown_time, " seconds")
 		
 		AIState.COOLDOWN:
-			# Recovery phase - completely stationary and vulnerable
-			velocity = Vector2.ZERO
+			# Recovery phase - very slow movement while vulnerable
+			if target_player and is_instance_valid(target_player):
+				# Slowly back away during cooldown
+				var away_direction = (global_position - target_player.global_position).normalized()
+				var retreat_direction = apply_boundary_avoidance(away_direction)
+				velocity = retreat_direction * movement_speed * 0.15  # Very slow for golems
+			else:
+				velocity = Vector2.ZERO
 			
-			# Show vulnerability with blue tinting (only if not dead)
-			if not is_dead:
-				if int(state_timer * 2) % 2 == 0:
-					sprite.modulate = Color(0.6, 0.6, 1.0)  # Blue vulnerability
+			# Check if player is nearby even during cooldown
+			if target_player and is_instance_valid(target_player):
+				var current_distance = global_position.distance_to(target_player.global_position)
+				if current_distance <= DETECTION_RANGE * 0.8 and state_timer > individual_cooldown_time * 0.7:
+					# Show awareness of player near end of cooldown
+					if not is_dead:
+						if int(state_timer * 6) % 2 == 0:
+							sprite.modulate = Color(1.0, 0.6, 0.6)  # Red warning
+						else:
+							sprite.modulate = Color(0.6, 0.6, 1.0)  # Blue vulnerability
 				else:
-					sprite.modulate = get_restore_color()
+					# Normal vulnerability visual
+					if not is_dead:
+						if int(state_timer * 2) % 2 == 0:
+							sprite.modulate = Color(0.6, 0.6, 1.0)  # Blue vulnerability
+						else:
+							sprite.modulate = get_restore_color()
 			
 			# Return to patrol after cooldown
 			if state_timer >= individual_cooldown_time:
 				ai_state = AIState.PATROL
 				state_timer = 0.0
+				patrol_timer = 0.0  # Reset patrol timer to immediately check for players
 				if not is_dead:
 					sprite.modulate = get_restore_color()
 				print("🔄 Stone golem ready after ", individual_cooldown_time, " seconds - resuming patrol")
@@ -945,24 +1359,38 @@ func perform_ground_pound_attack():
 	# Create area damage around the golem
 	var main_node = get_tree().get_first_node_in_group("main")
 	if main_node and main_node.has_method("handle_golem_ground_pound"):
-		main_node.handle_golem_ground_pound(global_position, GOLEM_GROUND_POUND_RANGE, attack_damage)
+		main_node.handle_golem_ground_pound(global_position, GOLEM_ATTACK_RANGE, attack_damage)
 	else:
 		# Fallback: Direct damage check
-		var distance_to_player = global_position.distance_to(target_player.global_position)
-		if distance_to_player <= GOLEM_GROUND_POUND_RANGE:
-			deal_damage_to_player()
-			print("💥 GROUND POUND hit player for ", attack_damage, " damage!")
+		if target_player and is_instance_valid(target_player):
+			var distance_to_player = global_position.distance_to(target_player.global_position)
+			if distance_to_player <= GOLEM_ATTACK_RANGE:
+				deal_damage_to_player()
+				print("💥 GROUND POUND hit player for ", attack_damage, " damage!")
 	
-	print("🌊 Stone golem GROUND POUND creates shockwave in ", GOLEM_GROUND_POUND_RANGE, " unit radius!")
+	print("🌊 Stone golem GROUND POUND creates shockwave in ", GOLEM_ATTACK_RANGE, " unit radius!")
 
 func find_reposition_target():
 	# Find a position that's at safe distance from player
+	if not target_player or not is_instance_valid(target_player):
+		# No target - just move to a random position
+		reposition_target = global_position + Vector2(randf_range(-100, 100), randf_range(-100, 100))
+		return
+	
 	var away_from_player = (global_position - target_player.global_position).normalized()
 	var angle_variation = randf_range(-0.8, 0.8)  # More variation for interesting positioning
 	away_from_player = away_from_player.rotated(angle_variation)
 	# Use a safe distance that's well beyond minimum range
-	var safe_distance = ARCHER_MIN_RANGE + 30.0  # 60 + 30 = 90 units away
+	var safe_distance = ARCHER_MIN_RANGE + 40.0  # 80 + 40 = 120 units away
 	reposition_target = target_player.global_position + away_from_player * safe_distance
+	
+	# Ensure reposition target stays within arena bounds
+	var arena_margin = 50
+	var arena_width = 1600
+	var arena_height = 1000
+	
+	reposition_target.x = clamp(reposition_target.x, arena_margin, arena_width - arena_margin)
+	reposition_target.y = clamp(reposition_target.y, arena_margin, arena_height - arena_margin)
 
 
 
@@ -972,6 +1400,9 @@ func deal_damage_to_player():
 		print("⚔️ Enemy dealt ", attack_damage, " damage to player!")
 
 func fire_arrow():
+	if not target_player or not is_instance_valid(target_player):
+		return  # Can't fire without a target
+	
 	var arrow_direction = (target_player.global_position - global_position).normalized()
 	var main_node = get_tree().get_first_node_in_group("main")
 	if main_node:
@@ -1122,13 +1553,14 @@ func get_restore_color() -> Color:
 func find_nearest_player_target():
 	var main_node = get_tree().get_first_node_in_group("main")
 	if not main_node:
-		print("⚠️ Enemy can't find main node - no player target")
 		return
 	
 	# Check if this is multiplayer mode
 	var is_multiplayer = false
 	if "is_multiplayer_game" in main_node:
 		is_multiplayer = main_node.is_multiplayer_game
+	
+	var previous_target = target_player
 	
 	if is_multiplayer and "multiplayer_players" in main_node:
 		# Multiplayer: Find nearest player from multiplayer_players array
@@ -1145,22 +1577,26 @@ func find_nearest_player_target():
 						nearest_player = player
 			
 			target_player = nearest_player
-			if target_player:
-				print("🎯 Enemy targeting multiplayer player at distance: ", nearest_distance)
-			else:
-				print("⚠️ No valid multiplayer players found for enemy targeting")
+			# AGGRESSIVE: If we found a new target, immediately start hunting
+			if target_player and target_player != previous_target and enemy_type == EnemyType.SWORD_SKELETON:
+				print("🎯 Skeleton found new multiplayer target - switching to hunting mode!")
 		else:
-			print("⚠️ No multiplayer players in array for enemy targeting")
+			target_player = null
 	else:
-		# Single-player: Use the main player
-		if "player" in main_node and main_node.player:
-			target_player = main_node.player
-			print("🎯 Enemy targeting single-player")
+		# Single-player: Find all nodes in the "player" group
+		var players = get_tree().get_nodes_in_group("player")
+		if players.size() > 0:
+			# Simply find the first valid player (should only be one in single player)
+			for player in players:
+				if is_instance_valid(player):
+					target_player = player
+					# AGGRESSIVE: If we found a new target, immediately start hunting
+					if target_player != previous_target and enemy_type == EnemyType.SWORD_SKELETON:
+						var distance = global_position.distance_to(player.global_position)
+						print("🎯 Skeleton found player at distance: ", distance, " - starting hunt!")
+					break
 		else:
-			print("⚠️ No single player found for enemy targeting")
-	
-	if not target_player:
-		print("❌ Enemy failed to find any player target!")
+			target_player = null
 
 # Update target periodically in case players move or new players join
 func update_player_target():
@@ -1246,3 +1682,99 @@ func get_current_animation() -> String:
 func play_sync_animation(animation_name: String):
 	if sprite and sprite.sprite_frames and sprite.sprite_frames.has_animation(animation_name):
 		sprite.play(animation_name) 
+
+# SIMPLE DIRECT CHASE - remove complex randomization during chase
+# This function is no longer used for chase but kept for patrol variety
+func get_natural_patrol_movement() -> Vector2:
+	# Only used for patrol movement, not chase
+	wander_angle += randf_range(-0.05, 0.05)
+	return Vector2(cos(wander_angle), sin(wander_angle)).normalized()
+
+func get_natural_patrol_direction() -> Vector2:
+	var base_direction: Vector2
+	
+	if target_player and is_instance_valid(target_player):
+		# ALWAYS hunt toward player - no wandering off randomly
+		var to_player = (target_player.global_position - global_position).normalized()
+		
+		# Add natural variation to hunting approach (NOT wandering away)
+		var approach_angle_variation = lerp(0.1, 0.3, movement_personality)  # Small angle variation
+		var random_angle = randf_range(-approach_angle_variation, approach_angle_variation)
+		
+		# Apply the variation to the hunting direction
+		base_direction = to_player.rotated(random_angle)
+		
+		# Ensure we're still generally moving toward player
+		if base_direction.dot(to_player) < 0.5:  # If angle too extreme, correct it
+			base_direction = to_player.rotated(random_angle * 0.5)  # Reduce the angle
+		
+		print("🔍 Skeleton hunting toward player with approach variation: ", movement_personality)
+	else:
+		# NO RANDOM WANDERING - actively search for player in last known direction
+		if dash_target != Vector2.ZERO:
+			# Move toward last known player position
+			base_direction = (dash_target - global_position).normalized()
+		else:
+			# Search pattern toward map center where player likely is
+			var map_center = Vector2(800, 500)  # Center of 1600x1000 arena
+			base_direction = (map_center - global_position).normalized()
+		
+		print("🔍 Skeleton searching for player - no random wandering")
+	
+	return base_direction
+
+func add_tactical_positioning_offset(base_target: Vector2) -> Vector2:
+	# Add smart positioning and STRONG wall avoidance
+	var tactical_target = base_target
+	
+	# STRONG wall repulsion to prevent clustering against walls
+	var wall_repulsion = Vector2.ZERO
+	var wall_repulsion_distance = 200.0  # INCREASED - stay further from walls
+	var arena_width = 1600
+	var arena_height = 1000
+	
+	# Check distance to each wall and apply strong repulsion
+	if global_position.x < wall_repulsion_distance:
+		# Too close to left wall
+		wall_repulsion.x = (wall_repulsion_distance - global_position.x) * 2.0  # Strong push right
+	elif global_position.x > arena_width - wall_repulsion_distance:
+		# Too close to right wall  
+		wall_repulsion.x = -(global_position.x - (arena_width - wall_repulsion_distance)) * 2.0  # Strong push left
+	
+	if global_position.y < wall_repulsion_distance:
+		# Too close to top wall
+		wall_repulsion.y = (wall_repulsion_distance - global_position.y) * 2.0  # Strong push down
+	elif global_position.y > arena_height - wall_repulsion_distance:
+		# Too close to bottom wall
+		wall_repulsion.y = -(global_position.y - (arena_height - wall_repulsion_distance)) * 2.0  # Strong push up
+	
+	# Apply wall repulsion first (highest priority)
+	if wall_repulsion.length() > 0:
+		tactical_target += wall_repulsion
+		print("🚧 Strong wall repulsion applied: ", wall_repulsion.length())
+	
+	# Anti-clustering with other enemies (secondary priority)
+	var nearby_enemies = get_tree().get_nodes_in_group("enemies")
+	var repulsion_force = Vector2.ZERO
+	var min_distance = 60.0  # REDUCED - allow closer formations but prevent overlap
+	
+	for other_enemy in nearby_enemies:
+		if other_enemy == self or not is_instance_valid(other_enemy):
+			continue
+			
+		var distance_to_other = global_position.distance_to(other_enemy.global_position)
+		if distance_to_other < min_distance and distance_to_other > 0:
+			# Push away from other enemy
+			var away_direction = (global_position - other_enemy.global_position).normalized()
+			var repulsion_strength = (min_distance - distance_to_other) / min_distance
+			repulsion_force += away_direction * repulsion_strength * 25.0
+	
+	# Apply enemy separation (lower priority than walls)
+	if repulsion_force.length() > 0:
+		tactical_target += repulsion_force * 0.5  # REDUCED strength to prioritize wall avoidance
+		
+		# Add randomness to avoid perfect formations
+		var random_scatter = Vector2(randf_range(-20, 20), randf_range(-20, 20))
+		tactical_target += random_scatter
+	
+	return tactical_target 

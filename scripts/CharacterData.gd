@@ -50,7 +50,7 @@ static func _static_init():
 		Character.new(
 			"Knight",
 			"A holy paladin wielding sword and shield with divine protection",
-			9, 7, 8, 8,
+			9, 7, 4, 8,
 			"melee",
 			"Divine Shield",
 			"Creates a protective barrier that heals and damages nearby enemies",

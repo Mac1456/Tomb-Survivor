@@ -42,8 +42,9 @@ var invincibility_tween: Tween = null
 # Node references
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var collision: CollisionShape2D = $CollisionShape2D
-@onready var health_bar_container: Node2D = $HealthBarContainer
-@onready var health_bar: ColorRect = $HealthBarContainer/HealthBar
+# Health bar references - may be null if not in scene, will be created dynamically
+var health_bar_container: Node2D
+var health_bar: ColorRect
 
 # Signals
 signal health_changed(new_health: float, max_health: float)
@@ -61,8 +62,15 @@ func _ready():
 	# Configure character first
 	configure_character()
 	
-	# Create health bar after configuration
-	if not health_bar_container:
+	# Try to find existing health bar nodes first
+	health_bar_container = get_node_or_null("HealthBarContainer")
+	if health_bar_container:
+		health_bar = health_bar_container.get_node_or_null("HealthBar")
+		print("Found existing health bar in scene")
+	
+	# Create health bar if not found
+	if not health_bar_container or not health_bar:
+		print("Creating dynamic health bar")
 		create_health_bar()
 	
 	# Setup dodge effect
@@ -526,32 +534,37 @@ func create_health_bar():
 	health_bar_container.position = Vector2(0, -30)
 	add_child(health_bar_container)
 	
-	# Background (dark red)
+	# Background (bright red - shows lost health) - slightly larger for visibility
 	var bg = ColorRect.new()
-	bg.color = Color(0.3, 0, 0, 1)
-	bg.size = Vector2(60, 6)
-	bg.position = Vector2(-30, -3)
+	bg.name = "HealthBarBackground" 
+	bg.color = Color(1.0, 0.0, 0.0, 1.0)  # Pure bright red - maximum visibility
+	bg.size = Vector2(64, 8)  # Slightly larger than green bar
+	bg.position = Vector2(-32, -4)  # Offset to center the larger background
 	health_bar_container.add_child(bg)
 	
-	# Health bar (green)
+	# Health bar (green - shows remaining health)
 	health_bar = ColorRect.new()
 	health_bar.name = "HealthBar"
-	health_bar.color = Color.GREEN
+	health_bar.color = Color(0.0, 1.0, 0.0, 1.0)  # Pure bright green
 	health_bar.size = Vector2(60, 6)
 	health_bar.position = Vector2(-30, -3)
 	health_bar_container.add_child(health_bar)
+	# Ensure health bar is on top
+	health_bar_container.move_child(health_bar, health_bar_container.get_child_count() - 1)
 	
-	# Ensure health bar is visible
+	# Ensure health bar is visible and on top
 	health_bar_container.visible = true
-	health_bar_container.z_index = 10  # Ensure it renders on top
+	health_bar_container.z_index = 100  # Very high z-index to ensure it renders on top of everything
 	
-	print("Health bar created for player")
+	print("Health bar created for player - Reference set: ", health_bar != null)
+	print("🎨 Red background: size=", bg.size, " pos=", bg.position, " color=", bg.color)
+	print("🎨 Green health bar: size=", health_bar.size, " pos=", health_bar.position, " color=", health_bar.color)
 	
 	# Initialize health bar to full
 	update_health_bar()
 
 func update_health_bar():
-	if health_bar:
+	if health_bar and is_instance_valid(health_bar):
 		var health_percentage = current_health / base_health
 		health_bar.size.x = 60 * health_percentage
 		
@@ -562,6 +575,22 @@ func update_health_bar():
 			health_bar.color = Color.YELLOW
 		else:
 			health_bar.color = Color.RED
+		
+		print("🏥 Health bar updated: ", current_health, "/", base_health, " (", (health_percentage * 100), "%) - Width: ", health_bar.size.x, "/60 - Red should be visible: ", health_bar.size.x < 60)
+	else:
+		print("⚠️ Health bar reference is null or invalid!")
+		# Try to find existing health bar
+		var container = get_node_or_null("HealthBarContainer")
+		if container:
+			health_bar = container.get_node_or_null("HealthBar")
+			if health_bar:
+				print("✅ Found existing health bar, updating reference")
+				update_health_bar()  # Retry update
+			else:
+				print("⚠️ HealthBar node not found in container")
+		else:
+			print("⚠️ HealthBarContainer not found - creating new health bar")
+			create_health_bar()
 
 func set_character_data(new_character: CharacterData.Character):
 	character_data = new_character
@@ -910,38 +939,33 @@ func special_ability():
 	# Play local animation and handle local effects (ONLY for local player)
 	play_animation("special")
 	
-	# TEMPORARILY DISABLED: No RPC sync to test mirroring fix
-	# var is_multiplayer = main_scene and main_scene.is_multiplayer_game
-	# if is_multiplayer:
-	#     sync_player_action.rpc("special_ability", multiplayer.get_unique_id())
-	
-	# Handle special ability (ONLY for local player)
+	# Set cooldown first
 	if main_scene:
-		# Use default cooldowns based on character type
 		var cooldown_time = 5.0  # Default special cooldown
-		var damage = 40.0  # Default
-		var range = 100.0  # Default
-		
 		match character_name:
 			"Knight":
 				cooldown_time = 5.0
-				damage = 40.0
-				range = 120.0
 			"Berserker":
 				cooldown_time = 6.0
-				damage = 45.0
-				range = 100.0
 			"Huntress":
 				cooldown_time = 4.0
-				damage = 35.0
-				range = 150.0
 			"Wizard":
 				cooldown_time = 5.0
-				damage = 50.0
-				range = 130.0
 		
 		main_scene.set_character_cooldown(character_name, "special", cooldown_time)
-		main_scene.create_projectile(global_position, damage, range, "special")
+	
+	# Call character-specific special ability implementation
+	match character_name:
+		"Knight":
+			perform_knight_special_attack()
+		"Berserker":
+			perform_berserker_special_attack()
+		"Huntress":
+			perform_huntress_special_attack()
+		"Wizard":
+			perform_wizard_special_attack()
+		_:
+			print("Unknown character special ability")
 
 func ultimate_ability():
 	# Check if on cooldown (character-specific)
@@ -957,38 +981,33 @@ func ultimate_ability():
 	# Play local animation and handle local effects (ONLY for local player) 
 	play_animation("ultimate")
 	
-	# TEMPORARILY DISABLED: No RPC sync to test mirroring fix
-	# var is_multiplayer = main_scene and main_scene.is_multiplayer_game
-	# if is_multiplayer:
-	#     sync_player_action.rpc("ultimate_ability", multiplayer.get_unique_id())
-	
-	# Handle ultimate ability (ONLY for local player)
+	# Set cooldown first
 	if main_scene:
-		# Use default cooldowns based on character type
 		var cooldown_time = 15.0  # Default ultimate cooldown
-		var damage = 80.0  # Default
-		var range = 150.0  # Default
-		
 		match character_name:
 			"Knight":
 				cooldown_time = 15.0
-				damage = 80.0
-				range = 150.0
 			"Berserker":
 				cooldown_time = 18.0
-				damage = 100.0
-				range = 120.0
 			"Huntress":
 				cooldown_time = 12.0
-				damage = 60.0
-				range = 200.0
 			"Wizard":
 				cooldown_time = 15.0
-				damage = 75.0
-				range = 180.0
 		
 		main_scene.set_character_cooldown(character_name, "ultimate", cooldown_time)
-		main_scene.create_projectile(global_position, damage, range, "ultimate")
+	
+	# Call character-specific ultimate ability implementation
+	match character_name:
+		"Knight":
+			perform_knight_ultimate_attack()
+		"Berserker":
+			perform_berserker_ultimate_attack()
+		"Huntress":
+			perform_huntress_ultimate_attack()
+		"Wizard":
+			perform_wizard_ultimate_attack()
+		_:
+			print("Unknown character ultimate ability")
 
 func dodge_roll():
 	if dodge_roll_cooldown_timer > 0:
